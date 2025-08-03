@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 
 export default function AppointmentsPage() {
-  const [selectedAppointment, setSelectedAppointment] = useState(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<null | typeof appointments[0]>(null)
   const [viewMode, setViewMode] = useState("week")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
