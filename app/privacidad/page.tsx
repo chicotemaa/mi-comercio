@@ -96,13 +96,13 @@ export default function PrivacyPage() {
               <CardContent className="pt-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Introducción</h2>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  ComercioFlow ("nosotros", "nuestro" o "la empresa") se compromete a proteger y respetar tu privacidad.
-                  Esta Política de Privacidad explica cómo recopilamos, usamos, divulgamos y protegemos tu información
-                  cuando utilizas nuestros servicios.
+                  {`ComercioFlow ("nosotros", "nuestro" o "la empresa") se compromete a proteger y respetar tu privacidad.
+            Esta Política de Privacidad explica cómo recopilamos, usamos, divulgamos y protegemos tu información
+            cuando utilizas nuestros servicios.`}
                 </p>
                 <p className="text-gray-600 leading-relaxed">
-                  Al usar ComercioFlow, aceptas las prácticas descritas en esta política. Si no estás de acuerdo con
-                  algún aspecto de esta política, por favor no uses nuestros servicios.
+                  {`Al usar ComercioFlow, aceptas las prácticas descritas en esta política. Si no estás de acuerdo con
+            algún aspecto de esta política, por favor no uses nuestros servicios.`}
                 </p>
               </CardContent>
             </Card>

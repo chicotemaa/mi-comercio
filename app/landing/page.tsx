@@ -12,7 +12,6 @@ import {
   MessageCircle,
   Clock,
   CheckCircle,
-  Star,
   ArrowRight,
   Smartphone,
   Shield,
@@ -83,32 +82,7 @@ export default function LandingPage() {
     },
   ]
 
-  const testimonials = [
-    {
-      name: "María González",
-      business: "Salón de Belleza Elegance",
-      rating: 5,
-      comment:
-        "Desde que uso ComercioFlow, mis ventas aumentaron 35%. La gestión de citas es súper fácil y mis clientes aman los recordatorios automáticos.",
-      image: "/placeholder.svg?height=60&width=60",
-    },
-    {
-      name: "Carlos Rodríguez",
-      business: "Barbería Moderna",
-      rating: 5,
-      comment:
-        "Increíble plataforma. Ahora puedo enfocarme en cortar cabello mientras el sistema maneja todo lo demás. Los reportes me ayudan a tomar mejores decisiones.",
-      image: "/placeholder.svg?height=60&width=60",
-    },
-    {
-      name: "Ana Martín",
-      business: "Spa Relax",
-      rating: 5,
-      comment:
-        "La integración con WhatsApp es genial. Mis clientes pueden reservar fácilmente y yo tengo todo organizado. ¡Recomendado al 100%!",
-      image: "/placeholder.svg?height=60&width=60",
-    },
-  ]
+  
 
   const plans = [
     {
