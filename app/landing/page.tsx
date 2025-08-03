@@ -136,9 +136,6 @@ export default function LandingPage() {
             <Link href="/auth">
               <Button variant="outline">Iniciar Sesión</Button>
             </Link>
-            <Link href="/auth">
-              <Button>Comenzar Gratis</Button>
-            </Link>
           </div>
         </div>
       </header>
