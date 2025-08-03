@@ -176,8 +176,7 @@ export default function LandingPage() {
       <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Transforma tu negocio de
-            <span className="text-blue-600"> servicios</span>
+            Transforma tu negocio 
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             La plataforma todo-en-uno que necesitas para gestionar citas, clientes, pagos y hacer crecer tu salón de
