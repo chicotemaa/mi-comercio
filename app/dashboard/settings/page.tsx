@@ -64,10 +64,10 @@ export default function SettingsPage() {
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
 
-  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+  const days: (keyof typeof workingHours)[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
   const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
-  const getRoleText = (role) => {
+  const getRoleText = (role: string) => {
     switch (role) {
       case "owner":
         return "Propietario"
@@ -82,7 +82,7 @@ export default function SettingsPage() {
     }
   }
 
-  const getRoleColor = (role) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case "owner":
         return "bg-purple-100 text-purple-800"
@@ -112,7 +112,7 @@ export default function SettingsPage() {
     setIsInviteDialogOpen(false)
   }
 
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = (userId: number) => {
     setUsers(users.filter((u) => u.id !== userId))
   }
 

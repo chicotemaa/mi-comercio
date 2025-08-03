@@ -107,7 +107,7 @@ export default function NotificationsPage() {
     },
   ]
 
-  const markAsRead = (notificationId) => {
+  const markAsRead = (notificationId: number) => {
     setNotifications(notifications.map((n) => (n.id === notificationId ? { ...n, read: true } : n)))
   }
 

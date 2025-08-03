@@ -28,7 +28,7 @@ import {
 export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedPayment, setSelectedPayment] = useState(null)
+  const [selectedPayment, setSelectedPayment] = useState<null | typeof payments[0]>(null)
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false)
 
   const payments = [
@@ -119,7 +119,7 @@ export default function PaymentsPage() {
     },
   ]
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
       case "paid":
@@ -134,7 +134,7 @@ export default function PaymentsPage() {
     }
   }
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "completed":
         return "Completado"
@@ -151,7 +151,7 @@ export default function PaymentsPage() {
     }
   }
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
       case "paid":

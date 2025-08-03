@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { SetStateAction, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,8 +83,8 @@ export default function EmployeesPage() {
 
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingEmployee, setEditingEmployee] = useState(null)
-  const [selectedEmployee, setSelectedEmployee] = useState(null)
+  const [editingEmployee, setEditingEmployee] = useState<null | typeof employees[0]>(null)
+  const [selectedEmployee, setSelectedEmployee] = useState<null | typeof employees[0]>(null)
 
   const services = ["Corte de cabello", "Peinado", "Manicura", "Pedicura", "Barba y bigote", "Tratamientos", "Nail Art"]
   const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -102,12 +102,12 @@ export default function EmployeesPage() {
     setIsDialogOpen(true)
   }
 
-  const handleEditEmployee = (employee) => {
-    setEditingEmployee(employee)
-    setIsDialogOpen(true)
+  const handleEditEmployee = (employee: typeof employees[0]) => {
+      setEditingEmployee(employee)
+      setIsDialogOpen(true)
   }
 
-  const toggleEmployeeStatus = (employeeId) => {
+  const toggleEmployeeStatus = (employeeId: number) => {
     setEmployees(employees.map((emp) => (emp.id === employeeId ? { ...emp, active: !emp.active } : emp)))
   }
 
@@ -391,19 +391,19 @@ export default function EmployeesPage() {
                   {days.map((day, index) => (
                     <div key={day} className="flex items-center space-x-4 p-4 border rounded-lg">
                       <div className="w-20">
-                        <Switch defaultChecked={editingEmployee?.schedule[day]?.active ?? false} />
+                        <Switch defaultChecked={editingEmployee?.schedule[day as keyof typeof editingEmployee.schedule]?.active ?? false} />
                       </div>
                       <div className="w-24 font-medium">{dayNames[index]}</div>
                       <div className="flex items-center space-x-2">
                         <Input
                           type="time"
-                          defaultValue={editingEmployee?.schedule[day]?.start || "09:00"}
+                          defaultValue={editingEmployee?.schedule[day as keyof typeof editingEmployee.schedule]?.start || "09:00"}
                           className="w-32"
                         />
                         <span>a</span>
                         <Input
                           type="time"
-                          defaultValue={editingEmployee?.schedule[day]?.end || "17:00"}
+                          defaultValue={editingEmployee?.schedule[day as keyof typeof editingEmployee.schedule]?.end || "17:00"}
                           className="w-32"
                         />
                       </div>
@@ -474,7 +474,7 @@ export default function EmployeesPage() {
                 <h4 className="font-semibold mb-3">Horarios de trabajo</h4>
                 <div className="space-y-2">
                   {days.map((day, index) => {
-                    const schedule = selectedEmployee.schedule[day]
+                    const schedule = selectedEmployee.schedule[day as keyof typeof selectedEmployee.schedule]
                     return (
                       <div key={day} className="flex items-center justify-between p-3 border rounded-lg">
                         <span className="font-medium">{dayNames[index]}</span>
@@ -494,7 +494,7 @@ export default function EmployeesPage() {
               <div>
                 <h4 className="font-semibold mb-3">Servicios</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedEmployee.services.map((service, index) => (
+                  {selectedEmployee.services.map((service: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, index: Key | null | undefined) => (
                     <Badge key={index} variant="outline">
                       {service}
                     </Badge>
@@ -507,7 +507,7 @@ export default function EmployeesPage() {
             <Button variant="outline" onClick={() => setSelectedEmployee(null)}>
               Cerrar
             </Button>
-            <Button onClick={() => handleEditEmployee(selectedEmployee)}>Editar empleado</Button>
+            <Button onClick={() => selectedEmployee && handleEditEmployee(selectedEmployee)}>Editar empleado</Button>
           </div>
         </DialogContent>
       </Dialog>
