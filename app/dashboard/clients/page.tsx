@@ -126,7 +126,6 @@ export default function ClientsPage() {
   )
 
   const activeClients = clients.filter((c) => c.status === "active")
-  const inactiveClients = clients.filter((c) => c.status === "inactive")
 
   return (
     <div className="p-6 space-y-6">

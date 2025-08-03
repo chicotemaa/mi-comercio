@@ -11,7 +11,6 @@ import { BarChart3, TrendingUp, Download, Calendar, DollarSign, Users, Scissors 
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState("last30days")
-  const [reportType, setReportType] = useState("revenue")
 
   const revenueData = [
     { period: "Ene", revenue: 2400, appointments: 45 },

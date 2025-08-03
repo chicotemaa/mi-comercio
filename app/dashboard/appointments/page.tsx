@@ -25,7 +25,6 @@ import {
 } from "lucide-react"
 
 export default function AppointmentsPage() {
-  const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [viewMode, setViewMode] = useState("week")
   const [searchTerm, setSearchTerm] = useState("")
@@ -104,7 +103,7 @@ export default function AppointmentsPage() {
     },
   ]
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
         return "bg-green-100 text-green-800"
@@ -119,7 +118,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "confirmed":
         return "Confirmada"
