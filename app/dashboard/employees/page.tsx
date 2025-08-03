@@ -494,10 +494,10 @@ export default function EmployeesPage() {
               <div>
                 <h4 className="font-semibold mb-3">Servicios</h4>
                 <div className="flex flex-wrap gap-2">
-                  {selectedEmployee.services.map((service: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined, index: Key | null | undefined) => (
-                    <Badge key={index} variant="outline">
-                      {service}
-                    </Badge>
+                {selectedEmployee.services.map((service: string, index: number) => (
+                  <Badge key={index} variant="outline">
+                    {service}
+                  </Badge>
                   ))}
                 </div>
               </div>
