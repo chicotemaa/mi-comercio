@@ -172,9 +172,6 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="container mx-auto px-4 text-center">
-          <Badge className="mb-6 bg-blue-100 text-blue-800 hover:bg-blue-100">
-            🚀 Más de 10,000 negocios argentinos confían en nosotros
-          </Badge>
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Transforma tu negocio de
             <span className="text-blue-600"> servicios</span>
@@ -263,42 +260,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Lo que dicen nuestros clientes</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Miles de negocios argentinos ya transformaron su gestión con ComercioFlow.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="pt-6">
-                  <div className="flex items-center mb-4">
-                    {Array.from({ length: testimonial.rating }, (_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-600 mb-6 leading-relaxed">"{testimonial.comment}"</p>
-                  <div className="flex items-center">
-                    <img
-                      src={testimonial.image || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full mr-4"
-                    />
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                      <p className="text-sm text-gray-600">{testimonial.business}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* Pricing Section */}
       <section className="py-20 bg-gray-50">
