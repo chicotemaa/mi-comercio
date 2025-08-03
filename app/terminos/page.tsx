@@ -173,8 +173,7 @@ export default function TermsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  ComercioFlow se proporciona "tal como está" sin garantías de ningún tipo. En la máxima medida
-                  permitida por la ley, no seremos responsables por:
+                  {`ComercioFlow se proporciona "tal cual" y no garantizamos que el servicio sea ininterrumpido o libre de errores.`}
                 </p>
                 <ul className="space-y-2 text-gray-600 mb-4">
                   <li>• Daños indirectos, incidentales o consecuentes</li>
