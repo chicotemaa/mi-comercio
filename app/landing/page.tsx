@@ -16,8 +16,11 @@ import {
   Smartphone,
   Shield,
   Zap,
+  Menu,
+  X,
 } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
 
 export default function LandingPage() {
   const features = [
@@ -117,28 +120,57 @@ export default function LandingPage() {
       cta: "Prueba 30 días gratis",
     },
   ]
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">ComercioFlow</h1>
-              <p className="text-xs text-gray-600">comercioflow.com.ar</p>
-            </div>
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Logo y título */}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
+            <Building2 className="w-6 h-6 text-white" />
           </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/auth">
-              <Button variant="outline">Iniciar Sesión</Button>
-            </Link>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">ComercioFlow</h1>
+            <p className="text-xs text-gray-600">comercioflow.com.ar</p>
           </div>
         </div>
-      </header>
+
+        {/* Botón hamburguesa visible sólo en móvil */}
+        <button
+          className="md:hidden p-2 focus:outline-none"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Abrir menú"
+        >
+          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        {/* Menú desktop */}
+        <nav className="hidden md:flex items-center space-x-4">
+          <Link href="/auth">
+            <Button variant="outline">Iniciar Sesión</Button>
+          </Link>
+        </nav>
+      </div>
+
+      {/* Menú móvil desplegable */}
+      {mobileOpen && (
+        <nav className="md:hidden bg-white border-t">
+          <ul className="flex flex-col p-4 space-y-2">
+            <li>
+              <Link href="/auth">
+                <Button variant="outline" className="w-full text-center">
+                  Iniciar Sesión
+                </Button>
+              </Link>
+            </li>
+            {/* aquí podrías agregar más enlaces */}
+          </ul>
+        </nav>
+      )}
+    </header>
 
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
