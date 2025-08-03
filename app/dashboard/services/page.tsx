@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { SetStateAction, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,7 +60,16 @@ export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingService, setEditingService] = useState(null)
+  const [editingService, setEditingService] = useState<{
+    id: number
+    name: string
+    category: string
+    duration: number
+    price: number
+    description: string
+    active: boolean
+    image: string
+  } | null>(null)
 
   const categories = ["Cabello", "Uñas", "Facial", "Corporal", "Depilación"]
 
@@ -77,16 +86,25 @@ export default function ServicesPage() {
     setIsDialogOpen(true)
   }
 
-  const handleEditService = (service) => {
+  const handleEditService = (service: {
+    id: number
+    name: string
+    category: string
+    duration: number
+    price: number
+    description: string
+    active: boolean
+    image: string
+  }) => {
     setEditingService(service)
     setIsDialogOpen(true)
   }
 
-  const handleDeleteService = (serviceId) => {
+  const handleDeleteService = (serviceId: number) => {
     setServices(services.filter((s) => s.id !== serviceId))
   }
 
-  const toggleServiceStatus = (serviceId) => {
+  const toggleServiceStatus = (serviceId: number) => {
     setServices(services.map((s) => (s.id === serviceId ? { ...s, active: !s.active } : s)))
   }
 

@@ -26,7 +26,7 @@ import {
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedClient, setSelectedClient] = useState(null)
+  const [selectedClient, setSelectedClient] = useState<null | typeof clients[0]>(null)
 
   const clients = [
     {

@@ -48,7 +48,7 @@ export default function ReportsPage() {
     ],
   }
 
-  const exportReport = (format) => {
+  const exportReport = (format: string) => {
     // Simular exportación
     console.log(`Exportando reporte en formato ${format}`)
   }

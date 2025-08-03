@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { SetStateAction, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -64,8 +64,37 @@ export default function CampaignsPage() {
   ])
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingCampaign, setEditingCampaign] = useState(null)
-  const [selectedCampaign, setSelectedCampaign] = useState(null)
+  const [editingCampaign, setEditingCampaign] = useState<null | {
+    id: number;
+    name: string;
+    type: string;
+    status: string;
+    audience: string;
+    recipients: number;
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    createdDate: string;
+    sentDate: string | null;
+    message: string;
+    subject?: string; // Added subject property
+  }>(null)
+  const [selectedCampaign, setSelectedCampaign] = useState<null | {
+    id: number;
+    name: string;
+    type: string;
+    status: string;
+    audience: string;
+    recipients: number;
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    createdDate: string;
+    sentDate: string | null;
+    message: string;
+  }>(null)
 
   const audiences = [
     { id: "all", name: "Todos los clientes", count: 245 },
@@ -75,7 +104,7 @@ export default function CampaignsPage() {
     { id: "inactive", name: "Clientes inactivos", count: 67 },
   ]
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "sent":
         return "bg-green-100 text-green-800"
@@ -90,7 +119,7 @@ export default function CampaignsPage() {
     }
   }
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "sent":
         return "Enviada"
@@ -105,7 +134,7 @@ export default function CampaignsPage() {
     }
   }
 
-  const getTypeIcon = (type) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
       case "whatsapp":
         return <MessageCircle className="w-4 h-4" />
@@ -121,12 +150,12 @@ export default function CampaignsPage() {
     setIsDialogOpen(true)
   }
 
-  const handleEditCampaign = (campaign) => {
-    setEditingCampaign(campaign)
-    setIsDialogOpen(true)
+  const handleEditCampaign = (campaign: { id: number; name: string; type: string; status: string; audience: string; recipients: number; sent: number; delivered: number; opened: number; clicked: number; createdDate: string; sentDate: string | null; message: string }) => {
+      setEditingCampaign(campaign)
+      setIsDialogOpen(true)
   }
 
-  const handleDeleteCampaign = (campaignId) => {
+  const handleDeleteCampaign = (campaignId: number) => {
     setCampaigns(campaigns.filter((c) => c.id !== campaignId))
   }
 
@@ -622,7 +651,7 @@ export default function CampaignsPage() {
             <Button variant="outline" onClick={() => setSelectedCampaign(null)}>
               Cerrar
             </Button>
-            <Button variant="outline" onClick={() => handleEditCampaign(selectedCampaign)}>
+            <Button variant="outline" onClick={() => selectedCampaign && handleEditCampaign(selectedCampaign)}>
               Editar campaña
             </Button>
           </div>
@@ -631,3 +660,4 @@ export default function CampaignsPage() {
     </div>
   )
 }
+ 
