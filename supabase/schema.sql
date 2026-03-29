@@ -52,6 +52,8 @@ create table if not exists public.staff_members (
 alter table public.staff_members add column if not exists bio text;
 alter table public.staff_members add column if not exists image_url text;
 alter table public.staff_members add column if not exists join_date date;
+alter table public.staff_members add column if not exists employee_code text;
+alter table public.staff_members add column if not exists hourly_rate numeric(10, 2) not null default 0;
 alter table public.staff_members add column if not exists rating numeric(3, 2) not null default 5;
 alter table public.staff_members add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
@@ -230,6 +232,21 @@ create table if not exists public.staff_member_services (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.service_price_variants (
+  id uuid primary key default gen_random_uuid(),
+  service_id uuid not null references public.services (id) on delete cascade,
+  variant_name text not null,
+  variant_code text,
+  price numeric(10, 2) not null check (price >= 0),
+  duration_minutes integer not null check (duration_minutes > 0),
+  is_default boolean not null default false,
+  is_active boolean not null default true,
+  display_order integer not null default 0,
+  notes text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses (id) on delete cascade,
@@ -277,6 +294,22 @@ alter table public.appointments add column if not exists internal_notes text;
 alter table public.appointments add column if not exists cancellation_reason text;
 alter table public.appointments add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
+create table if not exists public.staff_time_logs (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  staff_member_id uuid not null references public.staff_members (id) on delete cascade,
+  work_date date not null,
+  start_time time,
+  end_time time,
+  hours_worked numeric(6, 2) not null default 0 check (hours_worked >= 0),
+  entry_type text not null default 'shift',
+  source text not null default 'manual',
+  notes text,
+  created_by_profile_id uuid references public.profiles (id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.invoices (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses (id) on delete cascade,
@@ -320,6 +353,40 @@ create table if not exists public.payments (
   processed_at timestamptz,
   notes text,
   created_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  expense_date date not null,
+  category text not null,
+  subcategory text,
+  description text not null,
+  vendor_name text,
+  amount numeric(10, 2) not null check (amount >= 0),
+  method public.payment_method not null default 'cash',
+  source text not null default 'manual',
+  notes text,
+  created_by_profile_id uuid references public.profiles (id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.payouts (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses (id) on delete cascade,
+  payout_date date not null,
+  recipient_name text not null,
+  recipient_type text not null default 'other',
+  category text not null default 'distribution',
+  staff_member_id uuid references public.staff_members (id) on delete set null,
+  amount numeric(10, 2) not null check (amount >= 0),
+  method public.payment_method not null default 'transfer',
+  source text not null default 'manual',
+  notes text,
+  created_by_profile_id uuid references public.profiles (id) on delete set null,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.campaigns (
@@ -421,19 +488,27 @@ create table if not exists public.team_invitations (
 
 create index if not exists idx_services_business_id on public.services (business_id);
 create index if not exists idx_staff_members_business_id on public.staff_members (business_id);
+create unique index if not exists idx_staff_members_business_employee_code on public.staff_members (business_id, employee_code) where employee_code is not null;
 create index if not exists idx_appointments_business_id on public.appointments (business_id);
 create index if not exists idx_appointments_date_time on public.appointments (appointment_date, appointment_time);
 create index if not exists idx_appointments_customer_id on public.appointments (customer_id);
 create index if not exists idx_business_hours_business_day on public.business_hours (business_id, day_of_week);
 create index if not exists idx_staff_member_hours_member_day on public.staff_member_working_hours (staff_member_id, day_of_week);
 create unique index if not exists idx_staff_member_services_unique on public.staff_member_services (staff_member_id, service_id);
+create index if not exists idx_service_price_variants_service_id on public.service_price_variants (service_id);
+create unique index if not exists idx_service_price_variants_unique_name on public.service_price_variants (service_id, lower(variant_name));
+create unique index if not exists idx_service_price_variants_default_unique on public.service_price_variants (service_id) where is_default = true;
 create unique index if not exists idx_business_hours_unique_day on public.business_hours (business_id, day_of_week);
 create unique index if not exists idx_staff_member_hours_unique_day on public.staff_member_working_hours (staff_member_id, day_of_week);
 create index if not exists idx_customers_business_id on public.customers (business_id);
 create unique index if not exists idx_customers_business_contact on public.customers (business_id, primary_contact);
 create unique index if not exists idx_customers_business_email on public.customers (business_id, lower(email)) where email is not null;
+create index if not exists idx_staff_time_logs_business_date on public.staff_time_logs (business_id, work_date);
+create index if not exists idx_staff_time_logs_member_date on public.staff_time_logs (staff_member_id, work_date);
 create unique index if not exists idx_invoices_business_number on public.invoices (business_id, number);
 create index if not exists idx_payments_business_id on public.payments (business_id);
+create index if not exists idx_expenses_business_date on public.expenses (business_id, expense_date);
+create index if not exists idx_payouts_business_date on public.payouts (business_id, payout_date);
 create index if not exists idx_campaigns_business_id on public.campaigns (business_id);
 create index if not exists idx_notifications_business_read on public.notifications (business_id, is_read);
 create unique index if not exists idx_integration_settings_provider on public.integration_settings (business_id, provider);
@@ -445,9 +520,12 @@ alter table public.services enable row level security;
 alter table public.business_hours enable row level security;
 alter table public.customers enable row level security;
 alter table public.appointments enable row level security;
+alter table public.staff_time_logs enable row level security;
 alter table public.invoices enable row level security;
 alter table public.invoice_items enable row level security;
 alter table public.payments enable row level security;
+alter table public.expenses enable row level security;
+alter table public.payouts enable row level security;
 alter table public.campaigns enable row level security;
 alter table public.campaign_recipients enable row level security;
 alter table public.notifications enable row level security;
@@ -457,6 +535,7 @@ alter table public.notification_preferences enable row level security;
 alter table public.team_invitations enable row level security;
 alter table public.staff_member_working_hours enable row level security;
 alter table public.staff_member_services enable row level security;
+alter table public.service_price_variants enable row level security;
 
 drop policy if exists "Public businesses are readable" on public.businesses;
 create policy "Public businesses are readable"
@@ -784,6 +863,8 @@ insert into public.staff_members (
   phone,
   display_order,
   bio,
+  employee_code,
+  hourly_rate,
   join_date,
   rating
 )
@@ -795,6 +876,8 @@ select
   '+54 362 400-0000',
   1,
   'Desde 2021 acompaña a cada cliente con cortes precisos, perfilados prolijos y una mirada enfocada en resaltar el estilo personal.',
+  'NERE',
+  3500,
   date '2021-01-01',
   4.9
 from target_business
@@ -804,6 +887,21 @@ where not exists (
   where business_id = target_business.id
     and full_name = 'Nerea Aylen'
 );
+
+with target_business as (
+  select id
+  from public.businesses
+  where slug = 'nerea-aylen-barber'
+  limit 1
+)
+update public.staff_members
+set
+  employee_code = coalesce(employee_code, 'NERE'),
+  hourly_rate = case when hourly_rate = 0 then 3500 else hourly_rate end,
+  updated_at = timezone('utc', now())
+from target_business
+where public.staff_members.business_id = target_business.id
+  and public.staff_members.full_name = 'Nerea Aylen';
 
 with target_staff as (
   select id
@@ -876,6 +974,38 @@ where not exists (
   where business_id = target_business.id
     and name = values_to_insert.name
 );
+
+insert into public.service_price_variants (
+  service_id,
+  variant_name,
+  variant_code,
+  price,
+  duration_minutes,
+  is_default,
+  is_active,
+  display_order,
+  notes,
+  updated_at
+)
+select
+  service.id,
+  'Base',
+  'base',
+  service.price,
+  service.duration_minutes,
+  true,
+  service.is_active,
+  1,
+  'Variante inicial generada desde el precio base del servicio.',
+  timezone('utc', now())
+from public.services service
+join public.businesses business on business.id = service.business_id
+where business.slug = 'nerea-aylen-barber'
+  and not exists (
+    select 1
+    from public.service_price_variants variant
+    where variant.service_id = service.id
+  );
 
 with target_staff as (
   select id, business_id
