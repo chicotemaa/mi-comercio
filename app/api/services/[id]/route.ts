@@ -1,91 +1,27 @@
 import { NextResponse } from "next/server"
 
-import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin"
-import { getDefaultDurationMinutes, SERVICE_CATEGORIES } from "@/lib/service-catalog"
-import type { ServiceCategory } from "@/lib/business-shared"
-
-interface ServicePayload {
-  name?: unknown
-  description?: unknown
-  price?: unknown
-  category?: unknown
-}
+import { getManagedBusiness, parseServicePayload, type ServicePayload } from "@/lib/service-management"
 
 function badRequest(message: string) {
   return NextResponse.json({ error: message }, { status: 400 })
 }
 
-function parsePayload(payload: ServicePayload) {
-  const name = typeof payload.name === "string" ? payload.name.trim() : ""
-  const description = typeof payload.description === "string" ? payload.description.trim() : ""
-  const price = typeof payload.price === "number" ? payload.price : Number(payload.price)
-  const category = typeof payload.category === "string" ? payload.category.trim().toLowerCase() : ""
-
-  if (!name) {
-    return { error: "El nombre es obligatorio." } as const
-  }
-
-  if (!Number.isFinite(price) || price < 0) {
-    return { error: "El costo debe ser un número válido mayor o igual a cero." } as const
-  }
-
-  if (!SERVICE_CATEGORIES.includes(category as ServiceCategory)) {
-    return { error: "La categoría debe ser corte, coloraciones o tratamiento." } as const
-  }
-
-  return {
-    data: {
-      name,
-      description: description || null,
-      price,
-      category: category as ServiceCategory,
-      durationMinutes: getDefaultDurationMinutes(category as ServiceCategory),
-    },
-  } as const
-}
-
-async function getManagedBusiness() {
-  const businessSlug = process.env.BUSINESS_SLUG
-
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return { error: "Falta la configuración de Supabase o BUSINESS_SLUG." } as const
-  }
-
-  const supabase = createSupabaseAdminClient()
-
-  if (!supabase) {
-    return { error: "No se pudo crear el cliente administrador de Supabase." } as const
-  }
-
-  const { data: business, error } = await supabase
-    .from("businesses")
-    .select("id, slug")
-    .eq("slug", businessSlug)
-    .maybeSingle()
-
-  if (error || !business) {
-    return { error: "No se encontró el negocio configurado." } as const
-  }
-
-  return { supabase, business } as const
-}
-
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const businessResult = await getManagedBusiness()
 
-  if ("error" in businessResult) {
-    return NextResponse.json({ error: businessResult.error }, { status: 500 })
+  if (businessResult.error || !businessResult.data) {
+    return NextResponse.json({ error: businessResult.error ?? "No se pudo resolver el negocio." }, { status: 500 })
   }
 
   const { id } = await context.params
   const payload = (await request.json()) as ServicePayload
-  const parsed = parsePayload(payload)
+  const parsed = parseServicePayload(payload)
 
-  if ("error" in parsed) {
+  if (parsed.error || !parsed.data) {
     return badRequest(parsed.error ?? "Solicitud inválida.")
   }
 
-  const { supabase, business } = businessResult
+  const { supabase, business } = businessResult.data
 
   const { data: duplicateService, error: duplicateError } = await supabase
     .from("services")
@@ -149,12 +85,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   const businessResult = await getManagedBusiness()
 
-  if ("error" in businessResult) {
-    return NextResponse.json({ error: businessResult.error }, { status: 500 })
+  if (businessResult.error || !businessResult.data) {
+    return NextResponse.json({ error: businessResult.error ?? "No se pudo resolver el negocio." }, { status: 500 })
   }
 
   const { id } = await context.params
-  const { supabase, business } = businessResult
+  const { supabase, business } = businessResult.data
 
   const { error } = await supabase.from("services").delete().eq("id", id).eq("business_id", business.id)
 
