@@ -215,6 +215,17 @@ create table if not exists public.business_hours (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.booking_settings (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null unique references public.businesses (id) on delete cascade,
+  slot_interval_minutes integer not null default 30 check (slot_interval_minutes between 5 and 240),
+  lead_time_minutes integer not null default 120 check (lead_time_minutes between 0 and 10080),
+  max_booking_days_in_advance integer not null default 30 check (max_booking_days_in_advance between 1 and 365),
+  buffer_between_appointments_minutes integer not null default 0 check (buffer_between_appointments_minutes between 0 and 240),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.staff_member_working_hours (
   id uuid primary key default gen_random_uuid(),
   staff_member_id uuid not null references public.staff_members (id) on delete cascade,
@@ -493,6 +504,7 @@ create index if not exists idx_appointments_business_id on public.appointments (
 create index if not exists idx_appointments_date_time on public.appointments (appointment_date, appointment_time);
 create index if not exists idx_appointments_customer_id on public.appointments (customer_id);
 create index if not exists idx_business_hours_business_day on public.business_hours (business_id, day_of_week);
+create unique index if not exists idx_booking_settings_business_id on public.booking_settings (business_id);
 create index if not exists idx_staff_member_hours_member_day on public.staff_member_working_hours (staff_member_id, day_of_week);
 create unique index if not exists idx_staff_member_services_unique on public.staff_member_services (staff_member_id, service_id);
 create index if not exists idx_service_price_variants_service_id on public.service_price_variants (service_id);
@@ -518,6 +530,7 @@ alter table public.businesses enable row level security;
 alter table public.staff_members enable row level security;
 alter table public.services enable row level security;
 alter table public.business_hours enable row level security;
+alter table public.booking_settings enable row level security;
 alter table public.customers enable row level security;
 alter table public.appointments enable row level security;
 alter table public.staff_time_logs enable row level security;
@@ -565,6 +578,13 @@ for select
 to anon, authenticated
 using (true);
 
+drop policy if exists "Public booking settings are readable" on public.booking_settings;
+create policy "Public booking settings are readable"
+on public.booking_settings
+for select
+to anon, authenticated
+using (true);
+
 create or replace function public.create_public_appointment(
   business_slug_input text,
   service_id_input uuid,
@@ -583,10 +603,17 @@ set search_path = public
 as $$
 declare
   business_row public.businesses;
+  business_hours_row public.business_hours;
+  booking_settings_row public.booking_settings;
   service_row public.services;
   staff_row public.staff_members;
   customer_row public.customers;
   appointment_row public.appointments;
+  current_local_timestamp timestamp;
+  appointment_local_timestamp timestamp;
+  appointment_end_local_timestamp timestamp;
+  closing_local_timestamp timestamp;
+  slot_offset_minutes integer;
 begin
   select *
   into business_row
@@ -596,6 +623,25 @@ begin
 
   if business_row.id is null then
     raise exception 'business_not_found';
+  end if;
+
+  select *
+  into booking_settings_row
+  from public.booking_settings
+  where business_id = business_row.id
+  limit 1;
+
+  if booking_settings_row.id is null then
+    insert into public.booking_settings (
+      business_id,
+      updated_at
+    )
+    values (
+      business_row.id,
+      timezone('utc', now())
+    )
+    returning *
+    into booking_settings_row;
   end if;
 
   select *
@@ -609,6 +655,47 @@ begin
 
   if service_row.id is null then
     raise exception 'service_not_found';
+  end if;
+
+  select *
+  into business_hours_row
+  from public.business_hours
+  where business_id = business_row.id
+    and day_of_week = extract(dow from appointment_date_input)::smallint
+  limit 1;
+
+  if business_hours_row.id is null
+    or business_hours_row.is_open = false
+    or business_hours_row.open_time is null
+    or business_hours_row.close_time is null then
+    raise exception 'business_closed';
+  end if;
+
+  current_local_timestamp := timezone(business_row.time_zone, now());
+  appointment_local_timestamp := appointment_date_input::timestamp + appointment_time_input;
+  closing_local_timestamp := appointment_date_input::timestamp + business_hours_row.close_time;
+  appointment_end_local_timestamp :=
+    appointment_local_timestamp
+    + make_interval(mins => service_row.duration_minutes + booking_settings_row.buffer_between_appointments_minutes);
+
+  if appointment_local_timestamp < current_local_timestamp + make_interval(mins => booking_settings_row.lead_time_minutes) then
+    raise exception 'booking_too_soon';
+  end if;
+
+  if appointment_date_input > current_local_timestamp::date + booking_settings_row.max_booking_days_in_advance then
+    raise exception 'booking_too_far';
+  end if;
+
+  if appointment_time_input < business_hours_row.open_time
+    or appointment_time_input >= business_hours_row.close_time
+    or appointment_end_local_timestamp > closing_local_timestamp then
+    raise exception 'outside_business_hours';
+  end if;
+
+  slot_offset_minutes := (extract(epoch from (appointment_time_input - business_hours_row.open_time)) / 60)::integer;
+
+  if mod(slot_offset_minutes, booking_settings_row.slot_interval_minutes) <> 0 then
+    raise exception 'invalid_slot_interval';
   end if;
 
   if staff_member_id_input is not null then
@@ -848,6 +935,36 @@ where not exists (
   where business_id = target_business.id
     and day_of_week = hours.day_of_week
 );
+
+with target_business as (
+  select id
+  from public.businesses
+  where slug = 'nerea-aylen-barber'
+  limit 1
+)
+insert into public.booking_settings (
+  business_id,
+  slot_interval_minutes,
+  lead_time_minutes,
+  max_booking_days_in_advance,
+  buffer_between_appointments_minutes,
+  updated_at
+)
+select
+  target_business.id,
+  30,
+  120,
+  30,
+  0,
+  timezone('utc', now())
+from target_business
+on conflict (business_id) do update
+set
+  slot_interval_minutes = excluded.slot_interval_minutes,
+  lead_time_minutes = excluded.lead_time_minutes,
+  max_booking_days_in_advance = excluded.max_booking_days_in_advance,
+  buffer_between_appointments_minutes = excluded.buffer_between_appointments_minutes,
+  updated_at = excluded.updated_at;
 
 with target_business as (
   select id

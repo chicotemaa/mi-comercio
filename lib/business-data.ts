@@ -5,6 +5,8 @@ import type {
   AppointmentRecord,
   AppointmentStatus,
   BookingChannel,
+  BookingSettingsRecord,
+  BusinessHourRecord,
   BusinessRecord,
   CustomerRecord,
   ExpenseRecord,
@@ -15,6 +17,11 @@ import type {
   ServicePriceVariantRecord,
   StaffRecord,
   StaffTimeLogRecord,
+} from "@/lib/business-shared"
+import {
+  createDefaultBookingSettings,
+  createDefaultBusinessHours,
+  getBusinessDayLabel,
 } from "@/lib/business-shared"
 
 export interface BusinessDataBundle {
@@ -33,6 +40,13 @@ export interface BusinessOperationsBundle {
   payouts: PayoutRecord[]
   staffTimeLogs: StaffTimeLogRecord[]
   servicePriceVariants: ServicePriceVariantRecord[]
+  isLive: boolean
+}
+
+export interface BusinessScheduleBundle {
+  business: BusinessRecord
+  businessHours: BusinessHourRecord[]
+  bookingSettings: BookingSettingsRecord
   isLive: boolean
 }
 
@@ -171,6 +185,23 @@ interface SupabaseServicePriceVariantRow {
   display_order: number
   notes: string | null
   service: SupabasePaymentRelationRow | SupabasePaymentRelationRow[] | null
+}
+
+interface SupabaseBusinessHourRow {
+  id: string
+  day_of_week: number
+  label: string
+  open_time: string | null
+  close_time: string | null
+  is_open: boolean
+}
+
+interface SupabaseBookingSettingsRow {
+  id: string
+  slot_interval_minutes: number
+  lead_time_minutes: number
+  max_booking_days_in_advance: number
+  buffer_between_appointments_minutes: number
 }
 
 function addDays(baseDate: Date, days: number) {
@@ -442,6 +473,17 @@ function createDemoOperationsBundle(): BusinessOperationsBundle {
   }
 }
 
+function createDemoScheduleBundle(): BusinessScheduleBundle {
+  const demoBundle = createDemoBundle()
+
+  return {
+    business: demoBundle.business,
+    businessHours: createDefaultBusinessHours(),
+    bookingSettings: createDefaultBookingSettings(),
+    isLive: false,
+  }
+}
+
 function pickSingleRelation<T>(value: T | T[] | null) {
   if (!value) {
     return null
@@ -609,6 +651,34 @@ function mapServicePriceVariant(row: SupabaseServicePriceVariantRow): ServicePri
     displayOrder: row.display_order,
     notes: row.notes,
   }
+}
+
+function mapBusinessHour(row: SupabaseBusinessHourRow): BusinessHourRecord {
+  return {
+    id: row.id,
+    dayOfWeek: row.day_of_week,
+    label: row.label || getBusinessDayLabel(row.day_of_week),
+    openTime: row.open_time,
+    closeTime: row.close_time,
+    isOpen: row.is_open,
+  }
+}
+
+function mapBookingSettings(row: SupabaseBookingSettingsRow): BookingSettingsRecord {
+  return {
+    id: row.id,
+    slotIntervalMinutes: row.slot_interval_minutes,
+    leadTimeMinutes: row.lead_time_minutes,
+    maxBookingDaysInAdvance: row.max_booking_days_in_advance,
+    bufferBetweenAppointmentsMinutes: row.buffer_between_appointments_minutes,
+  }
+}
+
+function mergeBusinessHours(rows: BusinessHourRecord[]) {
+  const defaults = createDefaultBusinessHours()
+  const byDay = new Map(rows.map((row) => [row.dayOfWeek, row]))
+
+  return defaults.map((defaultRow) => byDay.get(defaultRow.dayOfWeek) ?? defaultRow)
 }
 
 export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
@@ -794,5 +864,74 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
   } catch (error) {
     console.error("Supabase operations lookup crashed", error)
     return createDemoOperationsBundle()
+  }
+}
+
+export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundle> {
+  const businessSlug = process.env.BUSINESS_SLUG
+
+  if (!businessSlug || !hasSupabaseAdminConfig()) {
+    return createDemoScheduleBundle()
+  }
+
+  const supabase = createSupabaseAdminClient()
+
+  if (!supabase) {
+    return createDemoScheduleBundle()
+  }
+
+  try {
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("id, name, slug, description, time_zone")
+      .eq("slug", businessSlug)
+      .maybeSingle()
+
+    if (businessError || !business) {
+      console.error("Supabase business lookup for schedule failed", businessError)
+      return createDemoScheduleBundle()
+    }
+
+    const [{ data: businessHours, error: businessHoursError }, { data: bookingSettings, error: bookingSettingsError }] =
+      await Promise.all([
+        supabase
+          .from("business_hours")
+          .select("id, day_of_week, label, open_time, close_time, is_open")
+          .eq("business_id", business.id)
+          .order("day_of_week", { ascending: true }),
+        supabase
+          .from("booking_settings")
+          .select(
+            "id, slot_interval_minutes, lead_time_minutes, max_booking_days_in_advance, buffer_between_appointments_minutes",
+          )
+          .eq("business_id", business.id)
+          .maybeSingle(),
+      ])
+
+    const isBookingSettingsMissing = bookingSettingsError?.code === "PGRST205"
+
+    if (businessHoursError || (bookingSettingsError && !isBookingSettingsMissing)) {
+      console.error("Supabase schedule lookup failed", {
+        businessHoursError,
+        bookingSettingsError,
+      })
+      return createDemoScheduleBundle()
+    }
+
+    if (isBookingSettingsMissing) {
+      console.warn("Supabase booking settings table is missing. Falling back to default booking settings.")
+    }
+
+    return {
+      business: mapBusiness(business as SupabaseBusinessRow),
+      businessHours: mergeBusinessHours((businessHours as SupabaseBusinessHourRow[] | null)?.map(mapBusinessHour) ?? []),
+      bookingSettings: bookingSettings && !isBookingSettingsMissing
+        ? mapBookingSettings(bookingSettings as SupabaseBookingSettingsRow)
+        : createDefaultBookingSettings(),
+      isLive: true,
+    }
+  } catch (error) {
+    console.error("Supabase schedule lookup crashed", error)
+    return createDemoScheduleBundle()
   }
 }

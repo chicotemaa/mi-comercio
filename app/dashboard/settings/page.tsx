@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,16 +24,6 @@ export default function SettingsPage() {
     website: "www.salonmaria.com",
     cuit: "20-12345678-9",
     logo: "/placeholder.svg?height=100&width=100",
-  })
-
-  const [workingHours, setWorkingHours] = useState({
-    monday: { active: true, open: "09:00", close: "18:00" },
-    tuesday: { active: true, open: "09:00", close: "18:00" },
-    wednesday: { active: true, open: "09:00", close: "18:00" },
-    thursday: { active: true, open: "09:00", close: "18:00" },
-    friday: { active: true, open: "09:00", close: "18:00" },
-    saturday: { active: true, open: "09:00", close: "15:00" },
-    sunday: { active: false, open: "10:00", close: "14:00" },
   })
 
   const [users, setUsers] = useState([
@@ -63,9 +54,6 @@ export default function SettingsPage() {
   ])
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
-
-  const days: (keyof typeof workingHours)[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-  const dayNames = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
   const getRoleText = (role: string) => {
     switch (role) {
@@ -100,11 +88,6 @@ export default function SettingsPage() {
   const handleSaveBusinessInfo = () => {
     // Simular guardado
     console.log("Guardando información del negocio:", businessInfo)
-  }
-
-  const handleSaveWorkingHours = () => {
-    // Simular guardado
-    console.log("Guardando horarios:", workingHours)
   }
 
   const handleInviteUser = () => {
@@ -243,58 +226,19 @@ export default function SettingsPage() {
                 <Clock className="w-5 h-5" />
                 <span>Horarios de atención</span>
               </CardTitle>
-              <CardDescription>Define los horarios de funcionamiento de tu negocio</CardDescription>
+              <CardDescription>La disponibilidad semanal y las reglas de turnos ahora viven en un módulo dedicado.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {days.map((day, index) => (
-                <div key={day} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  <div className="w-20">
-                    <Switch
-                      checked={workingHours[day].active}
-                      onCheckedChange={(checked) =>
-                        setWorkingHours({
-                          ...workingHours,
-                          [day]: { ...workingHours[day], active: checked },
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="w-24 font-medium">{dayNames[index]}</div>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="time"
-                      value={workingHours[day].open}
-                      onChange={(e) =>
-                        setWorkingHours({
-                          ...workingHours,
-                          [day]: { ...workingHours[day], open: e.target.value },
-                        })
-                      }
-                      className="w-32"
-                      disabled={!workingHours[day].active}
-                    />
-                    <span>a</span>
-                    <Input
-                      type="time"
-                      value={workingHours[day].close}
-                      onChange={(e) =>
-                        setWorkingHours({
-                          ...workingHours,
-                          [day]: { ...workingHours[day], close: e.target.value },
-                        })
-                      }
-                      className="w-32"
-                      disabled={!workingHours[day].active}
-                    />
-                  </div>
-                  <div className="flex-1 text-sm text-gray-500">{workingHours[day].active ? "Abierto" : "Cerrado"}</div>
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
+                <p className="text-sm text-slate-700">
+                  Desde ahí puedes abrir o cerrar días, definir horarios de atención y acotar la apertura de turnos con
+                  intervalo, anticipación mínima, días máximos y colchón entre reservas.
+                </p>
+                <div className="pt-4">
+                  <Button asChild>
+                    <Link href="/dashboard/hours">Abrir módulo de horarios</Link>
+                  </Button>
                 </div>
-              ))}
-              <div className="flex justify-end pt-4">
-                <Button onClick={handleSaveWorkingHours}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar horarios
-                </Button>
               </div>
             </CardContent>
           </Card>

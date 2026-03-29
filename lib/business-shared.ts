@@ -13,6 +13,23 @@ export interface BusinessRecord {
   timeZone: string
 }
 
+export interface BusinessHourRecord {
+  id: string
+  dayOfWeek: number
+  label: string
+  openTime: string | null
+  closeTime: string | null
+  isOpen: boolean
+}
+
+export interface BookingSettingsRecord {
+  id: string
+  slotIntervalMinutes: number
+  leadTimeMinutes: number
+  maxBookingDaysInAdvance: number
+  bufferBetweenAppointmentsMinutes: number
+}
+
 export interface ServiceRecord {
   id: string
   name: string
@@ -136,6 +153,39 @@ export interface ServicePriceVariantRecord {
   notes: string | null
 }
 
+export const BUSINESS_DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const
+
+const DEFAULT_BUSINESS_HOUR_ROWS = [
+  { dayOfWeek: 0, openTime: null, closeTime: null, isOpen: false },
+  { dayOfWeek: 1, openTime: null, closeTime: null, isOpen: false },
+  { dayOfWeek: 2, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
+  { dayOfWeek: 3, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
+  { dayOfWeek: 4, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
+  { dayOfWeek: 5, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
+  { dayOfWeek: 6, openTime: "12:00:00", closeTime: "22:00:00", isOpen: true },
+] as const
+
+export function createDefaultBusinessHours(): BusinessHourRecord[] {
+  return DEFAULT_BUSINESS_HOUR_ROWS.map((row) => ({
+    id: `default-hour-${row.dayOfWeek}`,
+    dayOfWeek: row.dayOfWeek,
+    label: BUSINESS_DAY_NAMES[row.dayOfWeek],
+    openTime: row.openTime,
+    closeTime: row.closeTime,
+    isOpen: row.isOpen,
+  }))
+}
+
+export function createDefaultBookingSettings(): BookingSettingsRecord {
+  return {
+    id: "default-booking-settings",
+    slotIntervalMinutes: 30,
+    leadTimeMinutes: 120,
+    maxBookingDaysInAdvance: 30,
+    bufferBetweenAppointmentsMinutes: 0,
+  }
+}
+
 export function getDateKeyInTimeZone(timeZone: string, date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,
@@ -162,6 +212,10 @@ export function formatAppointmentDate(value: string, timeZone: string) {
 
 export function formatAppointmentTime(value: string) {
   return value.slice(0, 5)
+}
+
+export function getBusinessDayLabel(dayOfWeek: number) {
+  return BUSINESS_DAY_NAMES[dayOfWeek] ?? `Día ${dayOfWeek}`
 }
 
 export function getStatusLabel(status: AppointmentStatus) {
