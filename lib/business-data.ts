@@ -51,6 +51,7 @@ interface SupabaseServiceRow {
   duration_minutes: number
   price: number | string
   is_active: boolean
+  category: ServiceRecord["category"]
 }
 
 interface SupabaseStaffRow {
@@ -203,6 +204,7 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: 45,
       price: 18000,
       isActive: true,
+      category: "corte",
     },
     {
       id: "service-barba",
@@ -211,6 +213,7 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: 30,
       price: 12000,
       isActive: true,
+      category: "corte",
     },
     {
       id: "service-combo",
@@ -219,6 +222,7 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: 60,
       price: 26000,
       isActive: true,
+      category: "corte",
     },
   ]
 
@@ -464,6 +468,7 @@ function mapService(row: SupabaseServiceRow): ServiceRecord {
     durationMinutes: row.duration_minutes,
     price: Number(row.price),
     isActive: row.is_active,
+    category: row.category,
   }
 }
 
@@ -635,7 +640,7 @@ export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
       await Promise.all([
         supabase
           .from("services")
-          .select("id, name, description, duration_minutes, price, is_active")
+          .select("id, name, description, duration_minutes, price, is_active, category")
           .eq("business_id", business.id)
           .order("display_order", { ascending: true }),
         supabase

@@ -3,6 +3,7 @@ export type BookingChannel = "website" | "whatsapp" | "instagram" | "manual"
 export type CustomerStatus = "active" | "inactive" | "vip" | "lead"
 export type PaymentMethod = "cash" | "card" | "transfer" | "mercado_pago" | "other"
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded"
+export type ServiceCategory = "corte" | "coloraciones" | "tratamiento"
 
 export interface BusinessRecord {
   id: string
@@ -19,6 +20,7 @@ export interface ServiceRecord {
   durationMinutes: number
   price: number
   isActive: boolean
+  category: ServiceCategory | null
 }
 
 export interface StaffRecord {
@@ -295,4 +297,17 @@ export function formatDisplayDate(value: string | null, timeZone: string) {
     dateStyle: "medium",
     timeZone,
   }).format(date)
+}
+
+export function getServiceCategoryLabel(category: ServiceCategory | null) {
+  switch (category) {
+    case "corte":
+      return "Corte"
+    case "coloraciones":
+      return "Coloraciones"
+    case "tratamiento":
+      return "Tratamiento"
+    default:
+      return "Sin categoría"
+  }
 }
