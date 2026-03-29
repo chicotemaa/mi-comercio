@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Building2, Users, Target, Award, ArrowLeft } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 export default function AboutPage() {
@@ -152,9 +153,11 @@ export default function AboutPage() {
             {team.map((member, index) => (
               <Card key={index} className="text-center border-0 shadow-lg">
                 <CardContent className="pt-8">
-                  <img
+                  <Image
                     src={member.image || "/placeholder.svg"}
                     alt={member.name}
+                    width={128}
+                    height={128}
                     className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
                   />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
