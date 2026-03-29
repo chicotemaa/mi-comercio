@@ -65,8 +65,8 @@ export default function DashboardLayout({
               <Building2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-sm">BusinessHub</h2>
-              <p className="text-xs text-muted-foreground">Salón de Belleza María</p>
+              <h2 className="font-semibold text-sm">Mi Comercio</h2>
+              <p className="text-xs text-muted-foreground">Panel conectado a Supabase</p>
             </div>
           </div>
         </SidebarHeader>
@@ -94,11 +94,11 @@ export default function DashboardLayout({
                   <SidebarMenuButton className="w-full">
                     <Avatar className="w-6 h-6">
                       <AvatarImage src="/placeholder.svg?height=24&width=24" />
-                      <AvatarFallback>MA</AvatarFallback>
+                      <AvatarFallback>MC</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-left">
-                      <p className="text-sm font-medium">María García</p>
-                      <p className="text-xs text-muted-foreground">Propietaria</p>
+                      <p className="text-sm font-medium">Equipo admin</p>
+                      <p className="text-xs text-muted-foreground">Backoffice</p>
                     </div>
                     <ChevronDown className="w-4 h-4" />
                   </SidebarMenuButton>

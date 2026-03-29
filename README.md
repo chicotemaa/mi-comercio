@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# mi-comercio-app
 
-## Getting Started
+Panel/backoffice hecho con Next.js para administrar el mismo proyecto de Supabase que usa `ns-barber`.
 
-First, run the development server:
+## Rol del proyecto
+
+- `ns-barber`: sitio público y formulario de reservas.
+- `mi-comercio-app`: panel interno para ver agenda, servicios y equipo.
+- `Supabase`: backend compartido, base de datos y RPC pública para crear reservas.
+
+## Requisitos
+
+- Node.js 20+
+- npm 10+
+
+## Instalación
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+## Variables de entorno
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-public-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+BUSINESS_SLUG=nerea-aylen-barber
+```
+
+- `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto compartido.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: necesaria si luego quieres sumar auth cliente.
+- `SUPABASE_SERVICE_ROLE_KEY`: usada por el panel para leer datos completos en servidor.
+- `BUSINESS_SLUG`: negocio que debe cargar el dashboard.
+
+## Supabase
+
+El esquema base y los seeds iniciales están en [supabase/schema.sql](/Users/matidev/Documents/Proyects/mi-comercio-app/supabase/schema.sql).
+
+Ese script crea:
+
+- `businesses`
+- `profiles`
+- `staff_members`
+- `services`
+- `appointments`
+- RPC `create_public_appointment(...)`
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estado actual
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Dashboard, agenda, servicios y equipo leen desde Supabase.
+- Si faltan variables o el proyecto todavía no existe, el panel entra en modo demo.
+- El sitio público puede insertar reservas reales usando la RPC pública del mismo proyecto.
