@@ -4,6 +4,7 @@ export type CustomerStatus = "active" | "inactive" | "vip" | "lead"
 export type PaymentMethod = "cash" | "card" | "transfer" | "mercado_pago" | "other"
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded"
 export type ServiceCategory = "corte" | "coloraciones" | "tratamiento"
+export type StaffCompensationType = "hourly" | "category_percentage"
 
 export interface BusinessRecord {
   id: string
@@ -47,8 +48,34 @@ export interface StaffRecord {
   email: string | null
   phone: string | null
   isActive: boolean
+  bio?: string | null
+  joinDate?: string | null
   employeeCode?: string | null
   hourlyRate?: number
+  rating?: number
+  compensationType?: StaffCompensationType
+}
+
+export interface StaffWorkingHourRecord {
+  id: string
+  staffMemberId: string
+  dayOfWeek: number
+  startTime: string | null
+  endTime: string | null
+  isActive: boolean
+}
+
+export interface StaffServiceAssignmentRecord {
+  id: string
+  staffMemberId: string
+  serviceId: string
+}
+
+export interface StaffCategoryRateRecord {
+  id: string
+  staffMemberId: string
+  category: ServiceCategory
+  percentage: number
 }
 
 export interface AppointmentRecord {
@@ -218,6 +245,14 @@ export function getBusinessDayLabel(dayOfWeek: number) {
   return BUSINESS_DAY_NAMES[dayOfWeek] ?? `Día ${dayOfWeek}`
 }
 
+export function createDefaultCategoryRateMap() {
+  return {
+    corte: 0,
+    coloraciones: 0,
+    tratamiento: 0,
+  } satisfies Record<ServiceCategory, number>
+}
+
 export function getStatusLabel(status: AppointmentStatus) {
   switch (status) {
     case "pending":
@@ -363,5 +398,16 @@ export function getServiceCategoryLabel(category: ServiceCategory | null) {
       return "Tratamiento"
     default:
       return "Sin categoría"
+  }
+}
+
+export function getStaffCompensationTypeLabel(type: StaffCompensationType) {
+  switch (type) {
+    case "hourly":
+      return "Por hora"
+    case "category_percentage":
+      return "% por categoría"
+    default:
+      return type
   }
 }

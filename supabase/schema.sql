@@ -55,6 +55,19 @@ alter table public.staff_members add column if not exists join_date date;
 alter table public.staff_members add column if not exists employee_code text;
 alter table public.staff_members add column if not exists hourly_rate numeric(10, 2) not null default 0;
 alter table public.staff_members add column if not exists rating numeric(3, 2) not null default 5;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_type
+    where typname = 'staff_compensation_type'
+      and typnamespace = 'public'::regnamespace
+  ) then
+    create type public.staff_compensation_type as enum ('hourly', 'category_percentage');
+  end if;
+end;
+$$;
+alter table public.staff_members add column if not exists compensation_type public.staff_compensation_type not null default 'hourly';
 alter table public.staff_members add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
 create table if not exists public.services (
@@ -241,6 +254,15 @@ create table if not exists public.staff_member_services (
   staff_member_id uuid not null references public.staff_members (id) on delete cascade,
   service_id uuid not null references public.services (id) on delete cascade,
   created_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.staff_member_category_rates (
+  id uuid primary key default gen_random_uuid(),
+  staff_member_id uuid not null references public.staff_members (id) on delete cascade,
+  service_category text not null check (service_category in ('corte', 'coloraciones', 'tratamiento')),
+  percentage numeric(5, 2) not null default 0 check (percentage >= 0 and percentage <= 100),
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.service_price_variants (
@@ -507,6 +529,7 @@ create index if not exists idx_business_hours_business_day on public.business_ho
 create unique index if not exists idx_booking_settings_business_id on public.booking_settings (business_id);
 create index if not exists idx_staff_member_hours_member_day on public.staff_member_working_hours (staff_member_id, day_of_week);
 create unique index if not exists idx_staff_member_services_unique on public.staff_member_services (staff_member_id, service_id);
+create unique index if not exists idx_staff_member_category_rates_unique on public.staff_member_category_rates (staff_member_id, service_category);
 create index if not exists idx_service_price_variants_service_id on public.service_price_variants (service_id);
 create unique index if not exists idx_service_price_variants_unique_name on public.service_price_variants (service_id, lower(variant_name));
 create unique index if not exists idx_service_price_variants_default_unique on public.service_price_variants (service_id) where is_default = true;
@@ -548,6 +571,7 @@ alter table public.notification_preferences enable row level security;
 alter table public.team_invitations enable row level security;
 alter table public.staff_member_working_hours enable row level security;
 alter table public.staff_member_services enable row level security;
+alter table public.staff_member_category_rates enable row level security;
 alter table public.service_price_variants enable row level security;
 
 drop policy if exists "Public businesses are readable" on public.businesses;
@@ -1015,6 +1039,7 @@ update public.staff_members
 set
   employee_code = coalesce(employee_code, 'NERE'),
   hourly_rate = case when hourly_rate = 0 then 3500 else hourly_rate end,
+  compensation_type = coalesce(compensation_type, 'hourly'),
   updated_at = timezone('utc', now())
 from target_business
 where public.staff_members.business_id = target_business.id
@@ -1050,6 +1075,30 @@ where not exists (
   where staff_member_id = target_staff.id
     and day_of_week = hours.day_of_week
 );
+
+with target_staff as (
+  select id
+  from public.staff_members
+  where full_name = 'Nerea Aylen'
+  limit 1
+)
+insert into public.staff_member_category_rates (staff_member_id, service_category, percentage, updated_at)
+select
+  target_staff.id,
+  rates.service_category,
+  rates.percentage,
+  timezone('utc', now())
+from target_staff
+cross join (
+  values
+    ('corte', 40::numeric),
+    ('coloraciones', 0::numeric),
+    ('tratamiento', 0::numeric)
+) as rates(service_category, percentage)
+on conflict (staff_member_id, service_category) do update
+set
+  percentage = excluded.percentage,
+  updated_at = excluded.updated_at;
 
 with target_business as (
   select id

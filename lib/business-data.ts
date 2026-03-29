@@ -1,5 +1,7 @@
 import "server-only"
 
+import type { SupabaseClient } from "@supabase/supabase-js"
+
 import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin"
 import type {
   AppointmentRecord,
@@ -15,11 +17,16 @@ import type {
   PayoutRecord,
   ServiceRecord,
   ServicePriceVariantRecord,
+  StaffCategoryRateRecord,
+  StaffCompensationType,
   StaffRecord,
+  StaffServiceAssignmentRecord,
   StaffTimeLogRecord,
+  StaffWorkingHourRecord,
 } from "@/lib/business-shared"
 import {
   createDefaultBookingSettings,
+  createDefaultCategoryRateMap,
   createDefaultBusinessHours,
   getBusinessDayLabel,
 } from "@/lib/business-shared"
@@ -50,6 +57,18 @@ export interface BusinessScheduleBundle {
   isLive: boolean
 }
 
+export interface BusinessTeamBundle {
+  business: BusinessRecord
+  services: ServiceRecord[]
+  staffMembers: StaffRecord[]
+  appointments: AppointmentRecord[]
+  staffTimeLogs: StaffTimeLogRecord[]
+  staffWorkingHours: StaffWorkingHourRecord[]
+  staffCategoryRates: StaffCategoryRateRecord[]
+  staffServiceAssignments: StaffServiceAssignmentRecord[]
+  isLive: boolean
+}
+
 interface SupabaseBusinessRow {
   id: string
   name: string
@@ -75,8 +94,12 @@ interface SupabaseStaffRow {
   email: string | null
   phone: string | null
   is_active: boolean
+  bio?: string | null
+  join_date?: string | null
   employee_code?: string | null
   hourly_rate?: number | string | null
+  rating?: number | string | null
+  compensation_type?: StaffCompensationType | null
 }
 
 interface SupabaseAppointmentRow {
@@ -204,6 +227,33 @@ interface SupabaseBookingSettingsRow {
   buffer_between_appointments_minutes: number
 }
 
+interface SupabaseStaffWorkingHourRow {
+  id: string
+  staff_member_id: string
+  day_of_week: number
+  start_time: string | null
+  end_time: string | null
+  is_active: boolean
+}
+
+interface SupabaseStaffServiceAssignmentRow {
+  id: string
+  staff_member_id: string
+  service_id: string
+}
+
+interface SupabaseStaffCategoryRateRow {
+  id: string
+  staff_member_id: string
+  service_category: ServiceRecord["category"]
+  percentage: number | string
+}
+
+const STAFF_SELECT_FIELDS =
+  "id, full_name, role, email, phone, is_active, bio, join_date, employee_code, hourly_rate, rating, compensation_type"
+const LEGACY_STAFF_SELECT_FIELDS =
+  "id, full_name, role, email, phone, is_active, bio, join_date, employee_code, hourly_rate, rating"
+
 function addDays(baseDate: Date, days: number) {
   const date = new Date(baseDate)
   date.setDate(date.getDate() + days)
@@ -212,6 +262,52 @@ function addDays(baseDate: Date, days: number) {
 
 function formatDateForSql(date: Date) {
   return date.toISOString().slice(0, 10)
+}
+
+async function fetchStaffMembersForBusiness(supabase: SupabaseClient, businessId: string) {
+  const primaryResponse = await supabase
+    .from("staff_members")
+    .select(STAFF_SELECT_FIELDS)
+    .eq("business_id", businessId)
+    .order("display_order", { ascending: true })
+
+  if (!primaryResponse.error) {
+    return {
+      data: primaryResponse.data as SupabaseStaffRow[] | null,
+      error: null,
+    }
+  }
+
+  if (primaryResponse.error.code !== "42703") {
+    return {
+      data: null,
+      error: primaryResponse.error,
+    }
+  }
+
+  const legacyResponse = await supabase
+    .from("staff_members")
+    .select(LEGACY_STAFF_SELECT_FIELDS)
+    .eq("business_id", businessId)
+    .order("display_order", { ascending: true })
+
+  if (legacyResponse.error) {
+    return {
+      data: null,
+      error: legacyResponse.error,
+    }
+  }
+
+  console.warn("Supabase staff_members table is missing compensation_type. Falling back to hourly defaults.")
+
+  return {
+    data:
+      (legacyResponse.data as Omit<SupabaseStaffRow, "compensation_type">[] | null)?.map((row) => ({
+        ...row,
+        compensation_type: "hourly",
+      })) ?? [],
+    error: null,
+  }
 }
 
 function createDemoBundle(): BusinessDataBundle {
@@ -265,6 +361,12 @@ function createDemoBundle(): BusinessDataBundle {
       email: "nerea@demo.local",
       phone: "+54 362 400-0000",
       isActive: true,
+      bio: "Especialista en cortes y atención personalizada.",
+      joinDate: "2021-01-01",
+      employeeCode: "NERE",
+      hourlyRate: 3500,
+      rating: 4.9,
+      compensationType: "hourly",
     },
   ]
 
@@ -484,6 +586,61 @@ function createDemoScheduleBundle(): BusinessScheduleBundle {
   }
 }
 
+function createDemoTeamBundle(): BusinessTeamBundle {
+  const demoBundle = createDemoBundle()
+  const staffTimeLogs: StaffTimeLogRecord[] = [
+    {
+      id: "team-time-log-demo-1",
+      staffMemberId: demoBundle.staffMembers[0]?.id ?? "staff-nerea",
+      staffName: demoBundle.staffMembers[0]?.fullName ?? "Nerea Aylen",
+      workDate: new Date().toISOString().slice(0, 10),
+      startTime: "11:00:00",
+      endTime: "19:00:00",
+      hoursWorked: 8,
+      entryType: "shift",
+      source: "manual",
+      notes: "Jornada demo del módulo de empleados.",
+    },
+  ]
+
+  const staffWorkingHours: StaffWorkingHourRecord[] = createDefaultBusinessHours().map((day) => ({
+    id: `team-hour-${day.dayOfWeek}`,
+    staffMemberId: demoBundle.staffMembers[0]?.id ?? "staff-nerea",
+    dayOfWeek: day.dayOfWeek,
+    startTime: day.openTime,
+    endTime: day.closeTime,
+    isActive: day.isOpen,
+  }))
+
+  const staffServiceAssignments: StaffServiceAssignmentRecord[] = demoBundle.services.map((service) => ({
+    id: `team-assignment-${service.id}`,
+    staffMemberId: demoBundle.staffMembers[0]?.id ?? "staff-nerea",
+    serviceId: service.id,
+  }))
+
+  const defaultRates = createDefaultCategoryRateMap()
+  defaultRates.corte = 40
+
+  const staffCategoryRates: StaffCategoryRateRecord[] = (["corte", "coloraciones", "tratamiento"] as const).map((category) => ({
+      id: `team-rate-${category}`,
+      staffMemberId: demoBundle.staffMembers[0]?.id ?? "staff-nerea",
+      category,
+      percentage: defaultRates[category],
+    }))
+
+  return {
+    business: demoBundle.business,
+    services: demoBundle.services,
+    staffMembers: demoBundle.staffMembers,
+    appointments: demoBundle.appointments,
+    staffTimeLogs,
+    staffWorkingHours,
+    staffCategoryRates,
+    staffServiceAssignments,
+    isLive: false,
+  }
+}
+
 function pickSingleRelation<T>(value: T | T[] | null) {
   if (!value) {
     return null
@@ -522,8 +679,12 @@ function mapStaff(row: SupabaseStaffRow): StaffRecord {
     email: row.email,
     phone: row.phone,
     isActive: row.is_active,
+    bio: row.bio ?? null,
+    joinDate: row.join_date ?? null,
     employeeCode: row.employee_code ?? null,
     hourlyRate: Number(row.hourly_rate ?? 0),
+    rating: Number(row.rating ?? 5),
+    compensationType: row.compensation_type ?? "hourly",
   }
 }
 
@@ -674,6 +835,34 @@ function mapBookingSettings(row: SupabaseBookingSettingsRow): BookingSettingsRec
   }
 }
 
+function mapStaffWorkingHour(row: SupabaseStaffWorkingHourRow): StaffWorkingHourRecord {
+  return {
+    id: row.id,
+    staffMemberId: row.staff_member_id,
+    dayOfWeek: row.day_of_week,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    isActive: row.is_active,
+  }
+}
+
+function mapStaffServiceAssignment(row: SupabaseStaffServiceAssignmentRow): StaffServiceAssignmentRecord {
+  return {
+    id: row.id,
+    staffMemberId: row.staff_member_id,
+    serviceId: row.service_id,
+  }
+}
+
+function mapStaffCategoryRate(row: SupabaseStaffCategoryRateRow): StaffCategoryRateRecord {
+  return {
+    id: row.id,
+    staffMemberId: row.staff_member_id,
+    category: row.service_category ?? "corte",
+    percentage: Number(row.percentage),
+  }
+}
+
 function mergeBusinessHours(rows: BusinessHourRecord[]) {
   const defaults = createDefaultBusinessHours()
   const byDay = new Map(rows.map((row) => [row.dayOfWeek, row]))
@@ -713,11 +902,7 @@ export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
           .select("id, name, description, duration_minutes, price, is_active, category")
           .eq("business_id", business.id)
           .order("display_order", { ascending: true }),
-        supabase
-          .from("staff_members")
-          .select("id, full_name, role, email, phone, is_active")
-          .eq("business_id", business.id)
-          .order("display_order", { ascending: true }),
+        fetchStaffMembersForBusiness(supabase, business.id),
         supabase
           .from("appointments")
           .select(
@@ -933,5 +1118,126 @@ export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundl
   } catch (error) {
     console.error("Supabase schedule lookup crashed", error)
     return createDemoScheduleBundle()
+  }
+}
+
+export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
+  const businessSlug = process.env.BUSINESS_SLUG
+
+  if (!businessSlug || !hasSupabaseAdminConfig()) {
+    return createDemoTeamBundle()
+  }
+
+  const supabase = createSupabaseAdminClient()
+
+  if (!supabase) {
+    return createDemoTeamBundle()
+  }
+
+  try {
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("id, name, slug, description, time_zone")
+      .eq("slug", businessSlug)
+      .maybeSingle()
+
+    if (businessError || !business) {
+      console.error("Supabase business lookup for team failed", businessError)
+      return createDemoTeamBundle()
+    }
+
+    const [
+      { data: services, error: servicesError },
+      { data: staffMembers, error: staffError },
+      { data: appointments, error: appointmentsError },
+      { data: staffTimeLogs, error: staffTimeLogsError },
+      { data: staffWorkingHours, error: staffWorkingHoursError },
+      { data: staffServiceAssignments, error: staffServiceAssignmentsError },
+      { data: staffCategoryRates, error: staffCategoryRatesError },
+    ] = await Promise.all([
+      supabase
+        .from("services")
+        .select("id, name, description, duration_minutes, price, is_active, category")
+        .eq("business_id", business.id)
+        .order("display_order", { ascending: true }),
+      fetchStaffMembersForBusiness(supabase, business.id),
+      supabase
+        .from("appointments")
+        .select(
+          "id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, created_at",
+        )
+        .eq("business_id", business.id)
+        .order("appointment_date", { ascending: true })
+        .order("appointment_time", { ascending: true }),
+      supabase
+        .from("staff_time_logs")
+        .select("id, staff_member_id, work_date, start_time, end_time, hours_worked, entry_type, source, notes, staff_member:staff_members(full_name)")
+        .eq("business_id", business.id)
+        .order("work_date", { ascending: false }),
+      supabase
+        .from("staff_member_working_hours")
+        .select("id, staff_member_id, day_of_week, start_time, end_time, is_active")
+        .order("day_of_week", { ascending: true }),
+      supabase
+        .from("staff_member_services")
+        .select("id, staff_member_id, service_id"),
+      supabase
+        .from("staff_member_category_rates")
+        .select("id, staff_member_id, service_category, percentage"),
+    ])
+
+    const isCategoryRatesMissing = staffCategoryRatesError?.code === "PGRST205"
+
+    if (
+      servicesError ||
+      staffError ||
+      appointmentsError ||
+      staffTimeLogsError ||
+      staffWorkingHoursError ||
+      staffServiceAssignmentsError ||
+      (staffCategoryRatesError && !isCategoryRatesMissing)
+    ) {
+      console.error("Supabase team lookup failed", {
+        servicesError,
+        staffError,
+        appointmentsError,
+        staffTimeLogsError,
+        staffWorkingHoursError,
+        staffServiceAssignmentsError,
+        staffCategoryRatesError,
+      })
+      return createDemoTeamBundle()
+    }
+
+    if (isCategoryRatesMissing) {
+      console.warn("Supabase staff category rates table is missing. Falling back to default rate values.")
+    }
+
+    const staffIds = new Set((staffMembers as SupabaseStaffRow[] | null)?.map((staffMember) => staffMember.id) ?? [])
+
+    return {
+      business: mapBusiness(business as SupabaseBusinessRow),
+      services: (services as SupabaseServiceRow[] | null)?.map(mapService) ?? [],
+      staffMembers: (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+      appointments: (appointments as SupabaseAppointmentRow[] | null)?.map(mapAppointment) ?? [],
+      staffTimeLogs: (staffTimeLogs as SupabaseStaffTimeLogRow[] | null)?.map(mapStaffTimeLog) ?? [],
+      staffWorkingHours:
+        (staffWorkingHours as SupabaseStaffWorkingHourRow[] | null)
+          ?.filter((workingHour) => staffIds.has(workingHour.staff_member_id))
+          .map(mapStaffWorkingHour) ?? [],
+      staffServiceAssignments:
+        (staffServiceAssignments as SupabaseStaffServiceAssignmentRow[] | null)
+          ?.filter((assignment) => staffIds.has(assignment.staff_member_id))
+          .map(mapStaffServiceAssignment) ?? [],
+      staffCategoryRates: isCategoryRatesMissing
+        ? []
+        : (staffCategoryRates as SupabaseStaffCategoryRateRow[] | null)
+            ?.filter((rate) => staffIds.has(rate.staff_member_id))
+            .map(mapStaffCategoryRate) ?? [],
+      isLive: true,
+    }
+  } catch (error) {
+    console.error("Supabase team lookup crashed", error)
+    return createDemoTeamBundle()
   }
 }
