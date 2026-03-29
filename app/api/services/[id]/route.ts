@@ -47,6 +47,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       duration_minutes: parsed.data.durationMinutes,
       price: parsed.data.price,
       category: parsed.data.category,
+      is_active: parsed.data.isActive,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

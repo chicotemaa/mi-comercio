@@ -12,6 +12,7 @@ export interface ServicePayload {
   price?: unknown
   category?: unknown
   durationMinutes?: unknown
+  isActive?: unknown
 }
 
 export interface ManagedBusinessContext {
@@ -28,6 +29,7 @@ export interface ParsedServicePayload {
   price: number
   category: ServiceCategory
   durationMinutes: number
+  isActive: boolean
 }
 
 export function parseServicePayload(payload: ServicePayload): { data?: ParsedServicePayload; error?: string } {
@@ -41,6 +43,7 @@ export function parseServicePayload(payload: ServicePayload): { data?: ParsedSer
       : payload.durationMinutes === undefined || payload.durationMinutes === null
         ? getDefaultDurationMinutes(category as ServiceCategory)
         : Number(payload.durationMinutes)
+  const isActive = typeof payload.isActive === "boolean" ? payload.isActive : true
 
   if (!name) {
     return { error: "El nombre es obligatorio." }
@@ -65,8 +68,17 @@ export function parseServicePayload(payload: ServicePayload): { data?: ParsedSer
       price,
       category: category as ServiceCategory,
       durationMinutes,
+      isActive,
     },
   }
+}
+
+export function parseServiceStatusPayload(payload: Pick<ServicePayload, "isActive">): { isActive?: boolean; error?: string } {
+  if (typeof payload.isActive !== "boolean") {
+    return { error: "El estado activo debe ser booleano." }
+  }
+
+  return { isActive: payload.isActive }
 }
 
 export async function getManagedBusiness(): Promise<{ data?: ManagedBusinessContext; error?: string }> {

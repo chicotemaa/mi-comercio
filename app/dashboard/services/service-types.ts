@@ -8,6 +8,7 @@ export interface ServiceSummary {
   price: number
   isActive: boolean
   bookings: number
+  bookingRevenue: number
   category: ServiceCategory | null
 }
 

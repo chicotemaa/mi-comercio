@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       duration_minutes: parsed.data.durationMinutes,
       price: parsed.data.price,
       category: parsed.data.category,
-      is_active: true,
+      is_active: parsed.data.isActive,
       booking_enabled: true,
       updated_at: new Date().toISOString(),
     })

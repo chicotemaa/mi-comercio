@@ -12,6 +12,7 @@ import { Plus, Search } from "lucide-react"
 import { ServiceDeleteDialog } from "./_components/service-delete-dialog"
 import { ServiceFeedbackDialog } from "./_components/service-feedback-dialog"
 import { ServiceFormDialog } from "./_components/service-form-dialog"
+import { ServiceStatusDialog } from "./_components/service-status-dialog"
 import { ServicesTable } from "./_components/services-table"
 import type { ServiceSummary } from "./service-types"
 import { useServicesController } from "./use-services-controller"
@@ -63,6 +64,7 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">{formatCurrency(controller.averageTicket)}</div>
+            <p className="text-xs text-slate-500">Promedio ponderado por reservas registradas</p>
           </CardContent>
         </Card>
 
@@ -123,6 +125,7 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
             <ServicesTable
               onDelete={controller.openDeleteDialog}
               onEdit={controller.openEditDialog}
+              onToggleStatus={controller.openToggleDialog}
               services={controller.filteredServices}
             />
           )}
@@ -149,6 +152,17 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
           }
         }}
         service={controller.selectedServiceToDelete}
+      />
+
+      <ServiceStatusDialog
+        isSubmitting={controller.isTogglingStatus || controller.isRefreshing}
+        onConfirm={() => void controller.confirmToggleStatus()}
+        onOpenChange={(open) => {
+          if (!open) {
+            controller.closeToggleDialog()
+          }
+        }}
+        service={controller.selectedServiceToToggle}
       />
 
       <ServiceFeedbackDialog

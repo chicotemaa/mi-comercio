@@ -24,10 +24,12 @@ export function useServicesController(services: ServiceSummary[]) {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [editingService, setEditingService] = useState<ServiceSummary | null>(null)
   const [serviceToDelete, setServiceToDelete] = useState<ServiceSummary | null>(null)
+  const [serviceToToggle, setServiceToToggle] = useState<ServiceSummary | null>(null)
   const [formState, setFormState] = useState<ServiceFormState>(createServiceFormState())
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [feedbackState, setFeedbackState] = useState<ServiceFeedbackState | null>(null)
 
@@ -45,8 +47,14 @@ export function useServicesController(services: ServiceSummary[]) {
     })
   }, [categoryFilter, searchTerm, services])
 
+  const totalBookings = services.reduce((total, service) => total + service.bookings, 0)
+  const totalBookingRevenue = services.reduce((total, service) => total + service.bookingRevenue, 0)
   const averageTicket =
-    services.length > 0 ? services.reduce((total, service) => total + service.price, 0) / services.length : 0
+    totalBookings > 0
+      ? totalBookingRevenue / totalBookings
+      : services.length > 0
+        ? services.reduce((total, service) => total + service.price, 0) / services.length
+        : 0
 
   function resetForm() {
     setEditingService(null)
@@ -120,6 +128,7 @@ export function useServicesController(services: ServiceSummary[]) {
           price: Number(formState.price),
           category: formState.category,
           durationMinutes: Number(formState.durationMinutes),
+          isActive: editingService?.isActive ?? true,
         }),
       })
 
@@ -154,6 +163,14 @@ export function useServicesController(services: ServiceSummary[]) {
 
   function closeDeleteDialog() {
     setServiceToDelete(null)
+  }
+
+  function openToggleDialog(service: ServiceSummary) {
+    setServiceToToggle(service)
+  }
+
+  function closeToggleDialog() {
+    setServiceToToggle(null)
   }
 
   async function confirmDelete() {
@@ -198,6 +215,65 @@ export function useServicesController(services: ServiceSummary[]) {
     }
   }
 
+  async function confirmToggleStatus() {
+    if (!serviceToToggle) {
+      return
+    }
+
+    setIsTogglingStatus(true)
+
+    try {
+      const response = await fetch(`/api/services/${serviceToToggle.id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isActive: !serviceToToggle.isActive,
+        }),
+      })
+
+      const body = (await response.json().catch(() => null)) as { error?: string } | null
+
+      if (!response.ok) {
+        closeToggleDialog()
+        setFeedbackState(
+          createFeedbackState(
+            "No se pudo actualizar",
+            body?.error ?? "Ocurrió un problema al cambiar el estado del servicio.",
+            "error",
+          ),
+        )
+        return
+      }
+
+      const nextIsActive = !serviceToToggle.isActive
+
+      closeToggleDialog()
+      setFeedbackState(
+        createFeedbackState(
+          nextIsActive ? "Servicio activado" : "Servicio desactivado",
+          nextIsActive
+            ? "El servicio volvió a estar disponible en el catálogo."
+            : "El servicio dejó de estar disponible sin necesidad de borrarlo.",
+          "success",
+        ),
+      )
+      await refreshData()
+    } catch {
+      closeToggleDialog()
+      setFeedbackState(
+        createFeedbackState(
+          "No se pudo actualizar",
+          "Ocurrió un problema al cambiar el estado del servicio.",
+          "error",
+        ),
+      )
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
   function closeFeedbackDialog() {
     setFeedbackState(null)
   }
@@ -207,7 +283,9 @@ export function useServicesController(services: ServiceSummary[]) {
     categoryFilter,
     closeDeleteDialog,
     closeFeedbackDialog,
+    closeToggleDialog,
     confirmDelete,
+    confirmToggleStatus,
     filteredServices,
     formError,
     formState,
@@ -216,12 +294,15 @@ export function useServicesController(services: ServiceSummary[]) {
     isFormOpen,
     isRefreshing,
     isSubmitting,
+    isTogglingStatus,
     openCreateDialog,
     openDeleteDialog,
     openEditDialog,
+    openToggleDialog,
     feedbackState,
     searchTerm,
     selectedServiceToDelete: serviceToDelete,
+    selectedServiceToToggle: serviceToToggle,
     editingService,
     setCategoryFilter,
     setSearchTerm,

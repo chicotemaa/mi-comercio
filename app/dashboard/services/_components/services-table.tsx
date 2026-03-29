@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatCurrency, getServiceCategoryLabel } from "@/lib/business-shared"
-import { Clock3, Pencil, Scissors, Trash2 } from "lucide-react"
+import { Clock3, Eye, EyeOff, Pencil, Scissors, Trash2 } from "lucide-react"
 
 import type { ServiceSummary } from "../service-types"
 import { categoryBadgeClassName } from "../service-utils"
@@ -12,10 +12,11 @@ import { categoryBadgeClassName } from "../service-utils"
 interface ServicesTableProps {
   onDelete: (service: ServiceSummary) => void
   onEdit: (service: ServiceSummary) => void
+  onToggleStatus: (service: ServiceSummary) => void
   services: ServiceSummary[]
 }
 
-export function ServicesTable({ onDelete, onEdit, services }: ServicesTableProps) {
+export function ServicesTable({ onDelete, onEdit, onToggleStatus, services }: ServicesTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -63,6 +64,9 @@ export function ServicesTable({ onDelete, onEdit, services }: ServicesTableProps
               <div className="flex items-center justify-end gap-1">
                 <Button variant="ghost" size="sm" onClick={() => onEdit(service)}>
                   <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => onToggleStatus(service)}>
+                  {service.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onDelete(service)}>
                   <Trash2 className="h-4 w-4" />
