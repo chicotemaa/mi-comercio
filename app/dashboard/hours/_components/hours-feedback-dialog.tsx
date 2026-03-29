@@ -18,6 +18,13 @@ interface HoursFeedbackDialogProps {
 }
 
 export function HoursFeedbackDialog({ feedback, onOpenChange }: HoursFeedbackDialogProps) {
+  const buttonClassName =
+    feedback?.tone === "error"
+      ? "bg-rose-600 hover:bg-rose-700"
+      : feedback?.tone === "warning"
+        ? "bg-amber-500 hover:bg-amber-600 text-slate-950"
+        : undefined
+
   return (
     <Dialog open={Boolean(feedback)} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -26,10 +33,7 @@ export function HoursFeedbackDialog({ feedback, onOpenChange }: HoursFeedbackDia
           <DialogDescription>{feedback?.description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            className={feedback?.tone === "error" ? "bg-rose-600 hover:bg-rose-700" : undefined}
-            onClick={() => onOpenChange(false)}
-          >
+          <Button className={buttonClassName} onClick={() => onOpenChange(false)}>
             Cerrar
           </Button>
         </DialogFooter>
