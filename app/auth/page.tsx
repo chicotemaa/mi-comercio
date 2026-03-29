@@ -4,8 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft, Building2, Eye, EyeOff, Lock } from "lucide-react"
+import { Building2, Eye, EyeOff, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,10 +29,6 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/landing" className="mb-6 inline-flex items-center text-sm text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver
-          </Link>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900">
               <Building2 className="h-6 w-6 text-white" />

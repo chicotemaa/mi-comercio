@@ -103,7 +103,7 @@ export default function HelpPage() {
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/landing" className="flex items-center space-x-3">
+          <Link href="/auth" className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
               <Building2 className="w-6 h-6 text-white" />
             </div>
@@ -112,7 +112,7 @@ export default function HelpPage() {
               <p className="text-xs text-gray-600">comercioflow.com.ar</p>
             </div>
           </Link>
-          <Link href="/landing">
+          <Link href="/auth">
             <Button variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver al inicio
