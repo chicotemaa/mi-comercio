@@ -24,27 +24,6 @@ export async function PUT(request: Request) {
   const { supabase, business } = businessResult.data
   const timestamp = new Date().toISOString()
 
-  const { error: bookingSettingsError } = await supabase.from("booking_settings").upsert(
-    {
-      business_id: business.id,
-      slot_interval_minutes: parsed.data.bookingSettings.slotIntervalMinutes,
-      lead_time_minutes: parsed.data.bookingSettings.leadTimeMinutes,
-      max_booking_days_in_advance: parsed.data.bookingSettings.maxBookingDaysInAdvance,
-      buffer_between_appointments_minutes: parsed.data.bookingSettings.bufferBetweenAppointmentsMinutes,
-      updated_at: timestamp,
-    },
-    { onConflict: "business_id" },
-  )
-
-  if (bookingSettingsError) {
-    return NextResponse.json(
-      {
-        error: "No se pudieron guardar las reglas de reserva. Ejecuta la última versión de schema.sql en Supabase.",
-      },
-      { status: 500 },
-    )
-  }
-
   const { error: hoursError } = await supabase.from("business_hours").upsert(
     parsed.data.days.map((day) => ({
       business_id: business.id,
@@ -61,5 +40,26 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "No se pudieron guardar los horarios generales." }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true })
+  const { error: bookingSettingsError } = await supabase.from("booking_settings").upsert(
+    {
+      business_id: business.id,
+      slot_interval_minutes: parsed.data.bookingSettings.slotIntervalMinutes,
+      lead_time_minutes: parsed.data.bookingSettings.leadTimeMinutes,
+      max_booking_days_in_advance: parsed.data.bookingSettings.maxBookingDaysInAdvance,
+      buffer_between_appointments_minutes: parsed.data.bookingSettings.bufferBetweenAppointmentsMinutes,
+      updated_at: timestamp,
+    },
+    { onConflict: "business_id" },
+  )
+
+  if (bookingSettingsError) {
+    const warning =
+      bookingSettingsError.code === "PGRST205"
+        ? "Los horarios semanales se guardaron, pero las reglas avanzadas no porque falta aplicar la última versión de schema.sql en Supabase."
+        : "Los horarios semanales se guardaron, pero las reglas avanzadas no pudieron actualizarse."
+
+    return NextResponse.json({ success: true, warning })
+  }
+
+  return NextResponse.json({ success: true, warning: null })
 }

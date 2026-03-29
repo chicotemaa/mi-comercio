@@ -129,7 +129,7 @@ export function useHoursController(businessHours: BusinessHourRecord[], bookingS
         }),
       })
 
-      const body = (await response.json().catch(() => null)) as { error?: string } | null
+      const body = (await response.json().catch(() => null)) as { error?: string; warning?: string | null } | null
 
       if (!response.ok) {
         setFeedbackState(
@@ -144,9 +144,9 @@ export function useHoursController(businessHours: BusinessHourRecord[], bookingS
 
       setFeedbackState(
         createFeedbackState(
-          "Horarios actualizados",
-          "La disponibilidad general del negocio y las reglas de turnos se guardaron correctamente.",
-          "success",
+          body?.warning ? "Horarios actualizados con advertencia" : "Horarios actualizados",
+          body?.warning ?? "La disponibilidad general del negocio y las reglas de turnos se guardaron correctamente.",
+          body?.warning ? "warning" : "success",
         ),
       )
       refreshData()

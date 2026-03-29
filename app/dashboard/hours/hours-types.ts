@@ -16,5 +16,5 @@ export interface BookingRulesFormState {
 export interface HoursFeedbackState {
   title: string
   description: string
-  tone: "success" | "error"
+  tone: "success" | "warning" | "error"
 }
