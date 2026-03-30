@@ -59,12 +59,12 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+        className="fixed inset-0 z-50 flex items-start justify-center overflow-x-hidden overflow-y-auto p-2 sm:items-center sm:p-4"
         {...props}
       >
         <div
           className={cn(
-            "relative grid w-full max-h-[calc(100dvh-1rem)] gap-4 overflow-y-auto rounded-2xl border border-border/80 bg-background/95 p-5 shadow-2xl duration-200 supports-[backdrop-filter]:bg-background/92 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-h-[calc(100dvh-2rem)] sm:max-w-xl sm:p-6",
+            "relative grid min-w-0 w-full max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-1rem)] gap-4 overflow-x-hidden overflow-y-auto rounded-2xl border border-border/80 bg-background/95 p-5 shadow-2xl duration-200 supports-[backdrop-filter]:bg-background/92 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-h-[calc(100dvh-2rem)] sm:max-w-[min(40rem,calc(100vw-2rem))] sm:p-6",
             className
           )}
         >

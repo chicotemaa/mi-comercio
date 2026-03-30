@@ -56,54 +56,66 @@ function buildCalendarEvents(
   appointments: AppointmentRecord[],
   bookingSettings: BookingSettingsRecord,
 ) {
-  return appointments.map((appointment) => {
-    const start = `${appointment.appointmentDate}T${appointment.appointmentTime}`;
-    const startDate = new Date(start);
-    const endDate = new Date(
-      startDate.getTime() +
-        getAppointmentDurationWithBuffer(
-          appointment.durationMinutes,
-          bookingSettings,
-        ) *
-          60000,
-    );
+  return [...appointments]
+    .sort((left, right) => {
+      if (left.appointmentDate !== right.appointmentDate) {
+        return left.appointmentDate.localeCompare(right.appointmentDate);
+      }
 
-    const palette =
-      appointment.status === "cancelled"
-        ? {
-            backgroundColor: "#ffe4e6",
-            borderColor: "#fb7185",
-            textColor: "#881337",
-          }
-        : appointment.status === "completed"
+      if (left.appointmentTime !== right.appointmentTime) {
+        return left.appointmentTime.localeCompare(right.appointmentTime);
+      }
+
+      return left.customerName.localeCompare(right.customerName);
+    })
+    .map((appointment) => {
+      const start = `${appointment.appointmentDate}T${appointment.appointmentTime}`;
+      const startDate = new Date(start);
+      const endDate = new Date(
+        startDate.getTime() +
+          getAppointmentDurationWithBuffer(
+            appointment.durationMinutes,
+            bookingSettings,
+          ) *
+            60000,
+      );
+
+      const palette =
+        appointment.status === "cancelled"
           ? {
-              backgroundColor: "#e0f2fe",
-              borderColor: "#38bdf8",
-              textColor: "#0c4a6e",
+              backgroundColor: "#ffe4e6",
+              borderColor: "#fb7185",
+              textColor: "#881337",
             }
-          : appointment.status === "pending"
+          : appointment.status === "completed"
             ? {
-                backgroundColor: "#fef3c7",
-                borderColor: "#f59e0b",
-                textColor: "#78350f",
+                backgroundColor: "#e0f2fe",
+                borderColor: "#38bdf8",
+                textColor: "#0c4a6e",
               }
-            : {
-                backgroundColor: "#dcfce7",
-                borderColor: "#22c55e",
-                textColor: "#14532d",
-              };
+            : appointment.status === "pending"
+              ? {
+                  backgroundColor: "#fef3c7",
+                  borderColor: "#f59e0b",
+                  textColor: "#78350f",
+                }
+              : {
+                  backgroundColor: "#dcfce7",
+                  borderColor: "#22c55e",
+                  textColor: "#14532d",
+                };
 
-    return {
-      id: appointment.id,
-      title: appointment.customerName,
-      start,
-      end: formatDateTimeLocal(endDate),
-      extendedProps: {
-        appointment,
-      },
-      ...palette,
-    } satisfies EventInput;
-  });
+      return {
+        id: appointment.id,
+        title: appointment.customerName,
+        start,
+        end: formatDateTimeLocal(endDate),
+        extendedProps: {
+          appointment,
+        },
+        ...palette,
+      } satisfies EventInput;
+    });
 }
 
 function buildBreakBackgroundEvents(
@@ -437,6 +449,8 @@ export function AppointmentsCalendar({
         allDaySlot={false}
         expandRows
         dayMaxEventRows={viewMode === "month" || viewMode === "year" ? 4 : undefined}
+        eventOrder="start,-duration,title"
+        eventOrderStrict
         events={[...events, ...breakBackgroundEvents]}
         businessHours={businessHoursConfig}
         dateClick={handleDateClick}

@@ -83,7 +83,7 @@ export function AppointmentFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] w-[min(100%,72rem)] max-w-[min(72rem,100%)] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {appointmentBeingEdited ? "Editar turno" : "Nuevo turno"}
@@ -101,8 +101,8 @@ export function AppointmentFormDialog({
             </div>
           ) : null}
 
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-4 rounded-2xl border border-slate-200 p-4">
+          <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="min-w-0 space-y-4 rounded-2xl border border-slate-200 p-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
                   Datos del cliente
@@ -171,7 +171,7 @@ export function AppointmentFormDialog({
               </div>
             </div>
 
-            <div className="space-y-4 rounded-2xl border border-slate-200 p-4">
+            <div className="min-w-0 space-y-4 rounded-2xl border border-slate-200 p-4">
               <div>
                 <p className="text-sm font-semibold text-slate-900">
                   Configuración del turno
@@ -277,7 +277,7 @@ export function AppointmentFormDialog({
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                     Picker rápido
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 overflow-hidden">
                     {availableTimeOptions.slice(0, 8).map((timeValue) => (
                       <Button
                         key={timeValue}
@@ -355,8 +355,8 @@ export function AppointmentFormDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="appointment-notes">Notas visibles</Label>
               <Textarea
                 id="appointment-notes"
@@ -366,7 +366,7 @@ export function AppointmentFormDialog({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="appointment-internal-notes">
                 Notas internas
               </Label>
