@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
 import {
   Card,
   CardContent,
@@ -41,16 +43,36 @@ export function HoursPageClient({
   const controller = useHoursController(businessHours, bookingSettings);
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Horarios</h1>
-          <p className="text-slate-600">
-            Define la disponibilidad general de {businessName} y las reglas base
-            con las que se abren los turnos.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <>
+            <Button
+              disabled={
+                !controller.isDirty ||
+                controller.isSubmitting ||
+                controller.isRefreshing
+              }
+              onClick={controller.resetForm}
+              variant="outline"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Descartar cambios
+            </Button>
+            <Button
+              disabled={
+                !controller.isDirty ||
+                controller.isSubmitting ||
+                controller.isRefreshing
+              }
+              onClick={() => void controller.submitForm()}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Guardar reglas
+            </Button>
+          </>
+        }
+        badge={
           <Badge
             className={
               isLive
@@ -60,31 +82,11 @@ export function HoursPageClient({
           >
             {isLive ? "Disponibilidad en vivo" : "Disponibilidad demo"}
           </Badge>
-          <Button
-            disabled={
-              !controller.isDirty ||
-              controller.isSubmitting ||
-              controller.isRefreshing
-            }
-            onClick={controller.resetForm}
-            variant="outline"
-          >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Descartar cambios
-          </Button>
-          <Button
-            disabled={
-              !controller.isDirty ||
-              controller.isSubmitting ||
-              controller.isRefreshing
-            }
-            onClick={() => void controller.submitForm()}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Guardar reglas
-          </Button>
-        </div>
-      </div>
+        }
+        description={`Define la disponibilidad general de ${businessName} y las reglas base con las que se abren los turnos.`}
+        eyebrow="Disponibilidad"
+        title="Horarios"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -251,6 +253,6 @@ export function HoursPageClient({
           }
         }}
       />
-    </div>
+    </DashboardPageShell>
   );
 }

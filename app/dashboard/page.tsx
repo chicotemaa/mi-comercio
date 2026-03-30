@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import {
   formatAppointmentDate,
   formatAppointmentTime,
@@ -56,21 +58,21 @@ export default async function DashboardPage() {
     .slice(0, 3)
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Panel del negocio</p>
-          <h1 className="text-3xl font-bold text-slate-900">{business.name}</h1>
-          <p className="text-slate-600">
-            {isLive
-              ? "Datos en vivo desde Supabase compartidos con ns-barber."
-              : "Modo demo activo. Configura Supabase para ver reservas reales."}
-          </p>
-        </div>
-        <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
-          {isLive ? "Conectado a Supabase" : "Modo demo"}
-        </Badge>
-      </div>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        badge={
+          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+            {isLive ? "Conectado a Supabase" : "Modo demo"}
+          </Badge>
+        }
+        description={
+          isLive
+            ? "Datos en vivo desde Supabase compartidos con ns-barber para operar reservas, equipo y catálogo sobre una misma fuente."
+            : "Modo demo activo. Configura Supabase para ver reservas reales y métricas operativas conectadas."
+        }
+        eyebrow="Panel del negocio"
+        title={business.name}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
@@ -237,6 +239,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardPageShell>
   )
 }

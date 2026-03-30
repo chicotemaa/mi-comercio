@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -55,18 +57,17 @@ export function AppointmentsPageClient({
     .reduce((total, appointment) => total + appointment.price, 0)
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Agenda y citas</h1>
-          <p className="text-slate-600">
-            {businessName} {isLive ? "sincroniza" : "muestra en demo"} las reservas generadas desde ns-barber.
-          </p>
-        </div>
-        <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
-          {isLive ? "Supabase activo" : "Modo demo"}
-        </Badge>
-      </div>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        badge={
+          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+            {isLive ? "Supabase activo" : "Modo demo"}
+          </Badge>
+        }
+        description={`${businessName} ${isLive ? "sincroniza" : "muestra en demo"} las reservas generadas desde ns-barber, redes y carga interna.`}
+        eyebrow="Agenda operativa"
+        title="Agenda y citas"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -152,55 +153,57 @@ export function AppointmentsPageClient({
               No hay reservas que coincidan con los filtros.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Servicio</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Importe</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAppointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{appointment.customerName}</p>
-                        <p className="text-sm text-slate-500">{appointment.customerContact}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{appointment.serviceName}</p>
-                        <p className="text-sm text-slate-500">{appointment.staffName ?? "Sin profesional asignado"}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-slate-700">
-                        <Calendar className="h-4 w-4 text-slate-400" />
-                        <div>
-                          <p>{formatAppointmentDate(appointment.appointmentDate, timeZone)}</p>
-                          <p className="text-sm text-slate-500">{formatAppointmentTime(appointment.appointmentTime)}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getChannelLabel(appointment.channel)}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadgeClassName(appointment.status)}>
-                        {getStatusLabel(appointment.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(appointment.price)}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Servicio</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Canal</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Importe</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredAppointments.map((appointment) => (
+                    <TableRow key={appointment.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{appointment.customerName}</p>
+                          <p className="text-sm text-slate-500">{appointment.customerContact}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{appointment.serviceName}</p>
+                          <p className="text-sm text-slate-500">{appointment.staffName ?? "Sin profesional asignado"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-slate-700">
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <p>{formatAppointmentDate(appointment.appointmentDate, timeZone)}</p>
+                            <p className="text-sm text-slate-500">{formatAppointmentTime(appointment.appointmentTime)}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getChannelLabel(appointment.channel)}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeClassName(appointment.status)}>
+                          {getStatusLabel(appointment.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{formatCurrency(appointment.price)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
-    </div>
+    </DashboardPageShell>
   )
 }

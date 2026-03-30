@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/business-shared"
@@ -28,24 +30,23 @@ export function EmployeesPageClient({ businessName, employees, isLive, serviceOp
   const totalHoursWorked = employees.reduce((total, employee) => total + employee.totalHoursWorked, 0)
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Equipo</h1>
-          <p className="text-slate-600">
-            {businessName} usa este módulo para definir quién atiende, qué servicios toma y cómo se liquida cada profesional.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
-            {isLive ? "Equipo en vivo" : "Equipo demo"}
-          </Badge>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
           <Button onClick={controller.openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
             Nuevo profesional
           </Button>
-        </div>
-      </div>
+        }
+        badge={
+          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+            {isLive ? "Equipo en vivo" : "Equipo demo"}
+          </Badge>
+        }
+        description={`${businessName} usa este módulo para definir quién atiende, qué servicios toma y cómo se liquida cada profesional.`}
+        eyebrow="Equipo"
+        title="Profesionales y liquidaciones"
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -172,6 +173,6 @@ export function EmployeesPageClient({ businessName, employees, isLive, serviceOp
           }
         }}
       />
-    </div>
+    </DashboardPageShell>
   )
 }

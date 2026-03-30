@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
 import {
   Card,
   CardContent,
@@ -165,26 +167,18 @@ export function ReportsPageClient({
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Reportes y estadísticas
-          </h1>
-          <p className="text-slate-600">
-            {businessName} consolida aquí ingresos, operación, clientes y
-            servicios sobre datos reales.
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
-            <CalendarRange className="h-3.5 w-3.5" />
-            <span className="font-medium text-slate-900">
-              {snapshot.periodLabel}
-            </span>
-            <span>{snapshot.rangeLabel}</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <Button
+            variant="outline"
+            onClick={() => downloadReportsCsv(snapshot)}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            CSV
+          </Button>
+        }
+        badge={
           <Badge
             className={
               isLive
@@ -194,15 +188,20 @@ export function ReportsPageClient({
           >
             {isLive ? "Reportes en vivo" : "Reportes demo"}
           </Badge>
-          <Button
-            variant="outline"
-            onClick={() => downloadReportsCsv(snapshot)}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            CSV
-          </Button>
-        </div>
-      </div>
+        }
+        description={`${businessName} consolida aquí ingresos, operación, clientes y servicios sobre datos reales.`}
+        eyebrow="Analytics"
+        supporting={
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+            <CalendarRange className="h-3.5 w-3.5" />
+            <span className="font-medium text-slate-900">
+              {snapshot.periodLabel}
+            </span>
+            <span>{snapshot.rangeLabel}</span>
+          </div>
+        }
+        title="Reportes y estadísticas"
+      />
 
       <Card>
         <CardHeader>
@@ -728,6 +727,6 @@ export function ReportsPageClient({
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPageShell>
   );
 }

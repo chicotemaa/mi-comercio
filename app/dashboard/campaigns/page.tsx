@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -164,17 +166,18 @@ export default function CampaignsPage() {
   const totalOpened = campaigns.reduce((sum, c) => sum + c.opened, 0)
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-slate-900">Campañas y Comunicación</h1>
-          <p className="text-slate-600">Gestiona tus campañas de marketing y comunicación</p>
-        </div>
-        <Button className="self-start sm:self-auto" onClick={handleCreateCampaign}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva Campaña
-        </Button>
-      </div>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <Button className="self-start sm:self-auto" onClick={handleCreateCampaign}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva Campaña
+          </Button>
+        }
+        description="Gestiona audiencias, mensajes y resultados de campañas desde un mismo espacio operativo."
+        eyebrow="Comunicación"
+        title="Campañas"
+      />
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -663,7 +666,7 @@ export default function CampaignsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   )
 }
  

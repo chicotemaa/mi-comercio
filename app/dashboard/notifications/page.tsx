@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -118,24 +120,25 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-slate-900">Notificaciones y Actividad</h1>
-          <p className="text-slate-600">Mantente al día con todo lo que sucede en tu negocio</p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {unreadCount > 0 && (
-            <Button variant="outline" onClick={markAllAsRead}>
-              Marcar todas como leídas
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <>
+            {unreadCount > 0 && (
+              <Button variant="outline" onClick={markAllAsRead}>
+                Marcar todas como leídas
+              </Button>
+            )}
+            <Button variant="outline">
+              <Settings className="w-4 h-4 mr-2" />
+              Configurar
             </Button>
-          )}
-          <Button variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
-            Configurar
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+        description="Mantente al día con reservas, cobros, actividad interna y estado general del sistema."
+        eyebrow="Actividad"
+        title="Notificaciones y equipo"
+      />
 
       {/* Resumen de notificaciones */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -337,6 +340,6 @@ export default function NotificationsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPageShell>
   )
 }

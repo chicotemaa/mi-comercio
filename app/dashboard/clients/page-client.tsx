@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
 import {
   Card,
   CardContent,
@@ -60,16 +62,15 @@ export function ClientsPageClient({
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Clientes</h1>
-          <p className="text-slate-600">
-            {businessName} consolida aquí contactos, preferencias y valor
-            acumulado de cada cliente.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <Button onClick={controller.openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo cliente
+          </Button>
+        }
+        badge={
           <Badge
             className={
               isLive
@@ -79,12 +80,11 @@ export function ClientsPageClient({
           >
             {isLive ? "Clientes en vivo" : "Clientes demo"}
           </Badge>
-          <Button onClick={controller.openCreateDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo cliente
-          </Button>
-        </div>
-      </div>
+        }
+        description={`${businessName} consolida aquí contactos, preferencias y valor acumulado de cada cliente.`}
+        eyebrow="CRM"
+        title="Clientes"
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -242,6 +242,6 @@ export function ClientsPageClient({
           }
         }}
       />
-    </div>
+    </DashboardPageShell>
   );
 }

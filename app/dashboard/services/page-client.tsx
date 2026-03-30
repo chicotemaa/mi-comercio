@@ -3,6 +3,8 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SERVICE_CATEGORIES } from "@/lib/service-catalog"
@@ -27,24 +29,23 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
   const controller = useServicesController(services)
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Servicios</h1>
-          <p className="text-slate-600">
-            {businessName} mantiene este catálogo compartido entre el sitio público y el panel.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
-            {isLive ? "Catálogo en vivo" : "Catálogo demo"}
-          </Badge>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
           <Button onClick={controller.openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
             Nuevo servicio
           </Button>
-        </div>
-      </div>
+        }
+        badge={
+          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+            {isLive ? "Catálogo en vivo" : "Catálogo demo"}
+          </Badge>
+        }
+        description={`${businessName} mantiene este catálogo compartido entre el sitio público y el panel.`}
+        eyebrow="Catálogo"
+        title="Servicios"
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -173,6 +174,6 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
           }
         }}
       />
-    </div>
+    </DashboardPageShell>
   )
 }

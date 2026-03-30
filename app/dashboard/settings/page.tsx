@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { DashboardPageHeader } from "@/components/dashboard/page-header"
+import { DashboardPageShell } from "@/components/dashboard/page-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -101,11 +103,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-slate-900">Configuración</h1>
-        <p className="text-slate-600">Administra la configuración de tu negocio</p>
-      </div>
+    <DashboardPageShell>
+      <DashboardPageHeader
+        description="Administra la configuración del negocio, el acceso del equipo y las integraciones operativas."
+        eyebrow="Ajustes"
+        title="Configuración"
+      />
 
       <Tabs defaultValue="business" className="w-full">
         <div className="overflow-x-auto pb-1">
@@ -648,6 +651,6 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardPageShell>
   )
 }

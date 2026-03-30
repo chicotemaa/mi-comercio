@@ -2,6 +2,8 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
 import {
   Card,
   CardContent,
@@ -139,25 +141,38 @@ export function PaymentsPageClient({
   const isPayoutFormOpen = controller.formKind === "payout";
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Caja y movimientos
-          </h1>
-          <p className="text-slate-600">
-            {businessName} centraliza aquí cobros, gastos y distribuciones sobre
-            la misma base operativa.
-          </p>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
-            <CalendarRange className="h-3.5 w-3.5" />
-            <span className="font-medium text-slate-900">
-              {controller.periodMeta.title}
-            </span>
-            <span>{controller.periodMeta.rangeLabel}</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <DashboardPageShell>
+      <DashboardPageHeader
+        actions={
+          <>
+            <Button
+              variant={
+                controller.activeTab === "payments" ? "default" : "outline"
+              }
+              onClick={() => controller.openCreateDialog("payment")}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo cobro
+            </Button>
+            <Button
+              variant={
+                controller.activeTab === "expenses" ? "default" : "outline"
+              }
+              onClick={() => controller.openCreateDialog("expense")}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo gasto
+            </Button>
+            <Button
+              variant={controller.activeTab === "payouts" ? "default" : "outline"}
+              onClick={() => controller.openCreateDialog("payout")}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva distribución
+            </Button>
+          </>
+        }
+        badge={
           <Badge
             className={
               isLive
@@ -167,33 +182,20 @@ export function PaymentsPageClient({
           >
             {isLive ? "Caja en vivo" : "Caja demo"}
           </Badge>
-          <Button
-            variant={
-              controller.activeTab === "payments" ? "default" : "outline"
-            }
-            onClick={() => controller.openCreateDialog("payment")}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo cobro
-          </Button>
-          <Button
-            variant={
-              controller.activeTab === "expenses" ? "default" : "outline"
-            }
-            onClick={() => controller.openCreateDialog("expense")}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo gasto
-          </Button>
-          <Button
-            variant={controller.activeTab === "payouts" ? "default" : "outline"}
-            onClick={() => controller.openCreateDialog("payout")}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva distribución
-          </Button>
-        </div>
-      </div>
+        }
+        description={`${businessName} centraliza aquí cobros, gastos y distribuciones sobre la misma base operativa.`}
+        eyebrow="Caja"
+        supporting={
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+            <CalendarRange className="h-3.5 w-3.5" />
+            <span className="font-medium text-slate-900">
+              {controller.periodMeta.title}
+            </span>
+            <span>{controller.periodMeta.rangeLabel}</span>
+          </div>
+        }
+        title="Caja y movimientos"
+      />
 
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
@@ -683,6 +685,6 @@ export function PaymentsPageClient({
           }
         }}
       />
-    </div>
+    </DashboardPageShell>
   );
 }
