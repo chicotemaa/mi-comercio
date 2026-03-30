@@ -23,6 +23,10 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
+*.pyc
+.codex-import-venv/
+.codex-import-review.json
 
 # debug
 npm-debug.log*

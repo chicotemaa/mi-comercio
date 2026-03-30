@@ -29,6 +29,7 @@ import { formatCurrency, getPaymentMethodLabel } from "@/lib/business-shared";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
+  CalendarRange,
   Plus,
   Search,
   Wallet,
@@ -43,6 +44,7 @@ import { PaymentFormDialog } from "./_components/payment-form-dialog";
 import { PaymentsTable } from "./_components/payments-table";
 import { PayoutFormDialog } from "./_components/payout-form-dialog";
 import { PayoutsTable } from "./_components/payouts-table";
+import { MOVEMENT_PERIOD_OPTIONS } from "./payment-period-utils";
 import type { MovementTab } from "./payment-types";
 import { usePaymentsController } from "./use-payments-controller";
 
@@ -81,23 +83,27 @@ export function PaymentsPageClient({
         id: staffMember.id,
         fullName: staffMember.fullName,
       })),
+    timeZone,
   });
 
-  const completedRevenue = payments
+  const completedRevenue = controller.filteredPayments
     .filter((payment) => payment.status === "completed")
     .reduce((sum, payment) => sum + payment.amount, 0);
-  const pendingRevenue = payments
+  const pendingRevenue = controller.filteredPayments
     .filter((payment) => payment.status === "pending")
     .reduce((sum, payment) => sum + payment.amount, 0);
-  const totalExpenses = expenses.reduce(
+  const totalExpenses = controller.filteredExpenses.reduce(
     (sum, expense) => sum + expense.amount,
     0,
   );
-  const totalPayouts = payouts.reduce((sum, payout) => sum + payout.amount, 0);
+  const totalPayouts = controller.filteredPayouts.reduce(
+    (sum, payout) => sum + payout.amount,
+    0,
+  );
   const netResult = completedRevenue - totalExpenses - totalPayouts;
 
   const paymentMethods = Array.from(
-    payments
+    controller.filteredPayments
       .filter((payment) => payment.status === "completed")
       .reduce((map, payment) => {
         map.set(
@@ -109,7 +115,7 @@ export function PaymentsPageClient({
   );
 
   const expenseCategories = Array.from(
-    expenses.reduce((map, expense) => {
+    controller.filteredExpenses.reduce((map, expense) => {
       map.set(
         expense.category,
         (map.get(expense.category) ?? 0) + expense.amount,
@@ -119,7 +125,7 @@ export function PaymentsPageClient({
   ).sort((left, right) => right[1] - left[1]);
 
   const payoutRecipients = Array.from(
-    payouts.reduce((map, payout) => {
+    controller.filteredPayouts.reduce((map, payout) => {
       map.set(
         payout.recipientName,
         (map.get(payout.recipientName) ?? 0) + payout.amount,
@@ -143,6 +149,13 @@ export function PaymentsPageClient({
             {businessName} centraliza aquí cobros, gastos y distribuciones sobre
             la misma base operativa.
           </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+            <CalendarRange className="h-3.5 w-3.5" />
+            <span className="font-medium text-slate-900">
+              {controller.periodMeta.title}
+            </span>
+            <span>{controller.periodMeta.rangeLabel}</span>
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Badge
@@ -193,10 +206,11 @@ export function PaymentsPageClient({
             </div>
             <p className="text-xs text-slate-500">
               {
-                payments.filter((payment) => payment.status === "completed")
-                  .length
+                controller.filteredPayments.filter(
+                  (payment) => payment.status === "completed",
+                ).length
               }{" "}
-              cobros
+              cobros en {controller.periodMeta.chipLabel.toLowerCase()}
             </p>
           </CardContent>
         </Card>
@@ -208,7 +222,9 @@ export function PaymentsPageClient({
             <div className="text-2xl font-bold text-slate-900">
               {formatCurrency(pendingRevenue)}
             </div>
-            <p className="text-xs text-slate-500">Cobros sin cerrar</p>
+            <p className="text-xs text-slate-500">
+              Cobros sin cerrar del período
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -220,7 +236,7 @@ export function PaymentsPageClient({
               {formatCurrency(totalExpenses)}
             </div>
             <p className="text-xs text-slate-500">
-              {expenses.length} movimientos
+              {controller.filteredExpenses.length} movimientos
             </p>
           </CardContent>
         </Card>
@@ -234,7 +250,9 @@ export function PaymentsPageClient({
             <div className="text-2xl font-bold text-slate-900">
               {formatCurrency(totalPayouts)}
             </div>
-            <p className="text-xs text-slate-500">{payouts.length} salidas</p>
+            <p className="text-xs text-slate-500">
+              {controller.filteredPayouts.length} salidas
+            </p>
           </CardContent>
         </Card>
         <Card className={netResult < 0 ? "border-rose-200" : undefined}>
@@ -260,39 +278,57 @@ export function PaymentsPageClient({
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
           <CardDescription>
-            La búsqueda aplica sobre cobros, gastos y distribuciones.
+            La búsqueda y el período aplican sobre cobros, gastos y
+            distribuciones.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 lg:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              className="pl-9"
-              onChange={(event) => controller.setSearchTerm(event.target.value)}
-              placeholder="Buscar movimiento"
-              value={controller.searchTerm}
-            />
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {MOVEMENT_PERIOD_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                variant={
+                  controller.periodFilter === option.value ? "default" : "outline"
+                }
+                onClick={() => controller.setPeriodFilter(option.value)}
+                size="sm"
+              >
+                {option.label}
+              </Button>
+            ))}
           </div>
 
-          <Select
-            value={controller.statusFilter}
-            onValueChange={(value) =>
-              controller.setStatusFilter(
-                value as "all" | PaymentRecord["status"],
-              )
-            }
-          >
-            <SelectTrigger className="w-full lg:w-56">
-              <SelectValue placeholder="Estado de cobro" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los cobros</SelectItem>
-              <SelectItem value="completed">Completados</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
-              <SelectItem value="failed">Fallidos</SelectItem>
-              <SelectItem value="refunded">Reintegrados</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input
+                className="pl-9"
+                onChange={(event) => controller.setSearchTerm(event.target.value)}
+                placeholder="Buscar movimiento"
+                value={controller.searchTerm}
+              />
+            </div>
+
+            <Select
+              value={controller.statusFilter}
+              onValueChange={(value) =>
+                controller.setStatusFilter(
+                  value as "all" | PaymentRecord["status"],
+                )
+              }
+            >
+              <SelectTrigger className="w-full lg:w-56">
+                <SelectValue placeholder="Estado de cobro" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los cobros</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="failed">Fallidos</SelectItem>
+                <SelectItem value="refunded">Reintegrados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
@@ -315,13 +351,14 @@ export function PaymentsPageClient({
             <CardHeader>
               <CardTitle>Cobros registrados</CardTitle>
               <CardDescription>
-                {controller.filteredPayments.length} registros encontrados
+                {controller.filteredPayments.length} registros en{" "}
+                {controller.periodMeta.chipLabel.toLowerCase()}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {controller.filteredPayments.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">
-                  No hay cobros que coincidan con los filtros.
+                  No hay cobros que coincidan con los filtros del período.
                 </div>
               ) : (
                 <PaymentsTable
@@ -356,13 +393,14 @@ export function PaymentsPageClient({
             <CardHeader>
               <CardTitle>Gastos del negocio</CardTitle>
               <CardDescription>
-                {controller.filteredExpenses.length} egresos visibles
+                {controller.filteredExpenses.length} egresos en{" "}
+                {controller.periodMeta.chipLabel.toLowerCase()}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {controller.filteredExpenses.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">
-                  No hay gastos que coincidan con la búsqueda.
+                  No hay gastos que coincidan con la búsqueda del período.
                 </div>
               ) : (
                 <ExpensesTable
@@ -397,13 +435,15 @@ export function PaymentsPageClient({
             <CardHeader>
               <CardTitle>Distribuciones y pagos a terceros</CardTitle>
               <CardDescription>
-                {controller.filteredPayouts.length} movimientos visibles
+                {controller.filteredPayouts.length} movimientos en{" "}
+                {controller.periodMeta.chipLabel.toLowerCase()}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {controller.filteredPayouts.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">
-                  No hay distribuciones que coincidan con la búsqueda.
+                  No hay distribuciones que coincidan con la búsqueda del
+                  período.
                 </div>
               ) : (
                 <PayoutsTable
@@ -435,7 +475,9 @@ export function PaymentsPageClient({
             <Card>
               <CardHeader>
                 <CardTitle>Cobros por método</CardTitle>
-                <CardDescription>Solo pagos completados</CardDescription>
+                <CardDescription>
+                  Solo pagos completados de {controller.periodMeta.rangeLabel}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {paymentMethods.length > 0 ? (
@@ -463,7 +505,9 @@ export function PaymentsPageClient({
             <Card>
               <CardHeader>
                 <CardTitle>Gastos por categoría</CardTitle>
-                <CardDescription>Top egresos cargados</CardDescription>
+                <CardDescription>
+                  Top egresos del período activo
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {expenseCategories.length > 0 ? (
@@ -489,7 +533,9 @@ export function PaymentsPageClient({
             <Card>
               <CardHeader>
                 <CardTitle>Distribuciones principales</CardTitle>
-                <CardDescription>Salidas por destinatario</CardDescription>
+                <CardDescription>
+                  Salidas por destinatario del período
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {payoutRecipients.length > 0 ? (

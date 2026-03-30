@@ -13,6 +13,7 @@ import type {
   ExpenseFormState,
   MovementFeedbackState,
   MovementKind,
+  MovementPeriod,
   MovementRecord,
   MovementTab,
   PaymentFormState,
@@ -25,6 +26,13 @@ import {
   createPaymentFormState,
   createPayoutFormState,
 } from "./payment-utils";
+import {
+  getExpenseDateValue,
+  getMovementPeriodMeta,
+  getPaymentDateValue,
+  getPayoutDateValue,
+  isDateInMovementPeriod,
+} from "./payment-period-utils";
 
 function createFeedbackState(
   title: string,
@@ -40,16 +48,19 @@ export function usePaymentsController({
   payments,
   payouts,
   staffMembers,
+  timeZone,
 }: {
   customers: PaymentOptionCustomer[];
   expenses: ExpenseRecord[];
   payments: PaymentRecord[];
   payouts: PayoutRecord[];
   staffMembers: PaymentOptionStaff[];
+  timeZone: string;
 }) {
   const router = useRouter();
   const [isRefreshing, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<MovementTab>("payments");
+  const [periodFilter, setPeriodFilter] = useState<MovementPeriod>("month");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | PaymentFormState["status"]
@@ -91,14 +102,19 @@ export function usePaymentsController({
       const matchesSearch = haystack.includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "all" || payment.status === statusFilter;
+      const matchesPeriod = isDateInMovementPeriod(
+        getPaymentDateValue(payment),
+        periodFilter,
+        timeZone,
+      );
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesPeriod;
     });
-  }, [payments, searchTerm, statusFilter]);
+  }, [payments, periodFilter, searchTerm, statusFilter, timeZone]);
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter((expense) =>
-      [
+    return expenses.filter((expense) => {
+      const matchesSearch = [
         expense.description,
         expense.category,
         expense.subcategory ?? "",
@@ -106,13 +122,20 @@ export function usePaymentsController({
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchTerm.toLowerCase()),
-    );
-  }, [expenses, searchTerm]);
+        .includes(searchTerm.toLowerCase());
+      const matchesPeriod = isDateInMovementPeriod(
+        getExpenseDateValue(expense),
+        periodFilter,
+        timeZone,
+      );
+
+      return matchesSearch && matchesPeriod;
+    });
+  }, [expenses, periodFilter, searchTerm, timeZone]);
 
   const filteredPayouts = useMemo(() => {
-    return payouts.filter((payout) =>
-      [
+    return payouts.filter((payout) => {
+      const matchesSearch = [
         payout.recipientName,
         payout.category,
         payout.staffName ?? "",
@@ -120,9 +143,21 @@ export function usePaymentsController({
       ]
         .join(" ")
         .toLowerCase()
-        .includes(searchTerm.toLowerCase()),
-    );
-  }, [payouts, searchTerm]);
+        .includes(searchTerm.toLowerCase());
+      const matchesPeriod = isDateInMovementPeriod(
+        getPayoutDateValue(payout),
+        periodFilter,
+        timeZone,
+      );
+
+      return matchesSearch && matchesPeriod;
+    });
+  }, [payouts, periodFilter, searchTerm, timeZone]);
+
+  const periodMeta = useMemo(
+    () => getMovementPeriodMeta(periodFilter, timeZone),
+    [periodFilter, timeZone],
+  );
 
   function refreshData() {
     startTransition(() => {
@@ -379,9 +414,12 @@ export function usePaymentsController({
     openEditDialog,
     paymentFormState,
     payoutFormState,
+    periodFilter,
+    periodMeta,
     searchTerm,
     selectedMovement,
     setActiveTab,
+    setPeriodFilter,
     setSearchTerm,
     setSelectedMovement,
     setStatusFilter,

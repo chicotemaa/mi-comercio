@@ -10,6 +10,7 @@ import type {
 
 export type MovementKind = "payment" | "expense" | "payout";
 export type MovementTab = "payments" | "expenses" | "payouts" | "summary";
+export type MovementPeriod = "day" | "week" | "month" | "year";
 
 export interface PaymentFormState {
   description: string;
