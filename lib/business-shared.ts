@@ -1,196 +1,266 @@
-export type AppointmentStatus = "pending" | "confirmed" | "cancelled" | "completed"
-export type BookingChannel = "website" | "whatsapp" | "instagram" | "manual"
-export type CustomerStatus = "active" | "inactive" | "vip" | "lead"
-export type PaymentMethod = "cash" | "card" | "transfer" | "mercado_pago" | "other"
-export type PaymentStatus = "pending" | "completed" | "failed" | "refunded"
-export type ServiceCategory = "corte" | "coloraciones" | "tratamiento"
-export type StaffCompensationType = "hourly" | "category_percentage"
+export type AppointmentStatus =
+  | "pending"
+  | "confirmed"
+  | "cancelled"
+  | "completed";
+export type BookingChannel = "website" | "whatsapp" | "instagram" | "manual";
+export type CustomerStatus = "active" | "inactive" | "vip" | "lead";
+export type PaymentMethod =
+  | "cash"
+  | "card"
+  | "transfer"
+  | "mercado_pago"
+  | "other";
+export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
+export type ServiceCategory = "corte" | "coloraciones" | "tratamiento";
+export type StaffCompensationType = "hourly" | "category_percentage";
 
 export interface BusinessRecord {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  timeZone: string
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  timeZone: string;
 }
 
 export interface BusinessHourRecord {
-  id: string
-  dayOfWeek: number
-  label: string
-  openTime: string | null
-  closeTime: string | null
-  isOpen: boolean
+  id: string;
+  dayOfWeek: number;
+  label: string;
+  openTime: string | null;
+  closeTime: string | null;
+  breakStartTime: string | null;
+  breakEndTime: string | null;
+  isOpen: boolean;
 }
 
 export interface BookingSettingsRecord {
-  id: string
-  slotIntervalMinutes: number
-  leadTimeMinutes: number
-  maxBookingDaysInAdvance: number
-  bufferBetweenAppointmentsMinutes: number
+  id: string;
+  slotIntervalMinutes: number;
+  leadTimeMinutes: number;
+  maxBookingDaysInAdvance: number;
+  bufferBetweenAppointmentsMinutes: number;
 }
 
 export interface ServiceRecord {
-  id: string
-  name: string
-  description: string | null
-  durationMinutes: number
-  price: number
-  isActive: boolean
-  category: ServiceCategory | null
+  id: string;
+  name: string;
+  description: string | null;
+  durationMinutes: number;
+  price: number;
+  isActive: boolean;
+  category: ServiceCategory | null;
 }
 
 export interface StaffRecord {
-  id: string
-  fullName: string
-  role: string | null
-  email: string | null
-  phone: string | null
-  isActive: boolean
-  bio?: string | null
-  joinDate?: string | null
-  employeeCode?: string | null
-  hourlyRate?: number
-  rating?: number
-  compensationType?: StaffCompensationType
+  id: string;
+  fullName: string;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  isActive: boolean;
+  bio?: string | null;
+  joinDate?: string | null;
+  employeeCode?: string | null;
+  hourlyRate?: number;
+  rating?: number;
+  compensationType?: StaffCompensationType;
 }
 
 export interface StaffWorkingHourRecord {
-  id: string
-  staffMemberId: string
-  dayOfWeek: number
-  startTime: string | null
-  endTime: string | null
-  isActive: boolean
+  id: string;
+  staffMemberId: string;
+  dayOfWeek: number;
+  startTime: string | null;
+  endTime: string | null;
+  breakStartTime: string | null;
+  breakEndTime: string | null;
+  isActive: boolean;
 }
 
 export interface StaffServiceAssignmentRecord {
-  id: string
-  staffMemberId: string
-  serviceId: string
+  id: string;
+  staffMemberId: string;
+  serviceId: string;
 }
 
 export interface StaffCategoryRateRecord {
-  id: string
-  staffMemberId: string
-  category: ServiceCategory
-  percentage: number
+  id: string;
+  staffMemberId: string;
+  category: ServiceCategory;
+  percentage: number;
 }
 
 export interface AppointmentRecord {
-  id: string
-  customerName: string
-  customerContact: string
-  customerEmail: string | null
-  appointmentDate: string
-  appointmentTime: string
-  status: AppointmentStatus
-  channel: BookingChannel
-  serviceId: string | null
-  serviceName: string
-  staffMemberId: string | null
-  staffName: string | null
-  price: number
-  durationMinutes: number
-  notes: string | null
-  createdAt: string
+  id: string;
+  customerName: string;
+  customerContact: string;
+  customerEmail: string | null;
+  appointmentDate: string;
+  appointmentTime: string;
+  status: AppointmentStatus;
+  channel: BookingChannel;
+  serviceId: string | null;
+  serviceName: string;
+  staffMemberId: string | null;
+  staffName: string | null;
+  price: number;
+  durationMinutes: number;
+  notes: string | null;
+  createdAt: string;
 }
 
 export interface CustomerRecord {
-  id: string
-  fullName: string
-  primaryContact: string
-  email: string | null
-  phone: string | null
-  status: CustomerStatus
-  preferredServices: string[]
-  notes: string | null
-  lastVisitAt: string | null
-  totalAppointments: number
-  totalSpent: number
-  joinedAt: string
+  id: string;
+  fullName: string;
+  primaryContact: string;
+  email: string | null;
+  phone: string | null;
+  status: CustomerStatus;
+  preferredServices: string[];
+  notes: string | null;
+  lastVisitAt: string | null;
+  totalAppointments: number;
+  totalSpent: number;
+  joinedAt: string;
 }
 
 export interface PaymentRecord {
-  id: string
-  description: string
-  amount: number
-  method: PaymentMethod
-  status: PaymentStatus
-  customerName: string | null
-  staffName: string | null
-  invoiceNumber: string | null
-  processedAt: string | null
-  createdAt: string
-  notes: string | null
+  id: string;
+  description: string;
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  customerName: string | null;
+  staffName: string | null;
+  invoiceNumber: string | null;
+  processedAt: string | null;
+  createdAt: string;
+  notes: string | null;
 }
 
 export interface ExpenseRecord {
-  id: string
-  expenseDate: string
-  category: string
-  subcategory: string | null
-  description: string
-  vendorName: string | null
-  amount: number
-  method: PaymentMethod
-  source: string
-  notes: string | null
+  id: string;
+  expenseDate: string;
+  category: string;
+  subcategory: string | null;
+  description: string;
+  vendorName: string | null;
+  amount: number;
+  method: PaymentMethod;
+  source: string;
+  notes: string | null;
 }
 
 export interface PayoutRecord {
-  id: string
-  payoutDate: string
-  recipientName: string
-  recipientType: string
-  category: string
-  staffMemberId: string | null
-  staffName: string | null
-  amount: number
-  method: PaymentMethod
-  source: string
-  notes: string | null
+  id: string;
+  payoutDate: string;
+  recipientName: string;
+  recipientType: string;
+  category: string;
+  staffMemberId: string | null;
+  staffName: string | null;
+  amount: number;
+  method: PaymentMethod;
+  source: string;
+  notes: string | null;
 }
 
 export interface StaffTimeLogRecord {
-  id: string
-  staffMemberId: string
-  staffName: string | null
-  workDate: string
-  startTime: string | null
-  endTime: string | null
-  hoursWorked: number
-  entryType: string
-  source: string
-  notes: string | null
+  id: string;
+  staffMemberId: string;
+  staffName: string | null;
+  workDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  hoursWorked: number;
+  entryType: string;
+  source: string;
+  notes: string | null;
 }
 
 export interface ServicePriceVariantRecord {
-  id: string
-  serviceId: string
-  serviceName: string | null
-  variantName: string
-  variantCode: string | null
-  price: number
-  durationMinutes: number
-  isDefault: boolean
-  isActive: boolean
-  displayOrder: number
-  notes: string | null
+  id: string;
+  serviceId: string;
+  serviceName: string | null;
+  variantName: string;
+  variantCode: string | null;
+  price: number;
+  durationMinutes: number;
+  isDefault: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  notes: string | null;
 }
 
-export const BUSINESS_DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"] as const
+export const BUSINESS_DAY_NAMES = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+] as const;
 
 const DEFAULT_BUSINESS_HOUR_ROWS = [
-  { dayOfWeek: 0, openTime: null, closeTime: null, isOpen: false },
-  { dayOfWeek: 1, openTime: null, closeTime: null, isOpen: false },
-  { dayOfWeek: 2, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
-  { dayOfWeek: 3, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
-  { dayOfWeek: 4, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
-  { dayOfWeek: 5, openTime: "11:00:00", closeTime: "22:00:00", isOpen: true },
-  { dayOfWeek: 6, openTime: "12:00:00", closeTime: "22:00:00", isOpen: true },
-] as const
+  {
+    dayOfWeek: 0,
+    openTime: null,
+    closeTime: null,
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: false,
+  },
+  {
+    dayOfWeek: 1,
+    openTime: null,
+    closeTime: null,
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: false,
+  },
+  {
+    dayOfWeek: 2,
+    openTime: "11:00:00",
+    closeTime: "22:00:00",
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: true,
+  },
+  {
+    dayOfWeek: 3,
+    openTime: "11:00:00",
+    closeTime: "22:00:00",
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: true,
+  },
+  {
+    dayOfWeek: 4,
+    openTime: "11:00:00",
+    closeTime: "22:00:00",
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: true,
+  },
+  {
+    dayOfWeek: 5,
+    openTime: "11:00:00",
+    closeTime: "22:00:00",
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: true,
+  },
+  {
+    dayOfWeek: 6,
+    openTime: "12:00:00",
+    closeTime: "22:00:00",
+    breakStartTime: null,
+    breakEndTime: null,
+    isOpen: true,
+  },
+] as const;
 
 export function createDefaultBusinessHours(): BusinessHourRecord[] {
   return DEFAULT_BUSINESS_HOUR_ROWS.map((row) => ({
@@ -199,8 +269,10 @@ export function createDefaultBusinessHours(): BusinessHourRecord[] {
     label: BUSINESS_DAY_NAMES[row.dayOfWeek],
     openTime: row.openTime,
     closeTime: row.closeTime,
+    breakStartTime: row.breakStartTime,
+    breakEndTime: row.breakEndTime,
     isOpen: row.isOpen,
-  }))
+  }));
 }
 
 export function createDefaultBookingSettings(): BookingSettingsRecord {
@@ -210,7 +282,7 @@ export function createDefaultBookingSettings(): BookingSettingsRecord {
     leadTimeMinutes: 120,
     maxBookingDaysInAdvance: 30,
     bufferBetweenAppointmentsMinutes: 0,
-  }
+  };
 }
 
 export function getDateKeyInTimeZone(timeZone: string, date = new Date()) {
@@ -219,7 +291,7 @@ export function getDateKeyInTimeZone(timeZone: string, date = new Date()) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(date)
+  }).format(date);
 }
 
 export function formatCurrency(value: number) {
@@ -227,22 +299,22 @@ export function formatCurrency(value: number) {
     style: "currency",
     currency: "ARS",
     maximumFractionDigits: 0,
-  }).format(value)
+  }).format(value);
 }
 
 export function formatAppointmentDate(value: string, timeZone: string) {
   return new Intl.DateTimeFormat("es-AR", {
     dateStyle: "medium",
     timeZone,
-  }).format(new Date(`${value}T12:00:00`))
+  }).format(new Date(`${value}T12:00:00`));
 }
 
 export function formatAppointmentTime(value: string) {
-  return value.slice(0, 5)
+  return value.slice(0, 5);
 }
 
 export function getBusinessDayLabel(dayOfWeek: number) {
-  return BUSINESS_DAY_NAMES[dayOfWeek] ?? `Día ${dayOfWeek}`
+  return BUSINESS_DAY_NAMES[dayOfWeek] ?? `Día ${dayOfWeek}`;
 }
 
 export function createDefaultCategoryRateMap() {
@@ -250,164 +322,166 @@ export function createDefaultCategoryRateMap() {
     corte: 0,
     coloraciones: 0,
     tratamiento: 0,
-  } satisfies Record<ServiceCategory, number>
+  } satisfies Record<ServiceCategory, number>;
 }
 
 export function getStatusLabel(status: AppointmentStatus) {
   switch (status) {
     case "pending":
-      return "Pendiente"
+      return "Pendiente";
     case "confirmed":
-      return "Confirmada"
+      return "Confirmada";
     case "cancelled":
-      return "Cancelada"
+      return "Cancelada";
     case "completed":
-      return "Completada"
+      return "Completada";
     default:
-      return status
+      return status;
   }
 }
 
 export function getStatusBadgeClassName(status: AppointmentStatus) {
   switch (status) {
     case "pending":
-      return "bg-amber-100 text-amber-900"
+      return "bg-amber-100 text-amber-900";
     case "confirmed":
-      return "bg-emerald-100 text-emerald-900"
+      return "bg-emerald-100 text-emerald-900";
     case "cancelled":
-      return "bg-rose-100 text-rose-900"
+      return "bg-rose-100 text-rose-900";
     case "completed":
-      return "bg-sky-100 text-sky-900"
+      return "bg-sky-100 text-sky-900";
     default:
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
   }
 }
 
 export function getChannelLabel(channel: BookingChannel) {
   switch (channel) {
     case "website":
-      return "Web"
+      return "Web";
     case "whatsapp":
-      return "WhatsApp"
+      return "WhatsApp";
     case "instagram":
-      return "Instagram"
+      return "Instagram";
     case "manual":
-      return "Manual"
+      return "Manual";
     default:
-      return channel
+      return channel;
   }
 }
 
 export function getPaymentMethodLabel(method: PaymentMethod) {
   switch (method) {
     case "cash":
-      return "Efectivo"
+      return "Efectivo";
     case "card":
-      return "Tarjeta"
+      return "Tarjeta";
     case "transfer":
-      return "Transferencia"
+      return "Transferencia";
     case "mercado_pago":
-      return "Mercado Pago"
+      return "Mercado Pago";
     case "other":
-      return "Otro"
+      return "Otro";
     default:
-      return method
+      return method;
   }
 }
 
 export function getPaymentStatusLabel(status: PaymentStatus) {
   switch (status) {
     case "pending":
-      return "Pendiente"
+      return "Pendiente";
     case "completed":
-      return "Completado"
+      return "Completado";
     case "failed":
-      return "Fallido"
+      return "Fallido";
     case "refunded":
-      return "Reintegrado"
+      return "Reintegrado";
     default:
-      return status
+      return status;
   }
 }
 
 export function getPaymentStatusBadgeClassName(status: PaymentStatus) {
   switch (status) {
     case "pending":
-      return "bg-amber-100 text-amber-900"
+      return "bg-amber-100 text-amber-900";
     case "completed":
-      return "bg-emerald-100 text-emerald-900"
+      return "bg-emerald-100 text-emerald-900";
     case "failed":
-      return "bg-rose-100 text-rose-900"
+      return "bg-rose-100 text-rose-900";
     case "refunded":
-      return "bg-slate-200 text-slate-900"
+      return "bg-slate-200 text-slate-900";
     default:
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
   }
 }
 
 export function getCustomerStatusLabel(status: CustomerStatus) {
   switch (status) {
     case "active":
-      return "Activo"
+      return "Activo";
     case "inactive":
-      return "Inactivo"
+      return "Inactivo";
     case "vip":
-      return "VIP"
+      return "VIP";
     case "lead":
-      return "Lead"
+      return "Lead";
     default:
-      return status
+      return status;
   }
 }
 
 export function getCustomerStatusBadgeClassName(status: CustomerStatus) {
   switch (status) {
     case "active":
-      return "bg-emerald-100 text-emerald-900"
+      return "bg-emerald-100 text-emerald-900";
     case "inactive":
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
     case "vip":
-      return "bg-fuchsia-100 text-fuchsia-900"
+      return "bg-fuchsia-100 text-fuchsia-900";
     case "lead":
-      return "bg-sky-100 text-sky-900"
+      return "bg-sky-100 text-sky-900";
     default:
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
   }
 }
 
 export function formatDisplayDate(value: string | null, timeZone: string) {
   if (!value) {
-    return "Sin dato"
+    return "Sin dato";
   }
 
-  const date = value.includes("T") ? new Date(value) : new Date(`${value}T12:00:00`)
+  const date = value.includes("T")
+    ? new Date(value)
+    : new Date(`${value}T12:00:00`);
 
   return new Intl.DateTimeFormat("es-AR", {
     dateStyle: "medium",
     timeZone,
-  }).format(date)
+  }).format(date);
 }
 
 export function getServiceCategoryLabel(category: ServiceCategory | null) {
   switch (category) {
     case "corte":
-      return "Corte"
+      return "Corte";
     case "coloraciones":
-      return "Coloraciones"
+      return "Coloraciones";
     case "tratamiento":
-      return "Tratamiento"
+      return "Tratamiento";
     default:
-      return "Sin categoría"
+      return "Sin categoría";
   }
 }
 
 export function getStaffCompensationTypeLabel(type: StaffCompensationType) {
   switch (type) {
     case "hourly":
-      return "Por hora"
+      return "Por hora";
     case "category_percentage":
-      return "% por categoría"
+      return "% por categoría";
     default:
-      return type
+      return type;
   }
 }

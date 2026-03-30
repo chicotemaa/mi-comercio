@@ -1,30 +1,46 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import type { EmployeeFeedbackState } from "../employee-types"
+import type { EmployeeFeedbackState } from "../employee-types";
 
 interface EmployeeFeedbackDialogProps {
-  feedback: EmployeeFeedbackState | null
-  onOpenChange: (open: boolean) => void
+  feedback: EmployeeFeedbackState | null;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function EmployeeFeedbackDialog({ feedback, onOpenChange }: EmployeeFeedbackDialogProps) {
+export function EmployeeFeedbackDialog({
+  feedback,
+  onOpenChange,
+}: EmployeeFeedbackDialogProps) {
   const toneClassName =
     feedback?.tone === "error"
       ? "border-rose-200 bg-rose-50 text-rose-900"
-      : "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : feedback?.tone === "warning"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-emerald-200 bg-emerald-50 text-emerald-900";
 
   return (
     <Dialog open={feedback !== null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{feedback?.title ?? "Resultado"}</DialogTitle>
-          <DialogDescription>{feedback?.description ?? "La operación terminó."}</DialogDescription>
+          <DialogDescription>
+            {feedback?.description ?? "La operación terminó."}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className={`rounded-2xl border px-4 py-3 text-sm ${toneClassName}`}>
+        <div
+          className={`rounded-2xl border px-4 py-3 text-sm ${toneClassName}`}
+        >
           {feedback?.description ?? "La operación terminó."}
         </div>
 
@@ -33,5 +49,5 @@ export function EmployeeFeedbackDialog({ feedback, onOpenChange }: EmployeeFeedb
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

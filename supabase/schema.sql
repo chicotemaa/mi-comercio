@@ -69,6 +69,10 @@ end;
 $$;
 alter table public.staff_members add column if not exists compensation_type public.staff_compensation_type not null default 'hourly';
 alter table public.staff_members add column if not exists updated_at timestamptz not null default timezone('utc', now());
+alter table if exists public.business_hours add column if not exists break_start_time time;
+alter table if exists public.business_hours add column if not exists break_end_time time;
+alter table if exists public.staff_member_working_hours add column if not exists break_start_time time;
+alter table if exists public.staff_member_working_hours add column if not exists break_end_time time;
 
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),
@@ -224,6 +228,8 @@ create table if not exists public.business_hours (
   label text not null,
   open_time time,
   close_time time,
+  break_start_time time,
+  break_end_time time,
   is_open boolean not null default true,
   created_at timestamptz not null default timezone('utc', now())
 );
@@ -245,6 +251,8 @@ create table if not exists public.staff_member_working_hours (
   day_of_week smallint not null check (day_of_week between 0 and 6),
   start_time time,
   end_time time,
+  break_start_time time,
+  break_end_time time,
   is_active boolean not null default true,
   created_at timestamptz not null default timezone('utc', now())
 );
@@ -631,12 +639,17 @@ declare
   booking_settings_row public.booking_settings;
   service_row public.services;
   staff_row public.staff_members;
+  staff_hours_row public.staff_member_working_hours;
   customer_row public.customers;
   appointment_row public.appointments;
   current_local_timestamp timestamp;
   appointment_local_timestamp timestamp;
   appointment_end_local_timestamp timestamp;
   closing_local_timestamp timestamp;
+  business_break_start_local_timestamp timestamp;
+  business_break_end_local_timestamp timestamp;
+  staff_break_start_local_timestamp timestamp;
+  staff_break_end_local_timestamp timestamp;
   slot_offset_minutes integer;
 begin
   select *
@@ -716,6 +729,17 @@ begin
     raise exception 'outside_business_hours';
   end if;
 
+  if business_hours_row.break_start_time is not null
+    and business_hours_row.break_end_time is not null then
+    business_break_start_local_timestamp := appointment_date_input::timestamp + business_hours_row.break_start_time;
+    business_break_end_local_timestamp := appointment_date_input::timestamp + business_hours_row.break_end_time;
+
+    if appointment_local_timestamp < business_break_end_local_timestamp
+      and appointment_end_local_timestamp > business_break_start_local_timestamp then
+      raise exception 'during_business_break';
+    end if;
+  end if;
+
   slot_offset_minutes := (extract(epoch from (appointment_time_input - business_hours_row.open_time)) / 60)::integer;
 
   if mod(slot_offset_minutes, booking_settings_row.slot_interval_minutes) <> 0 then
@@ -733,6 +757,37 @@ begin
 
     if staff_row.id is null then
       raise exception 'staff_member_not_found';
+    end if;
+
+    select *
+    into staff_hours_row
+    from public.staff_member_working_hours
+    where staff_member_id = staff_row.id
+      and day_of_week = extract(dow from appointment_date_input)::smallint
+    limit 1;
+
+    if staff_hours_row.id is null
+      or staff_hours_row.is_active = false
+      or staff_hours_row.start_time is null
+      or staff_hours_row.end_time is null then
+      raise exception 'staff_member_unavailable';
+    end if;
+
+    if appointment_time_input < staff_hours_row.start_time
+      or appointment_time_input >= staff_hours_row.end_time
+      or appointment_end_local_timestamp > appointment_date_input::timestamp + staff_hours_row.end_time then
+      raise exception 'outside_staff_hours';
+    end if;
+
+    if staff_hours_row.break_start_time is not null
+      and staff_hours_row.break_end_time is not null then
+      staff_break_start_local_timestamp := appointment_date_input::timestamp + staff_hours_row.break_start_time;
+      staff_break_end_local_timestamp := appointment_date_input::timestamp + staff_hours_row.break_end_time;
+
+      if appointment_local_timestamp < staff_break_end_local_timestamp
+        and appointment_end_local_timestamp > staff_break_start_local_timestamp then
+        raise exception 'staff_member_on_break';
+      end if;
     end if;
   end if;
 
