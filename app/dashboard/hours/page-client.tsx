@@ -1,30 +1,44 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import type { BookingSettingsRecord, BusinessHourRecord } from "@/lib/business-shared"
-import { Clock3, RotateCcw, Save } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type {
+  BookingSettingsRecord,
+  BusinessHourRecord,
+} from "@/lib/business-shared";
+import { Clock3, RotateCcw, Save } from "lucide-react";
 
-import { HoursDayRow } from "./_components/hours-day-row"
-import { HoursFeedbackDialog } from "./_components/hours-feedback-dialog"
-import { useHoursController } from "./use-hours-controller"
+import { HoursDayRow } from "./_components/hours-day-row";
+import { HoursFeedbackDialog } from "./_components/hours-feedback-dialog";
+import { useHoursController } from "./use-hours-controller";
 
 interface HoursPageClientProps {
-  bookingSettings: BookingSettingsRecord
-  businessHours: BusinessHourRecord[]
-  businessName: string
-  isLive: boolean
+  bookingSettings: BookingSettingsRecord;
+  businessHours: BusinessHourRecord[];
+  businessName: string;
+  isLive: boolean;
 }
 
 function formatTimeLabel(value: string | null) {
-  return value ? `${value} hs` : "Sin horario"
+  return value ? `${value} hs` : "Sin horario";
 }
 
-export function HoursPageClient({ bookingSettings, businessHours, businessName, isLive }: HoursPageClientProps) {
-  const controller = useHoursController(businessHours, bookingSettings)
+export function HoursPageClient({
+  bookingSettings,
+  businessHours,
+  businessName,
+  isLive,
+}: HoursPageClientProps) {
+  const controller = useHoursController(businessHours, bookingSettings);
 
   return (
     <div className="space-y-6 p-6">
@@ -32,22 +46,40 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Horarios</h1>
           <p className="text-slate-600">
-            Define la disponibilidad general de {businessName} y las reglas base con las que se abren los turnos.
+            Define la disponibilidad general de {businessName} y las reglas base
+            con las que se abren los turnos.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+          <Badge
+            className={
+              isLive
+                ? "bg-emerald-100 text-emerald-900"
+                : "bg-amber-100 text-amber-900"
+            }
+          >
             {isLive ? "Disponibilidad en vivo" : "Disponibilidad demo"}
           </Badge>
           <Button
-            disabled={!controller.isDirty || controller.isSubmitting || controller.isRefreshing}
+            disabled={
+              !controller.isDirty ||
+              controller.isSubmitting ||
+              controller.isRefreshing
+            }
             onClick={controller.resetForm}
             variant="outline"
           >
             <RotateCcw className="mr-2 h-4 w-4" />
             Descartar cambios
           </Button>
-          <Button disabled={!controller.isDirty || controller.isSubmitting || controller.isRefreshing} onClick={() => void controller.submitForm()}>
+          <Button
+            disabled={
+              !controller.isDirty ||
+              controller.isSubmitting ||
+              controller.isRefreshing
+            }
+            onClick={() => void controller.submitForm()}
+          >
             <Save className="mr-2 h-4 w-4" />
             Guardar reglas
           </Button>
@@ -60,18 +92,26 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
             <CardTitle className="text-sm font-medium">Días abiertos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{controller.openDaysCount}</div>
+            <div className="text-3xl font-bold text-slate-900">
+              {controller.openDaysCount}
+            </div>
             <p className="text-xs text-slate-500">Sobre 7 días configurables</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Primer turno del día</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Primer turno del día
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{formatTimeLabel(controller.earliestOpenTime)}</div>
-            <p className="text-xs text-slate-500">Apertura más temprana configurada</p>
+            <div className="text-3xl font-bold text-slate-900">
+              {formatTimeLabel(controller.earliestOpenTime)}
+            </div>
+            <p className="text-xs text-slate-500">
+              Apertura más temprana configurada
+            </p>
           </CardContent>
         </Card>
 
@@ -80,8 +120,12 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
             <CardTitle className="text-sm font-medium">Último cierre</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{formatTimeLabel(controller.latestCloseTime)}</div>
-            <p className="text-xs text-slate-500">Cierre más tarde disponible</p>
+            <div className="text-3xl font-bold text-slate-900">
+              {formatTimeLabel(controller.latestCloseTime)}
+            </div>
+            <p className="text-xs text-slate-500">
+              Cierre más tarde disponible
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -93,7 +137,10 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
               <Clock3 className="h-5 w-5" />
               Horario semanal
             </CardTitle>
-            <CardDescription>Si un día queda cerrado, ese día no debería ofrecer turnos nuevos.</CardDescription>
+            <CardDescription>
+              Si un día queda cerrado, ese día no debería ofrecer turnos nuevos.
+              Si no hay almuerzo, deja esa franja vacía.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {controller.days.map((day) => (
@@ -110,7 +157,9 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
         <Card>
           <CardHeader>
             <CardTitle>Reglas generales de turnos</CardTitle>
-            <CardDescription>Estas reglas acotan cómo y cuándo se pueden reservar turnos.</CardDescription>
+            <CardDescription>
+              Estas reglas acotan cómo y cuándo se pueden reservar turnos.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
@@ -118,11 +167,18 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
               <Input
                 id="slot-interval"
                 min="5"
-                onChange={(event) => controller.updateBookingRule("slotIntervalMinutes", event.target.value)}
+                onChange={(event) =>
+                  controller.updateBookingRule(
+                    "slotIntervalMinutes",
+                    event.target.value,
+                  )
+                }
                 type="number"
                 value={controller.bookingRules.slotIntervalMinutes}
               />
-              <p className="text-xs text-slate-500">Minutos entre un horario disponible y el siguiente.</p>
+              <p className="text-xs text-slate-500">
+                Minutos entre un horario disponible y el siguiente.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -130,23 +186,39 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
               <Input
                 id="lead-time"
                 min="0"
-                onChange={(event) => controller.updateBookingRule("leadTimeMinutes", event.target.value)}
+                onChange={(event) =>
+                  controller.updateBookingRule(
+                    "leadTimeMinutes",
+                    event.target.value,
+                  )
+                }
                 type="number"
                 value={controller.bookingRules.leadTimeMinutes}
               />
-              <p className="text-xs text-slate-500">Minutos mínimos con los que se puede pedir un turno.</p>
+              <p className="text-xs text-slate-500">
+                Minutos mínimos con los que se puede pedir un turno.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="max-advance">Máximo de días de anticipación</Label>
+              <Label htmlFor="max-advance">
+                Máximo de días de anticipación
+              </Label>
               <Input
                 id="max-advance"
                 min="1"
-                onChange={(event) => controller.updateBookingRule("maxBookingDaysInAdvance", event.target.value)}
+                onChange={(event) =>
+                  controller.updateBookingRule(
+                    "maxBookingDaysInAdvance",
+                    event.target.value,
+                  )
+                }
                 type="number"
                 value={controller.bookingRules.maxBookingDaysInAdvance}
               />
-              <p className="text-xs text-slate-500">Hasta cuántos días adelante se habilitan reservas.</p>
+              <p className="text-xs text-slate-500">
+                Hasta cuántos días adelante se habilitan reservas.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -154,11 +226,18 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
               <Input
                 id="buffer"
                 min="0"
-                onChange={(event) => controller.updateBookingRule("bufferBetweenAppointmentsMinutes", event.target.value)}
+                onChange={(event) =>
+                  controller.updateBookingRule(
+                    "bufferBetweenAppointmentsMinutes",
+                    event.target.value,
+                  )
+                }
                 type="number"
                 value={controller.bookingRules.bufferBetweenAppointmentsMinutes}
               />
-              <p className="text-xs text-slate-500">Minutos extra a respetar entre un turno y el siguiente.</p>
+              <p className="text-xs text-slate-500">
+                Minutos extra a respetar entre un turno y el siguiente.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -168,10 +247,10 @@ export function HoursPageClient({ bookingSettings, businessHours, businessName, 
         feedback={controller.feedbackState}
         onOpenChange={(open) => {
           if (!open) {
-            controller.closeFeedbackDialog()
+            controller.closeFeedbackDialog();
           }
         }}
       />
     </div>
-  )
+  );
 }

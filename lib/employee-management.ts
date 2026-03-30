@@ -1,80 +1,77 @@
-import "server-only"
+import "server-only";
 
-import { createDefaultBusinessHours, createDefaultCategoryRateMap, type ServiceCategory, type StaffCompensationType } from "@/lib/business-shared"
-import type { ManagedBusinessContext } from "@/lib/managed-business"
-export { getManagedBusiness } from "@/lib/managed-business"
-import { SERVICE_CATEGORIES } from "@/lib/service-catalog"
-export type { ManagedBusinessContext } from "@/lib/managed-business"
+import {
+  createDefaultBusinessHours,
+  createDefaultCategoryRateMap,
+  getBusinessDayLabel,
+  type ServiceCategory,
+  type StaffCompensationType,
+} from "@/lib/business-shared";
+import { parseDailyScheduleDay } from "@/lib/daily-schedule";
+import type { ManagedBusinessContext } from "@/lib/managed-business";
+export { getManagedBusiness } from "@/lib/managed-business";
+import {
+  fetchBusinessHoursRows,
+  isMissingScheduleBreakColumnsError,
+} from "@/lib/schedule-schema";
+import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
+export type { ManagedBusinessContext } from "@/lib/managed-business";
 
 export interface EmployeeWorkingHourPayload {
-  dayOfWeek?: unknown
-  isActive?: unknown
-  startTime?: unknown
-  endTime?: unknown
+  dayOfWeek?: unknown;
+  isActive?: unknown;
+  startTime?: unknown;
+  endTime?: unknown;
+  breakStartTime?: unknown;
+  breakEndTime?: unknown;
 }
 
 export interface EmployeePayload {
-  fullName?: unknown
-  role?: unknown
-  email?: unknown
-  phone?: unknown
-  employeeCode?: unknown
-  bio?: unknown
-  joinDate?: unknown
-  isActive?: unknown
-  compensationType?: unknown
-  hourlyRate?: unknown
-  assignedServiceIds?: unknown
-  workingHours?: unknown
-  categoryRates?: unknown
+  fullName?: unknown;
+  role?: unknown;
+  email?: unknown;
+  phone?: unknown;
+  employeeCode?: unknown;
+  bio?: unknown;
+  joinDate?: unknown;
+  isActive?: unknown;
+  compensationType?: unknown;
+  hourlyRate?: unknown;
+  assignedServiceIds?: unknown;
+  workingHours?: unknown;
+  categoryRates?: unknown;
 }
 
 export interface ParsedEmployeePayload {
-  fullName: string
-  role: string | null
-  email: string | null
-  phone: string | null
-  employeeCode: string | null
-  bio: string | null
-  joinDate: string | null
-  isActive: boolean
-  compensationType: StaffCompensationType
-  hourlyRate: number
-  assignedServiceIds: string[]
+  fullName: string;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  employeeCode: string | null;
+  bio: string | null;
+  joinDate: string | null;
+  isActive: boolean;
+  compensationType: StaffCompensationType;
+  hourlyRate: number;
+  assignedServiceIds: string[];
   workingHours: Array<{
-    dayOfWeek: number
-    isActive: boolean
-    startTime: string | null
-    endTime: string | null
-  }>
-  categoryRates: Record<ServiceCategory, number>
+    dayOfWeek: number;
+    isActive: boolean;
+    startTime: string | null;
+    endTime: string | null;
+    breakStartTime: string | null;
+    breakEndTime: string | null;
+  }>;
+  categoryRates: Record<ServiceCategory, number>;
 }
 
 function normalizeOptionalText(value: unknown) {
   if (typeof value !== "string") {
-    return null
+    return null;
   }
 
-  const normalizedValue = value.trim()
-  return normalizedValue.length > 0 ? normalizedValue : null
-}
-
-function normalizeTime(value: unknown) {
-  if (value === null || value === undefined || value === "") {
-    return null
-  }
-
-  if (typeof value !== "string") {
-    return undefined
-  }
-
-  const normalizedValue = value.trim()
-
-  if (!/^\d{2}:\d{2}$/.test(normalizedValue)) {
-    return undefined
-  }
-
-  return `${normalizedValue}:00`
+  const normalizedValue = value.trim();
+  return normalizedValue.length > 0 ? normalizedValue : null;
 }
 
 function parseWorkingHours(input: unknown) {
@@ -83,108 +80,158 @@ function parseWorkingHours(input: unknown) {
     isActive: day.isOpen,
     startTime: day.openTime,
     endTime: day.closeTime,
-  }))
+    breakStartTime: day.breakStartTime,
+    breakEndTime: day.breakEndTime,
+  }));
 
   if (!Array.isArray(input)) {
-    return { data: defaultWorkingHours }
+    return { data: defaultWorkingHours };
   }
 
-  const byDay = new Map<number, (typeof defaultWorkingHours)[number]>()
+  const byDay = new Map<number, (typeof defaultWorkingHours)[number]>();
 
   for (const rawDay of input as EmployeeWorkingHourPayload[]) {
-    const dayOfWeek = typeof rawDay.dayOfWeek === "number" ? rawDay.dayOfWeek : Number(rawDay.dayOfWeek)
-    const isActive = typeof rawDay.isActive === "boolean" ? rawDay.isActive : false
-    const startTime = normalizeTime(rawDay.startTime)
-    const endTime = normalizeTime(rawDay.endTime)
+    const dayOfWeek =
+      typeof rawDay.dayOfWeek === "number"
+        ? rawDay.dayOfWeek
+        : Number(rawDay.dayOfWeek);
+    const isActive =
+      typeof rawDay.isActive === "boolean" ? rawDay.isActive : false;
 
     if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
-      return { error: "Cada día del horario semanal debe tener un valor entre 0 y 6." }
+      return {
+        error: "Cada día del horario semanal debe tener un valor entre 0 y 6.",
+      };
     }
 
     if (byDay.has(dayOfWeek)) {
-      return { error: "No puede haber días repetidos en el horario semanal del empleado." }
+      return {
+        error:
+          "No puede haber días repetidos en el horario semanal del empleado.",
+      };
     }
 
-    if (isActive) {
-      if (!startTime || !endTime) {
-        return { error: `El día ${dayOfWeek} del horario semanal debe tener apertura y cierre.` }
-      }
+    const parsedDay = parseDailyScheduleDay({
+      dayOfWeek,
+      isEnabled: isActive,
+      startTime: rawDay.startTime,
+      endTime: rawDay.endTime,
+      breakStartTime: rawDay.breakStartTime,
+      breakEndTime: rawDay.breakEndTime,
+      label: getBusinessDayLabel(dayOfWeek),
+    });
 
-      if (startTime >= endTime) {
-        return { error: `El día ${dayOfWeek} del horario semanal debe cerrar después de abrir.` }
-      }
+    if (parsedDay.error || !parsedDay.data) {
+      return {
+        error:
+          parsedDay.error ?? "El horario semanal del empleado es inválido.",
+      };
     }
 
     byDay.set(dayOfWeek, {
       dayOfWeek,
-      isActive,
-      startTime: isActive ? startTime ?? null : null,
-      endTime: isActive ? endTime ?? null : null,
-    })
+      isActive: parsedDay.data.isEnabled,
+      startTime: parsedDay.data.startTime,
+      endTime: parsedDay.data.endTime,
+      breakStartTime: parsedDay.data.breakStartTime,
+      breakEndTime: parsedDay.data.breakEndTime,
+    });
   }
 
   if (byDay.size !== 7) {
-    return { error: "Debes enviar los 7 días del horario semanal del empleado." }
+    return {
+      error: "Debes enviar los 7 días del horario semanal del empleado.",
+    };
   }
 
   return {
-    data: Array.from(byDay.values()).sort((left, right) => left.dayOfWeek - right.dayOfWeek),
-  }
+    data: Array.from(byDay.values()).sort(
+      (left, right) => left.dayOfWeek - right.dayOfWeek,
+    ),
+  };
 }
 
 function parseCategoryRates(input: unknown) {
-  const defaultCategoryRates = createDefaultCategoryRateMap()
+  const defaultCategoryRates = createDefaultCategoryRateMap();
 
   if (!input || typeof input !== "object" || Array.isArray(input)) {
-    return { data: defaultCategoryRates }
+    return { data: defaultCategoryRates };
   }
 
-  const parsedRates = { ...defaultCategoryRates }
+  const parsedRates = { ...defaultCategoryRates };
 
   for (const category of SERVICE_CATEGORIES) {
-    const rawValue = (input as Record<string, unknown>)[category]
-    const parsedValue = rawValue === undefined || rawValue === null || rawValue === "" ? 0 : Number(rawValue)
+    const rawValue = (input as Record<string, unknown>)[category];
+    const parsedValue =
+      rawValue === undefined || rawValue === null || rawValue === ""
+        ? 0
+        : Number(rawValue);
 
     if (!Number.isFinite(parsedValue) || parsedValue < 0 || parsedValue > 100) {
-      return { error: `El porcentaje de ${category} debe ser un número entre 0 y 100.` }
+      return {
+        error: `El porcentaje de ${category} debe ser un número entre 0 y 100.`,
+      };
     }
 
-    parsedRates[category] = parsedValue
+    parsedRates[category] = parsedValue;
   }
 
-  return { data: parsedRates }
+  return { data: parsedRates };
 }
 
-export function parseEmployeePayload(payload: EmployeePayload): { data?: ParsedEmployeePayload; error?: string } {
-  const fullName = typeof payload.fullName === "string" ? payload.fullName.trim() : ""
-  const employeeCode = normalizeOptionalText(payload.employeeCode)?.toUpperCase() ?? null
+export function parseEmployeePayload(payload: EmployeePayload): {
+  data?: ParsedEmployeePayload;
+  error?: string;
+} {
+  const fullName =
+    typeof payload.fullName === "string" ? payload.fullName.trim() : "";
+  const employeeCode =
+    normalizeOptionalText(payload.employeeCode)?.toUpperCase() ?? null;
   const compensationType =
-    payload.compensationType === "category_percentage" ? "category_percentage" : "hourly"
-  const hourlyRate = payload.hourlyRate === undefined || payload.hourlyRate === null || payload.hourlyRate === "" ? 0 : Number(payload.hourlyRate)
+    payload.compensationType === "category_percentage"
+      ? "category_percentage"
+      : "hourly";
+  const hourlyRate =
+    payload.hourlyRate === undefined ||
+    payload.hourlyRate === null ||
+    payload.hourlyRate === ""
+      ? 0
+      : Number(payload.hourlyRate);
   const assignedServiceIds = Array.isArray(payload.assignedServiceIds)
     ? Array.from(
-        new Set(payload.assignedServiceIds.filter((value): value is string => typeof value === "string" && value.length > 0)),
+        new Set(
+          payload.assignedServiceIds.filter(
+            (value): value is string =>
+              typeof value === "string" && value.length > 0,
+          ),
+        ),
       )
-    : []
+    : [];
 
   if (!fullName) {
-    return { error: "El nombre del profesional es obligatorio." }
+    return { error: "El nombre del profesional es obligatorio." };
   }
 
   if (!Number.isFinite(hourlyRate) || hourlyRate < 0) {
-    return { error: "El valor por hora debe ser un número válido mayor o igual a cero." }
+    return {
+      error:
+        "El valor por hora debe ser un número válido mayor o igual a cero.",
+    };
   }
 
-  const workingHours = parseWorkingHours(payload.workingHours)
+  const workingHours = parseWorkingHours(payload.workingHours);
 
   if (workingHours.error || !workingHours.data) {
-    return { error: workingHours.error ?? "El horario semanal es inválido." }
+    return { error: workingHours.error ?? "El horario semanal es inválido." };
   }
 
-  const categoryRates = parseCategoryRates(payload.categoryRates)
+  const categoryRates = parseCategoryRates(payload.categoryRates);
 
   if (categoryRates.error || !categoryRates.data) {
-    return { error: categoryRates.error ?? "Los porcentajes por categoría son inválidos." }
+    return {
+      error:
+        categoryRates.error ?? "Los porcentajes por categoría son inválidos.",
+    };
   }
 
   return {
@@ -203,90 +250,200 @@ export function parseEmployeePayload(payload: EmployeePayload): { data?: ParsedE
       workingHours: workingHours.data,
       categoryRates: categoryRates.data,
     },
-  }
+  };
 }
 
-export function parseEmployeeStatusPayload(payload: Pick<EmployeePayload, "isActive">) {
+export function parseEmployeeStatusPayload(
+  payload: Pick<EmployeePayload, "isActive">,
+) {
   if (typeof payload.isActive !== "boolean") {
-    return { error: "El estado activo debe ser booleano." }
+    return { error: "El estado activo debe ser booleano." };
   }
 
-  return { isActive: payload.isActive }
+  return { isActive: payload.isActive };
 }
 
-export async function validateAssignedServices(context: ManagedBusinessContext, serviceIds: string[]) {
+export async function validateEmployeeWorkingHoursAgainstBusinessHours(
+  context: ManagedBusinessContext,
+  workingHours: ParsedEmployeePayload["workingHours"],
+) {
+  const businessHoursResult = await fetchBusinessHoursRows(
+    context.supabase,
+    context.business.id,
+  );
+
+  if (businessHoursResult.error) {
+    return {
+      error:
+        "No se pudo validar el horario del profesional contra el horario general del negocio.",
+    };
+  }
+
+  const businessHoursByDay = new Map(
+    (businessHoursResult.data ?? []).map((row) => [
+      row.day_of_week,
+      {
+        isOpen: row.is_open,
+        openTime: row.open_time,
+        closeTime: row.close_time,
+      },
+    ]),
+  );
+
+  for (const workingDay of workingHours) {
+    if (!workingDay.isActive) {
+      continue;
+    }
+
+    const businessDay = businessHoursByDay.get(workingDay.dayOfWeek);
+    const label = getBusinessDayLabel(workingDay.dayOfWeek);
+
+    if (
+      !businessDay ||
+      !businessDay.isOpen ||
+      !businessDay.openTime ||
+      !businessDay.closeTime
+    ) {
+      return {
+        error: `${label} no puede quedar disponible para el profesional si el negocio está cerrado.`,
+      };
+    }
+
+    if (
+      !workingDay.startTime ||
+      !workingDay.endTime ||
+      workingDay.startTime < businessDay.openTime ||
+      workingDay.endTime > businessDay.closeTime
+    ) {
+      return {
+        error: `${label} del profesional debe quedar dentro del horario general del negocio.`,
+      };
+    }
+  }
+
+  return { data: true as const };
+}
+
+export async function validateAssignedServices(
+  context: ManagedBusinessContext,
+  serviceIds: string[],
+) {
   if (serviceIds.length === 0) {
-    return { data: [] as string[] }
+    return { data: [] as string[] };
   }
 
   const { data, error } = await context.supabase
     .from("services")
     .select("id")
     .eq("business_id", context.business.id)
-    .in("id", serviceIds)
+    .in("id", serviceIds);
 
   if (error) {
-    return { error: "No se pudieron validar los servicios asignados." }
+    return { error: "No se pudieron validar los servicios asignados." };
   }
 
-  const validServiceIds = (data ?? []).map((service) => service.id)
+  const validServiceIds = (data ?? []).map((service) => service.id);
 
   if (validServiceIds.length !== serviceIds.length) {
-    return { error: "Hay servicios asignados que no existen o no pertenecen al negocio." }
+    return {
+      error:
+        "Hay servicios asignados que no existen o no pertenecen al negocio.",
+    };
   }
 
-  return { data: validServiceIds }
+  return { data: validServiceIds };
 }
 
-export async function syncEmployeeRelations(context: ManagedBusinessContext, staffMemberId: string, payload: ParsedEmployeePayload) {
-  const timestamp = new Date().toISOString()
+export async function syncEmployeeRelations(
+  context: ManagedBusinessContext,
+  staffMemberId: string,
+  payload: ParsedEmployeePayload,
+) {
+  const timestamp = new Date().toISOString();
+  let warning: string | null = null;
+  let workingHoursError = (
+    await context.supabase.from("staff_member_working_hours").upsert(
+      payload.workingHours.map((day) => ({
+        staff_member_id: staffMemberId,
+        day_of_week: day.dayOfWeek,
+        start_time: day.startTime,
+        end_time: day.endTime,
+        break_start_time: day.breakStartTime,
+        break_end_time: day.breakEndTime,
+        is_active: day.isActive,
+      })),
+      { onConflict: "staff_member_id,day_of_week" },
+    )
+  ).error;
 
-  const { error: workingHoursError } = await context.supabase.from("staff_member_working_hours").upsert(
-    payload.workingHours.map((day) => ({
-      staff_member_id: staffMemberId,
-      day_of_week: day.dayOfWeek,
-      start_time: day.startTime,
-      end_time: day.endTime,
-      is_active: day.isActive,
-    })),
-    { onConflict: "staff_member_id,day_of_week" },
-  )
+  if (
+    workingHoursError &&
+    isMissingScheduleBreakColumnsError(workingHoursError)
+  ) {
+    workingHoursError = (
+      await context.supabase.from("staff_member_working_hours").upsert(
+        payload.workingHours.map((day) => ({
+          staff_member_id: staffMemberId,
+          day_of_week: day.dayOfWeek,
+          start_time: day.startTime,
+          end_time: day.endTime,
+          is_active: day.isActive,
+        })),
+        { onConflict: "staff_member_id,day_of_week" },
+      )
+    ).error;
+
+    if (!workingHoursError) {
+      warning =
+        "El horario semanal del profesional se guardó, pero la pausa de almuerzo no porque falta aplicar la última versión de schema.sql en Supabase.";
+    }
+  }
 
   if (workingHoursError) {
-    return { error: "No se pudo guardar el horario semanal del profesional." }
+    return { error: "No se pudo guardar el horario semanal del profesional." };
   }
 
   const { error: assignmentsDeleteError } = await context.supabase
     .from("staff_member_services")
     .delete()
-    .eq("staff_member_id", staffMemberId)
+    .eq("staff_member_id", staffMemberId);
 
   if (assignmentsDeleteError) {
-    return { error: "No se pudieron actualizar los servicios asignados del profesional." }
+    return {
+      error:
+        "No se pudieron actualizar los servicios asignados del profesional.",
+    };
   }
 
   if (payload.assignedServiceIds.length > 0) {
-    const { error: assignmentsInsertError } = await context.supabase.from("staff_member_services").insert(
-      payload.assignedServiceIds.map((serviceId) => ({
-        staff_member_id: staffMemberId,
-        service_id: serviceId,
-      })),
-    )
+    const { error: assignmentsInsertError } = await context.supabase
+      .from("staff_member_services")
+      .insert(
+        payload.assignedServiceIds.map((serviceId) => ({
+          staff_member_id: staffMemberId,
+          service_id: serviceId,
+        })),
+      );
 
     if (assignmentsInsertError) {
-      return { error: "No se pudieron guardar los servicios asignados del profesional." }
+      return {
+        error:
+          "No se pudieron guardar los servicios asignados del profesional.",
+      };
     }
   }
 
-  const { error: categoryRatesError } = await context.supabase.from("staff_member_category_rates").upsert(
-    SERVICE_CATEGORIES.map((category) => ({
-      staff_member_id: staffMemberId,
-      service_category: category,
-      percentage: payload.categoryRates[category],
-      updated_at: timestamp,
-    })),
-    { onConflict: "staff_member_id,service_category" },
-  )
+  const { error: categoryRatesError } = await context.supabase
+    .from("staff_member_category_rates")
+    .upsert(
+      SERVICE_CATEGORIES.map((category) => ({
+        staff_member_id: staffMemberId,
+        service_category: category,
+        percentage: payload.categoryRates[category],
+        updated_at: timestamp,
+      })),
+      { onConflict: "staff_member_id,service_category" },
+    );
 
   if (categoryRatesError) {
     return {
@@ -294,8 +451,8 @@ export async function syncEmployeeRelations(context: ManagedBusinessContext, sta
         categoryRatesError.code === "PGRST205"
           ? "Falta aplicar la última versión de schema.sql en Supabase para guardar los porcentajes por categoría."
           : "No se pudieron guardar los porcentajes por categoría del profesional.",
-    }
+    };
   }
 
-  return { data: true as const }
+  return { data: true as const, warning };
 }

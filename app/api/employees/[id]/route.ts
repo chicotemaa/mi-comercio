@@ -1,39 +1,59 @@
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
 import {
   getManagedBusiness,
   parseEmployeePayload,
   syncEmployeeRelations,
+  validateEmployeeWorkingHoursAgainstBusinessHours,
   validateAssignedServices,
   type EmployeePayload,
-} from "@/lib/employee-management"
+} from "@/lib/employee-management";
 
 function badRequest(message: string) {
-  return NextResponse.json({ error: message }, { status: 400 })
+  return NextResponse.json({ error: message }, { status: 400 });
 }
 
-export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const businessResult = await getManagedBusiness()
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const businessResult = await getManagedBusiness();
 
   if (businessResult.error || !businessResult.data) {
-    return NextResponse.json({ error: businessResult.error ?? "No se pudo resolver el negocio." }, { status: 500 })
+    return NextResponse.json(
+      { error: businessResult.error ?? "No se pudo resolver el negocio." },
+      { status: 500 },
+    );
   }
 
-  const { id } = await context.params
-  const payload = (await request.json()) as EmployeePayload
-  const parsed = parseEmployeePayload(payload)
+  const { id } = await context.params;
+  const payload = (await request.json()) as EmployeePayload;
+  const parsed = parseEmployeePayload(payload);
 
   if (parsed.error || !parsed.data) {
-    return badRequest(parsed.error ?? "Solicitud inválida.")
+    return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const validServices = await validateAssignedServices(businessResult.data, parsed.data.assignedServiceIds)
+  const validServices = await validateAssignedServices(
+    businessResult.data,
+    parsed.data.assignedServiceIds,
+  );
 
   if (validServices.error) {
-    return badRequest(validServices.error)
+    return badRequest(validServices.error);
   }
 
-  const { supabase, business } = businessResult.data
+  const workingHoursValidation =
+    await validateEmployeeWorkingHoursAgainstBusinessHours(
+      businessResult.data,
+      parsed.data.workingHours,
+    );
+
+  if (workingHoursValidation.error) {
+    return badRequest(workingHoursValidation.error);
+  }
+
+  const { supabase, business } = businessResult.data;
 
   if (parsed.data.employeeCode) {
     const { data: duplicateEmployee, error: duplicateError } = await supabase
@@ -42,14 +62,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       .eq("business_id", business.id)
       .eq("employee_code", parsed.data.employeeCode)
       .neq("id", id)
-      .maybeSingle()
+      .maybeSingle();
 
     if (duplicateError) {
-      return NextResponse.json({ error: "No se pudo validar el código interno del profesional." }, { status: 500 })
+      return NextResponse.json(
+        { error: "No se pudo validar el código interno del profesional." },
+        { status: 500 },
+      );
     }
 
     if (duplicateEmployee) {
-      return badRequest("Ya existe otro profesional con ese código interno.")
+      return badRequest("Ya existe otro profesional con ese código interno.");
     }
   }
 
@@ -71,7 +94,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     .eq("id", id)
     .eq("business_id", business.id)
     .select("id")
-    .single()
+    .single();
 
   if (error || !data) {
     return NextResponse.json(
@@ -82,14 +105,21 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
             : "No se pudo actualizar el profesional.",
       },
       { status: 500 },
-    )
+    );
   }
 
-  const syncResult = await syncEmployeeRelations(businessResult.data, id, parsed.data)
+  const syncResult = await syncEmployeeRelations(
+    businessResult.data,
+    id,
+    parsed.data,
+  );
 
   if (syncResult.error) {
-    return NextResponse.json({ error: syncResult.error }, { status: 500 })
+    return NextResponse.json({ error: syncResult.error }, { status: 500 });
   }
 
-  return NextResponse.json({ employee: data })
+  return NextResponse.json({
+    employee: data,
+    warning: syncResult.warning ?? null,
+  });
 }

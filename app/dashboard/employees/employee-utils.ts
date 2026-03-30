@@ -4,9 +4,13 @@ import {
   getBusinessDayLabel,
   type ServiceCategory,
   type StaffCompensationType,
-} from "@/lib/business-shared"
+} from "@/lib/business-shared";
 
-import type { EmployeeFormState, EmployeeSummary, EmployeeWorkingHourFormState } from "./employee-types"
+import type {
+  EmployeeFormState,
+  EmployeeSummary,
+  EmployeeWorkingHourFormState,
+} from "./employee-types";
 
 export const INITIAL_EMPLOYEE_FORM: EmployeeFormState = {
   fullName: "",
@@ -25,6 +29,8 @@ export const INITIAL_EMPLOYEE_FORM: EmployeeFormState = {
     isActive: day.isOpen,
     startTime: day.openTime?.slice(0, 5) ?? "",
     endTime: day.closeTime?.slice(0, 5) ?? "",
+    breakStartTime: day.breakStartTime?.slice(0, 5) ?? "",
+    breakEndTime: day.breakEndTime?.slice(0, 5) ?? "",
   })),
   categoryRates: {
     corte: "0",
@@ -32,38 +38,40 @@ export const INITIAL_EMPLOYEE_FORM: EmployeeFormState = {
     tratamiento: "0",
   },
   isActive: true,
-}
+};
 
 export function compensationTypeBadgeClassName(type: StaffCompensationType) {
   switch (type) {
     case "hourly":
-      return "bg-sky-100 text-sky-900"
+      return "bg-sky-100 text-sky-900";
     case "category_percentage":
-      return "bg-fuchsia-100 text-fuchsia-900"
+      return "bg-fuchsia-100 text-fuchsia-900";
     default:
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
   }
 }
 
 export function categoryRatePillClassName(category: ServiceCategory) {
   switch (category) {
     case "corte":
-      return "bg-sky-100 text-sky-900"
+      return "bg-sky-100 text-sky-900";
     case "coloraciones":
-      return "bg-fuchsia-100 text-fuchsia-900"
+      return "bg-fuchsia-100 text-fuchsia-900";
     case "tratamiento":
-      return "bg-emerald-100 text-emerald-900"
+      return "bg-emerald-100 text-emerald-900";
     default:
-      return "bg-slate-100 text-slate-800"
+      return "bg-slate-100 text-slate-800";
   }
 }
 
-export function createEmployeeFormState(employee?: EmployeeSummary | null): EmployeeFormState {
+export function createEmployeeFormState(
+  employee?: EmployeeSummary | null,
+): EmployeeFormState {
   if (!employee) {
-    return INITIAL_EMPLOYEE_FORM
+    return INITIAL_EMPLOYEE_FORM;
   }
 
-  const defaultRates = createDefaultCategoryRateMap()
+  const defaultRates = createDefaultCategoryRateMap();
 
   return {
     fullName: employee.fullName,
@@ -76,16 +84,23 @@ export function createEmployeeFormState(employee?: EmployeeSummary | null): Empl
     hourlyRate: String(employee.hourlyRate),
     compensationType: employee.compensationType,
     assignedServiceIds: [...employee.assignedServiceIds],
-    workingHours: (employee.workingHours.length > 0 ? employee.workingHours : INITIAL_EMPLOYEE_FORM.workingHours).map((day) => ({
+    workingHours: (employee.workingHours.length > 0
+      ? employee.workingHours
+      : INITIAL_EMPLOYEE_FORM.workingHours
+    ).map((day) => ({
       ...day,
     })),
     categoryRates: {
       corte: String(employee.categoryRates.corte ?? defaultRates.corte),
-      coloraciones: String(employee.categoryRates.coloraciones ?? defaultRates.coloraciones),
-      tratamiento: String(employee.categoryRates.tratamiento ?? defaultRates.tratamiento),
+      coloraciones: String(
+        employee.categoryRates.coloraciones ?? defaultRates.coloraciones,
+      ),
+      tratamiento: String(
+        employee.categoryRates.tratamiento ?? defaultRates.tratamiento,
+      ),
     },
     isActive: employee.isActive,
-  }
+  };
 }
 
 export function createDefaultEmployeeWorkingHours(): EmployeeWorkingHourFormState[] {
@@ -95,5 +110,7 @@ export function createDefaultEmployeeWorkingHours(): EmployeeWorkingHourFormStat
     isActive: day.isOpen,
     startTime: day.openTime?.slice(0, 5) ?? "",
     endTime: day.closeTime?.slice(0, 5) ?? "",
-  }))
+    breakStartTime: day.breakStartTime?.slice(0, 5) ?? "",
+    breakEndTime: day.breakEndTime?.slice(0, 5) ?? "",
+  }));
 }
