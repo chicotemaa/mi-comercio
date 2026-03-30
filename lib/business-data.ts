@@ -48,6 +48,7 @@ export interface BusinessDataBundle {
 
 export interface BusinessOperationsBundle {
   business: BusinessRecord;
+  staffMembers: StaffRecord[];
   customers: CustomerRecord[];
   payments: PaymentRecord[];
   expenses: ExpenseRecord[];
@@ -134,9 +135,13 @@ interface SupabaseCustomerRow {
   primary_contact: string;
   email: string | null;
   phone: string | null;
+  instagram_handle: string | null;
+  address: string | null;
   status: CustomerRecord["status"];
   preferred_services: string[] | null;
   notes: string | null;
+  rating: number | string;
+  marketing_opt_in: boolean;
   last_visit_at: string | null;
   total_appointments: number;
   total_spent: number | string;
@@ -155,6 +160,10 @@ interface SupabasePaymentRow {
   amount: number | string;
   method: PaymentRecord["method"];
   status: PaymentStatus;
+  customer_id: string | null;
+  invoice_id: string | null;
+  staff_member_id: string | null;
+  transaction_id: string | null;
   processed_at: string | null;
   created_at: string;
   notes: string | null;
@@ -493,9 +502,13 @@ function createDemoOperationsBundle(): BusinessOperationsBundle {
       primaryContact: "+54 362 455-0011",
       email: "lucas@email.com",
       phone: "+54 362 455-0011",
+      instagramHandle: null,
+      address: null,
       status: "active",
       preferredServices: ["Fade / degrade"],
       notes: "Cliente demo generado para el backoffice.",
+      rating: 5,
+      marketingOptIn: false,
       lastVisitAt: demoBundle.appointments[0]?.appointmentDate ?? null,
       totalAppointments: 1,
       totalSpent: 18000,
@@ -508,9 +521,13 @@ function createDemoOperationsBundle(): BusinessOperationsBundle {
       primaryContact: "@brunososa",
       email: null,
       phone: null,
+      instagramHandle: "@brunososa",
+      address: null,
       status: "lead",
       preferredServices: ["Perfilado de barba"],
       notes: "Consulta habitual por Instagram.",
+      rating: 4.5,
+      marketingOptIn: true,
       lastVisitAt: null,
       totalAppointments: 0,
       totalSpent: 0,
@@ -525,9 +542,13 @@ function createDemoOperationsBundle(): BusinessOperationsBundle {
       amount: 18000,
       method: "transfer",
       status: "completed",
+      customerId: customers[0].id,
       customerName: customers[0].fullName,
+      staffMemberId: demoBundle.staffMembers[0]?.id ?? null,
       staffName: demoBundle.staffMembers[0]?.fullName ?? null,
+      invoiceId: null,
       invoiceNumber: null,
+      transactionId: "DEMO-TRX-001",
       processedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       notes: "Pago demo asociado a una reserva confirmada.",
@@ -597,6 +618,7 @@ function createDemoOperationsBundle(): BusinessOperationsBundle {
 
   return {
     business: demoBundle.business,
+    staffMembers: demoBundle.staffMembers,
     customers,
     payments,
     expenses,
@@ -754,9 +776,13 @@ function mapCustomer(row: SupabaseCustomerRow): CustomerRecord {
     primaryContact: row.primary_contact,
     email: row.email,
     phone: row.phone,
+    instagramHandle: row.instagram_handle,
+    address: row.address,
     status: row.status,
     preferredServices: row.preferred_services ?? [],
     notes: row.notes,
+    rating: Number(row.rating ?? 5),
+    marketingOptIn: row.marketing_opt_in,
     lastVisitAt: row.last_visit_at,
     totalAppointments: row.total_appointments,
     totalSpent: Number(row.total_spent),
@@ -775,11 +801,15 @@ function mapPayment(row: SupabasePaymentRow): PaymentRecord {
     amount: Number(row.amount),
     method: row.method,
     status: row.status,
+    customerId: row.customer_id,
     customerName:
       typeof customer?.full_name === "string" ? customer.full_name : null,
+    staffMemberId: row.staff_member_id,
     staffName:
       typeof staffMember?.full_name === "string" ? staffMember.full_name : null,
+    invoiceId: row.invoice_id,
     invoiceNumber: typeof invoice?.number === "string" ? invoice.number : null,
+    transactionId: row.transaction_id,
     processedAt: row.processed_at,
     createdAt: row.created_at,
     notes: row.notes,
@@ -1032,6 +1062,7 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
     }
 
     const [
+      { data: staffMembers, error: staffMembersError },
       { data: customers, error: customersError },
       { data: payments, error: paymentsError },
       { data: expenses, error: expensesError },
@@ -1039,17 +1070,18 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
       { data: staffTimeLogs, error: staffTimeLogsError },
       { data: services, error: servicesError },
     ] = await Promise.all([
+      fetchStaffMembersForBusiness(supabase, business.id),
       supabase
         .from("customers")
         .select(
-          "id, full_name, primary_contact, email, phone, status, preferred_services, notes, last_visit_at, total_appointments, total_spent, joined_at",
+          "id, full_name, primary_contact, email, phone, instagram_handle, address, status, preferred_services, notes, rating, marketing_opt_in, last_visit_at, total_appointments, total_spent, joined_at",
         )
         .eq("business_id", business.id)
         .order("total_spent", { ascending: false }),
       supabase
         .from("payments")
         .select(
-          "id, description, amount, method, status, processed_at, created_at, notes, customer:customers(full_name), staff_member:staff_members(full_name), invoice:invoices(number)",
+          "id, description, amount, method, status, customer_id, invoice_id, staff_member_id, transaction_id, processed_at, created_at, notes, customer:customers(full_name), staff_member:staff_members(full_name), invoice:invoices(number)",
         )
         .eq("business_id", business.id)
         .order("created_at", { ascending: false }),
@@ -1082,6 +1114,7 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
     ]);
 
     if (
+      staffMembersError ||
       customersError ||
       paymentsError ||
       expensesError ||
@@ -1090,6 +1123,7 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
       servicesError
     ) {
       console.error("Supabase operations lookup failed", {
+        staffMembersError,
         customersError,
         paymentsError,
         expensesError,
@@ -1127,6 +1161,8 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
 
     return {
       business: mapBusiness(business as SupabaseBusinessRow),
+      staffMembers:
+        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
       customers:
         (customers as SupabaseCustomerRow[] | null)?.map(mapCustomer) ?? [],
       payments:

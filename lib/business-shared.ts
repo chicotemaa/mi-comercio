@@ -116,9 +116,13 @@ export interface CustomerRecord {
   primaryContact: string;
   email: string | null;
   phone: string | null;
+  instagramHandle: string | null;
+  address: string | null;
   status: CustomerStatus;
   preferredServices: string[];
   notes: string | null;
+  rating: number;
+  marketingOptIn: boolean;
   lastVisitAt: string | null;
   totalAppointments: number;
   totalSpent: number;
@@ -131,9 +135,13 @@ export interface PaymentRecord {
   amount: number;
   method: PaymentMethod;
   status: PaymentStatus;
+  customerId: string | null;
   customerName: string | null;
+  staffMemberId: string | null;
   staffName: string | null;
+  invoiceId: string | null;
   invoiceNumber: string | null;
+  transactionId: string | null;
   processedAt: string | null;
   createdAt: string;
   notes: string | null;
