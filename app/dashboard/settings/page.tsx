@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Building2, Clock, CreditCard, Upload, Save, Plus } from "lucide-react"
 
 export default function SettingsPage() {
@@ -73,15 +74,15 @@ export default function SettingsPage() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "owner":
-        return "bg-purple-100 text-purple-800"
+        return "bg-violet-100 text-violet-800"
       case "admin":
-        return "bg-blue-100 text-blue-800"
+        return "bg-sky-100 text-sky-800"
       case "employee":
-        return "bg-green-100 text-green-800"
+        return "bg-emerald-100 text-emerald-800"
       case "receptionist":
-        return "bg-orange-100 text-orange-800"
+        return "bg-amber-100 text-amber-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-slate-100 text-slate-800"
     }
   }
 
@@ -100,21 +101,23 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configuración</h1>
-        <p className="text-gray-600">Administra la configuración de tu negocio</p>
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-slate-900">Configuración</h1>
+        <p className="text-slate-600">Administra la configuración de tu negocio</p>
       </div>
 
       <Tabs defaultValue="business" className="w-full">
-        <TabsList>
-          <TabsTrigger value="business">Negocio</TabsTrigger>
-          <TabsTrigger value="hours">Horarios</TabsTrigger>
-          <TabsTrigger value="payments">Pagos</TabsTrigger>
-          <TabsTrigger value="integrations">Integraciones</TabsTrigger>
-          <TabsTrigger value="users">Usuarios</TabsTrigger>
-          <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="business">Negocio</TabsTrigger>
+            <TabsTrigger value="hours">Horarios</TabsTrigger>
+            <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="integrations">Integraciones</TabsTrigger>
+            <TabsTrigger value="users">Usuarios</TabsTrigger>
+            <TabsTrigger value="notifications">Notificaciones</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="business" className="space-y-6">
           <Card>
@@ -145,7 +148,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="lg:col-span-2 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="business-name">Nombre del negocio</Label>
                       <Input
@@ -172,7 +175,7 @@ export default function SettingsPage() {
                       onChange={(e) => setBusinessInfo({ ...businessInfo, description: e.target.value })}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="business-email">Email</Label>
                       <Input
@@ -287,17 +290,17 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <CreditCard className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
                       <h4 className="font-semibold">Mercado Pago</h4>
-                      <p className="text-sm text-gray-600">Pagos con tarjeta y transferencias</p>
+                      <p className="text-sm text-slate-600">Pagos con tarjeta y transferencias</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Badge className="bg-green-100 text-green-800">Conectado</Badge>
                     <Button variant="outline" size="sm">
                       Configurar
@@ -305,17 +308,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                       <CreditCard className="w-5 h-5 text-orange-600" />
                     </div>
                     <div>
                       <h4 className="font-semibold">Stripe</h4>
-                      <p className="text-sm text-gray-600">Procesamiento global de pagos</p>
+                      <p className="text-sm text-slate-600">Procesamiento global de pagos</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Badge variant="outline">No conectado</Badge>
                     <Button variant="outline" size="sm">
                       Conectar
@@ -323,17 +326,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <CreditCard className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
                       <h4 className="font-semibold">Efectivo</h4>
-                      <p className="text-sm text-gray-600">Pagos en efectivo</p>
+                      <p className="text-sm text-slate-600">Pagos en efectivo</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
                     <Switch defaultChecked />
                     <span className="text-sm">Habilitado</span>
                   </div>
@@ -342,7 +345,7 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <h4 className="font-semibold">Configuración de facturación</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="tax-rate">Tasa de IVA (%)</Label>
                     <Input id="tax-rate" type="number" defaultValue="21" />
@@ -404,15 +407,15 @@ export default function SettingsPage() {
                     connected: false,
                   },
                 ].map((integration, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={index} className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="text-2xl">{integration.icon}</div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
-                        <p className="text-sm text-gray-600">{integration.description}</p>
+                        <p className="text-sm text-slate-600">{integration.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
                       {integration.connected ? (
                         <>
                           <Badge className="bg-green-100 text-green-800">Conectado</Badge>
@@ -436,12 +439,12 @@ export default function SettingsPage() {
         <TabsContent value="users" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>Gestión de usuarios</CardTitle>
                   <CardDescription>Administra el acceso al sistema</CardDescription>
                 </div>
-                <Button onClick={() => setIsInviteDialogOpen(true)}>
+                <Button className="self-start sm:self-auto" onClick={() => setIsInviteDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Invitar usuario
                 </Button>
@@ -450,7 +453,7 @@ export default function SettingsPage() {
             <CardContent>
               <div className="space-y-4">
                 {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={user.id} className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-4">
                       <Avatar>
                         <AvatarImage src={`/placeholder.svg?height=40&width=40`} />
@@ -463,11 +466,11 @@ export default function SettingsPage() {
                       </Avatar>
                       <div>
                         <h4 className="font-semibold">{user.name}</h4>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-500">Último acceso: {user.lastLogin}</p>
+                        <p className="text-sm text-slate-600">{user.email}</p>
+                        <p className="text-xs text-slate-500">Último acceso: {user.lastLogin}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                       <Badge className={getRoleColor(user.role)}>{getRoleText(user.role)}</Badge>
                       <Badge variant={user.status === "active" ? "default" : "secondary"}>
                         {user.status === "active" ? "Activo" : "Inactivo"}
@@ -518,8 +521,8 @@ export default function SettingsPage() {
                     permissions: ["Gestión de citas", "Clientes", "Pagos"],
                   },
                 ].map((role, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
+                  <div key={index} className="rounded-xl border p-4">
+                    <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <h4 className="font-semibold">{role.name}</h4>
                       <Badge className={getRoleColor(role.role)}>{role.name}</Badge>
                     </div>
@@ -554,7 +557,7 @@ export default function SettingsPage() {
                     { id: "daily-summary", label: "Resumen diario", defaultChecked: false },
                     { id: "weekly-report", label: "Reporte semanal", defaultChecked: true },
                   ].map((notification) => (
-                    <div key={notification.id} className="flex items-center justify-between">
+                    <div key={notification.id} className="flex items-center justify-between gap-4">
                       <Label htmlFor={notification.id}>{notification.label}</Label>
                       <Switch id={notification.id} defaultChecked={notification.defaultChecked} />
                     </div>
@@ -565,11 +568,11 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <h4 className="font-semibold">Recordatorios automáticos</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <Label htmlFor="reminder-clients">Recordar citas a clientes</Label>
                     <Switch id="reminder-clients" defaultChecked />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Recordatorio por WhatsApp</Label>
                       <Select defaultValue="24">
@@ -606,42 +609,45 @@ export default function SettingsPage() {
       </Tabs>
 
       {/* Dialog para invitar usuario */}
-      {isInviteDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Invitar nuevo usuario</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="invite-email">Email</Label>
-                <Input id="invite-email" type="email" placeholder="usuario@email.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="invite-role">Rol</Label>
-                <Select defaultValue="employee">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="employee">Empleado</SelectItem>
-                    <SelectItem value="receptionist">Recepcionista</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="invite-message">Mensaje personalizado (opcional)</Label>
-                <Textarea id="invite-message" placeholder="Te invitamos a formar parte de nuestro equipo..." rows={3} />
-              </div>
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Invitar nuevo usuario</DialogTitle>
+            <DialogDescription>
+              Envía acceso al panel con un rol inicial para tu equipo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Email</Label>
+              <Input id="invite-email" type="email" placeholder="usuario@email.com" />
             </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleInviteUser}>Enviar invitación</Button>
+            <div className="space-y-2">
+              <Label htmlFor="invite-role">Rol</Label>
+              <Select defaultValue="employee">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="employee">Empleado</SelectItem>
+                  <SelectItem value="receptionist">Recepcionista</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite-message">Mensaje personalizado (opcional)</Label>
+              <Textarea id="invite-message" placeholder="Te invitamos a formar parte de nuestro equipo..." rows={3} />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsInviteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleInviteUser}>Enviar invitación</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

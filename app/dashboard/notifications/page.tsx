@@ -118,13 +118,13 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notificaciones y Actividad</h1>
-          <p className="text-gray-600">Mantente al día con todo lo que sucede en tu negocio</p>
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-slate-900">Notificaciones y Actividad</h1>
+          <p className="text-slate-600">Mantente al día con todo lo que sucede en tu negocio</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {unreadCount > 0 && (
             <Button variant="outline" onClick={markAllAsRead}>
               Marcar todas como leídas
@@ -185,14 +185,16 @@ export default function NotificationsPage() {
       </div>
 
       <Tabs defaultValue="notifications" className="w-full">
-        <TabsList>
-          <TabsTrigger value="notifications">
-            Notificaciones
-            {unreadCount > 0 && <Badge className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5">{unreadCount}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="activity">Actividad del equipo</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="notifications">
+              Notificaciones
+              {unreadCount > 0 && <Badge className="ml-2 bg-red-500 px-2 py-0.5 text-xs text-white">{unreadCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="activity">Actividad del equipo</TabsTrigger>
+            <TabsTrigger value="system">Sistema</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="notifications" className="space-y-4">
           <Card>
@@ -205,8 +207,8 @@ export default function NotificationsPage() {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`flex items-start space-x-4 p-4 rounded-lg border transition-colors ${
-                      !notification.read ? "bg-blue-50 border-blue-200" : "bg-white hover:bg-gray-50"
+                    className={`flex flex-col gap-4 rounded-xl border p-4 transition-colors sm:flex-row sm:items-start ${
+                      !notification.read ? "border-sky-200 bg-sky-50/80" : "bg-white hover:bg-slate-50"
                     }`}
                   >
                     <div
@@ -215,16 +217,16 @@ export default function NotificationsPage() {
                       <notification.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h4 className={`font-semibold ${!notification.read ? "text-gray-900" : "text-gray-700"}`}>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h4 className={`font-semibold ${!notification.read ? "text-slate-900" : "text-slate-700"}`}>
                           {notification.title}
                         </h4>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500">{notification.time}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500">{notification.time}</span>
                           {!notification.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                      <p className="mt-1 text-sm text-slate-600">{notification.message}</p>
                       {!notification.read && (
                         <Button
                           variant="ghost"
@@ -252,7 +254,7 @@ export default function NotificationsPage() {
             <CardContent>
               <div className="space-y-4">
                 {activities.map((activity) => (
-                  <div key={activity.id} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={activity.id} className="flex flex-col gap-4 rounded-xl border p-4 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center">
                     <Avatar className="w-10 h-10">
                       <AvatarImage src={activity.avatar || "/placeholder.svg"} />
                       <AvatarFallback>
@@ -263,14 +265,14 @@ export default function NotificationsPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-sm">
                           <span className="font-semibold">{activity.user}</span>
-                          <span className="text-gray-600"> {activity.action}</span>
+                          <span className="text-slate-600"> {activity.action}</span>
                         </p>
-                        <span className="text-xs text-gray-500">{activity.time}</span>
+                        <span className="text-xs text-slate-500">{activity.time}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">{activity.details}</p>
+                      <p className="mt-1 text-xs text-slate-500">{activity.details}</p>
                     </div>
                   </div>
                 ))}
@@ -287,34 +289,34 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     <div>
                       <h4 className="font-semibold">Servicios operativos</h4>
-                      <p className="text-sm text-gray-600">Todos los sistemas funcionando correctamente</p>
+                      <p className="text-sm text-slate-600">Todos los sistemas funcionando correctamente</p>
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">Activo</Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     <div>
                       <h4 className="font-semibold">Respaldos automáticos</h4>
-                      <p className="text-sm text-gray-600">Último respaldo: Hoy a las 03:00 AM</p>
+                      <p className="text-sm text-slate-600">Último respaldo: Hoy a las 03:00 AM</p>
                     </div>
                   </div>
                   <Badge className="bg-green-100 text-green-800">Completado</Badge>
                 </div>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <div>
                       <h4 className="font-semibold">Actualización programada</h4>
-                      <p className="text-sm text-gray-600">Nuevas funciones disponibles el 20/01</p>
+                      <p className="text-sm text-slate-600">Nuevas funciones disponibles el 20/01</p>
                     </div>
                   </div>
                   <Badge className="bg-blue-100 text-blue-800">Programada</Badge>

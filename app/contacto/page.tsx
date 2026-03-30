@@ -57,14 +57,14 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/auth" className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">ComercioFlow</h1>
-              <p className="text-xs text-gray-600">comercioflow.com.ar</p>
+              <h1 className="text-xl font-bold text-slate-900">ComercioFlow</h1>
+              <p className="text-xs text-slate-600">comercioflow.com.ar</p>
             </div>
           </Link>
           <Link href="/auth">
@@ -77,17 +77,17 @@ export default function ContactPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+      <section className="bg-gradient-to-br from-slate-50 to-blue-50 py-16 sm:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Contáctanos</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <h1 className="mb-6 text-4xl font-bold text-slate-900 sm:text-5xl">Contáctanos</h1>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
             ¿Tienes preguntas? Nuestro equipo está aquí para ayudarte. Contáctanos y te responderemos lo antes posible.
           </p>
         </div>
       </section>
 
       {/* Contact Info */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {contactInfo.map((info, index) => (
@@ -96,9 +96,9 @@ export default function ContactPage() {
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <info.icon className="w-8 h-8 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{info.title}</h3>
-                  <p className="text-gray-900 font-medium mb-1">{info.content}</p>
-                  <p className="text-sm text-gray-600">{info.description}</p>
+                  <h3 className="mb-2 text-lg font-semibold text-slate-900">{info.title}</h3>
+                  <p className="mb-1 font-medium text-slate-900">{info.content}</p>
+                  <p className="text-sm text-slate-600">{info.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -107,22 +107,22 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form */}
-      <section className="py-20 bg-gray-50">
+      <section className="bg-slate-50 py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <Card className="border-0 shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-3xl">Envíanos un mensaje</CardTitle>
-                <p className="text-gray-600 mt-2">Completa el formulario y nos pondremos en contacto contigo</p>
-              </CardHeader>
-              <CardContent>
-                {submitted ? (
-                  <div className="text-center py-8">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-3xl">Envíanos un mensaje</CardTitle>
+                  <p className="mt-2 text-slate-600">Completa el formulario y nos pondremos en contacto contigo</p>
+                </CardHeader>
+                <CardContent>
+                  {submitted ? (
+                    <div className="text-center py-8">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Mail className="w-8 h-8 text-green-600" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">¡Mensaje enviado!</h3>
-                    <p className="text-gray-600 mb-6">
+                    <h3 className="mb-2 text-xl font-semibold text-slate-900">¡Mensaje enviado!</h3>
+                    <p className="mb-6 text-slate-600">
                       Gracias por contactarnos. Te responderemos en menos de 24 horas.
                     </p>
                     <Button onClick={() => setSubmitted(false)} variant="outline">
@@ -177,7 +177,7 @@ export default function ContactPage() {
                       {isSubmitting ? "Enviando mensaje..." : "Enviar mensaje"}
                     </Button>
 
-                    <p className="text-xs text-gray-600 text-center">
+                    <p className="text-center text-xs text-slate-600">
                       Al enviar este formulario, aceptas nuestra{" "}
                       <Link href="/privacidad" className="text-blue-600 hover:underline">
                         Política de Privacidad
@@ -192,11 +192,11 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Preguntas Frecuentes</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h2 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl">Preguntas Frecuentes</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-600 sm:text-xl">
               Encuentra respuestas rápidas a las consultas más comunes
             </p>
           </div>
@@ -204,10 +204,10 @@ export default function ContactPage() {
           <div className="max-w-3xl mx-auto space-y-6">
             <Card className="border-0 shadow-lg">
               <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">
                   ¿Cuánto tiempo toma configurar ComercioFlow?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-slate-600">
                   La configuración inicial toma aproximadamente 5-10 minutos. Nuestro asistente de configuración te guía
                   paso a paso para que puedas empezar a usar la plataforma inmediatamente.
                 </p>
@@ -216,8 +216,8 @@ export default function ContactPage() {
 
             <Card className="border-0 shadow-lg">
               <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">¿Ofrecen soporte técnico en español?</h3>
-                <p className="text-gray-600">
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">¿Ofrecen soporte técnico en español?</h3>
+                <p className="text-slate-600">
                   Sí, todo nuestro soporte técnico es en español y está disponible de lunes a viernes de 9 a 18hs.
                   También tenemos una base de conocimientos completa y tutoriales en video.
                 </p>
@@ -226,10 +226,10 @@ export default function ContactPage() {
 
             <Card className="border-0 shadow-lg">
               <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="mb-2 text-lg font-semibold text-slate-900">
                   ¿Puedo cancelar mi suscripción en cualquier momento?
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-slate-600">
                   Absolutamente. No hay compromisos a largo plazo. Puedes cancelar tu suscripción en cualquier momento
                   desde tu panel de configuración, y mantendrás acceso hasta el final de tu período de facturación.
                 </p>

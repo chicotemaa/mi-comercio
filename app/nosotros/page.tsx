@@ -51,14 +51,14 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/auth" className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">ComercioFlow</h1>
-              <p className="text-xs text-gray-600">comercioflow.com.ar</p>
+              <h1 className="text-xl font-bold text-slate-900">ComercioFlow</h1>
+              <p className="text-xs text-slate-600">comercioflow.com.ar</p>
             </div>
           </Link>
           <Link href="/auth">
@@ -71,10 +71,10 @@ export default function AboutPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+      <section className="bg-gradient-to-br from-slate-50 to-blue-50 py-16 sm:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Sobre ComercioFlow</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+          <h1 className="mb-6 text-4xl font-bold text-slate-900 sm:text-5xl">Sobre ComercioFlow</h1>
+          <p className="mx-auto max-w-3xl text-lg leading-relaxed text-slate-600 sm:text-xl">
             Somos una empresa argentina dedicada a transformar la gestión de negocios de servicios a través de la
             tecnología.
           </p>
@@ -82,12 +82,12 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">Nuestra Misión</h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
+              <h2 className="mb-6 text-3xl font-bold text-slate-900 sm:text-4xl">Nuestra Misión</h2>
+              <p className="text-lg leading-relaxed text-slate-600 sm:text-xl">
                 Empoderar a los emprendedores y dueños de negocios de servicios en Argentina con herramientas
                 tecnológicas que les permitan crecer, optimizar sus operaciones y brindar una mejor experiencia a sus
                 clientes.
@@ -101,8 +101,8 @@ export default function AboutPage() {
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <value.icon className="w-8 h-8 text-blue-600" />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{value.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                    <h3 className="mb-3 text-xl font-semibold text-slate-900">{value.title}</h3>
+                    <p className="leading-relaxed text-slate-600">{value.description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -112,11 +112,11 @@ export default function AboutPage() {
       </section>
 
       {/* Story Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="bg-slate-50 py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold text-gray-900 mb-8 text-center">Nuestra Historia</h2>
-            <div className="prose prose-lg mx-auto text-gray-600">
+            <h2 className="mb-8 text-center text-3xl font-bold text-slate-900 sm:text-4xl">Nuestra Historia</h2>
+            <div className="prose prose-lg mx-auto text-slate-600">
               <p className="text-xl leading-relaxed mb-6">
                 ComercioFlow nació en 2020 cuando nuestro fundador, Juan Carlos Mendoza, se dio cuenta de que muchos
                 negocios de servicios en Argentina estaban perdiendo oportunidades por no tener herramientas digitales
@@ -141,11 +141,11 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Nuestro Equipo</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h2 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl">Nuestro Equipo</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-600 sm:text-xl">
               Un equipo apasionado por la tecnología y comprometido con el éxito de los negocios argentinos.
             </p>
           </div>
@@ -160,9 +160,9 @@ export default function AboutPage() {
                     height={128}
                     className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
                   />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900">{member.name}</h3>
                   <p className="text-blue-600 font-medium mb-3">{member.role}</p>
-                  <p className="text-gray-600 leading-relaxed">{member.description}</p>
+                  <p className="leading-relaxed text-slate-600">{member.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -171,10 +171,10 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-slate-900 text-white">
+      <section className="bg-slate-900 py-16 text-white sm:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">¿Quieres ser parte de nuestra historia?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">¿Quieres ser parte de nuestra historia?</h2>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-300 sm:text-xl">
             Únete a miles de negocios que ya transformaron su gestión con ComercioFlow.
           </p>
           <Link href="/auth">

@@ -102,14 +102,14 @@ export default function HelpPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/auth" className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-slate-900 rounded-xl">
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">ComercioFlow</h1>
-              <p className="text-xs text-gray-600">comercioflow.com.ar</p>
+              <h1 className="text-xl font-bold text-slate-900">ComercioFlow</h1>
+              <p className="text-xs text-slate-600">comercioflow.com.ar</p>
             </div>
           </Link>
           <Link href="/auth">
@@ -122,26 +122,26 @@ export default function HelpPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-blue-50">
+      <section className="bg-gradient-to-br from-slate-50 to-blue-50 py-16 sm:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Centro de Ayuda</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
+          <h1 className="mb-6 text-4xl font-bold text-slate-900 sm:text-5xl">Centro de Ayuda</h1>
+          <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
             Encuentra respuestas, tutoriales y guías para aprovechar al máximo ComercioFlow
           </p>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-slate-400" />
             <Input placeholder="Buscar en la ayuda..." className="pl-12 py-4 text-lg border-0 shadow-lg" />
           </div>
         </div>
       </section>
 
       {/* Quick Actions */}
-      <section className="py-16">
+      <section className="py-14 sm:py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">¿Necesitas ayuda inmediata?</h2>
+            <h2 className="mb-4 text-3xl font-bold text-slate-900">¿Necesitas ayuda inmediata?</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {quickActions.map((action, index) => (
@@ -153,8 +153,8 @@ export default function HelpPage() {
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <action.icon className="w-8 h-8 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{action.title}</h3>
-                  <p className="text-gray-600 mb-4">{action.description}</p>
+                  <h3 className="mb-2 text-xl font-semibold text-slate-900">{action.title}</h3>
+                  <p className="mb-4 text-slate-600">{action.description}</p>
                   <Button variant="outline">{action.action}</Button>
                 </CardContent>
               </Card>
@@ -164,11 +164,11 @@ export default function HelpPage() {
       </section>
 
       {/* Categories */}
-      <section className="py-20 bg-gray-50">
+      <section className="bg-slate-50 py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Explora por categorías</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <h2 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl">Explora por categorías</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-600 sm:text-xl">
               Encuentra información específica sobre cada funcionalidad de ComercioFlow
             </p>
           </div>
@@ -182,7 +182,7 @@ export default function HelpPage() {
                   <CardTitle className="text-xl">{category.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-4">{category.description}</p>
+                  <p className="mb-4 text-slate-600">{category.description}</p>
                   <p className="text-sm text-blue-600 font-medium">{category.articles} artículos</p>
                 </CardContent>
               </Card>
@@ -192,20 +192,20 @@ export default function HelpPage() {
       </section>
 
       {/* Popular Articles */}
-      <section className="py-20">
+      <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Artículos más populares</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">Los temas que más consultan nuestros usuarios</p>
+            <h2 className="mb-4 text-3xl font-bold text-slate-900 sm:text-4xl">Artículos más populares</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-600 sm:text-xl">Los temas que más consultan nuestros usuarios</p>
           </div>
           <div className="max-w-4xl mx-auto">
             {popularArticles.map((article, index) => (
               <Card key={index} className="mb-4 border-0 shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
                 <CardContent className="py-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">{article.title}</h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <h3 className="mb-2 text-lg font-semibold text-slate-900">{article.title}</h3>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{article.category}</span>
                         <span>{article.readTime} de lectura</span>
                       </div>
@@ -222,10 +222,10 @@ export default function HelpPage() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-20 bg-slate-900 text-white">
+      <section className="bg-slate-900 py-16 text-white sm:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-4">¿No encontraste lo que buscabas?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">¿No encontraste lo que buscabas?</h2>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-300 sm:text-xl">
             Nuestro equipo de soporte está disponible para ayudarte con cualquier consulta específica.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -234,15 +234,15 @@ export default function HelpPage() {
                 Contactar soporte
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-lg px-8 py-4 border-gray-600 text-white hover:bg-gray-800 bg-transparent"
-            >
-              Programar llamada
-            </Button>
-          </div>
-          <p className="text-sm text-gray-400 mt-6">Respuesta garantizada en menos de 24 horas</p>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-slate-600 bg-transparent px-8 py-4 text-lg text-white hover:bg-slate-800"
+              >
+                Programar llamada
+              </Button>
+            </div>
+          <p className="mt-6 text-sm text-slate-400">Respuesta garantizada en menos de 24 horas</p>
         </div>
       </section>
     </div>

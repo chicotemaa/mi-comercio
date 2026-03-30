@@ -35,7 +35,7 @@ export function ServiceFormDialog({
 }: ServiceFormDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{serviceBeingEdited ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
           <DialogDescription>

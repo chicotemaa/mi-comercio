@@ -1,6 +1,6 @@
 "use client"
 
-import {  useState } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -111,11 +111,11 @@ export default function CampaignsPage() {
       case "scheduled":
         return "bg-blue-100 text-blue-800"
       case "draft":
-        return "bg-gray-100 text-gray-800"
+        return "bg-slate-100 text-slate-800"
       case "failed":
         return "bg-red-100 text-red-800"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-slate-100 text-slate-800"
     }
   }
 
@@ -151,8 +151,8 @@ export default function CampaignsPage() {
   }
 
   const handleEditCampaign = (campaign: { id: number; name: string; type: string; status: string; audience: string; recipients: number; sent: number; delivered: number; opened: number; clicked: number; createdDate: string; sentDate: string | null; message: string }) => {
-      setEditingCampaign(campaign)
-      setIsDialogOpen(true)
+    setEditingCampaign(campaign)
+    setIsDialogOpen(true)
   }
 
   const handleDeleteCampaign = (campaignId: number) => {
@@ -164,13 +164,13 @@ export default function CampaignsPage() {
   const totalOpened = campaigns.reduce((sum, c) => sum + c.opened, 0)
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Campañas y Comunicación</h1>
-          <p className="text-gray-600">Gestiona tus campañas de marketing y comunicación</p>
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-slate-900">Campañas y Comunicación</h1>
+          <p className="text-slate-600">Gestiona tus campañas de marketing y comunicación</p>
         </div>
-        <Button onClick={handleCreateCampaign}>
+        <Button className="self-start sm:self-auto" onClick={handleCreateCampaign}>
           <Plus className="w-4 h-4 mr-2" />
           Nueva Campaña
         </Button>
@@ -230,11 +230,13 @@ export default function CampaignsPage() {
       </div>
 
       <Tabs defaultValue="campaigns" className="w-full">
-        <TabsList>
-          <TabsTrigger value="campaigns">Campañas</TabsTrigger>
-          <TabsTrigger value="templates">Plantillas</TabsTrigger>
-          <TabsTrigger value="analytics">Analíticas</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="campaigns">Campañas</TabsTrigger>
+            <TabsTrigger value="templates">Plantillas</TabsTrigger>
+            <TabsTrigger value="analytics">Analíticas</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="campaigns" className="space-y-6">
           <Card>
@@ -243,77 +245,79 @@ export default function CampaignsPage() {
               <CardDescription>Gestiona todas tus campañas de marketing</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Campaña</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Audiencia</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Métricas</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {campaigns.map((campaign) => (
-                    <TableRow key={campaign.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{campaign.name}</div>
-                          <div className="text-sm text-gray-500">
-                            Creada: {campaign.createdDate}
-                            {campaign.sentDate && ` • Enviada: ${campaign.sentDate}`}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {getTypeIcon(campaign.type)}
-                          <span className="capitalize">{campaign.type}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{campaign.audience}</div>
-                          <div className="text-sm text-gray-500">{campaign.recipients} destinatarios</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(campaign.status)}>{getStatusText(campaign.status)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {campaign.status === "sent" ? (
-                          <div className="text-sm">
-                            <div>📤 {campaign.sent} enviados</div>
-                            <div>✅ {campaign.delivered} entregados</div>
-                            <div>👁️ {campaign.opened} abiertos</div>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-500">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedCampaign(campaign)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditCampaign(campaign)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCampaign(campaign.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Campaña</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Audiencia</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Métricas</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {campaigns.map((campaign) => (
+                      <TableRow key={campaign.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{campaign.name}</div>
+                            <div className="text-sm text-slate-500">
+                              Creada: {campaign.createdDate}
+                              {campaign.sentDate && ` • Enviada: ${campaign.sentDate}`}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            {getTypeIcon(campaign.type)}
+                            <span className="capitalize">{campaign.type}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{campaign.audience}</div>
+                            <div className="text-sm text-slate-500">{campaign.recipients} destinatarios</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(campaign.status)}>{getStatusText(campaign.status)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {campaign.status === "sent" ? (
+                            <div className="text-sm">
+                              <div>📤 {campaign.sent} enviados</div>
+                              <div>✅ {campaign.delivered} entregados</div>
+                              <div>👁️ {campaign.opened} abiertos</div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-slate-500">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedCampaign(campaign)}>
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleEditCampaign(campaign)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -354,7 +358,7 @@ export default function CampaignsPage() {
                         <h4 className="font-semibold">{template.name}</h4>
                         {getTypeIcon(template.type)}
                       </div>
-                      <p className="text-sm text-gray-600 mb-4">{template.preview}</p>
+                      <p className="mb-4 text-sm text-slate-600">{template.preview}</p>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">
                           Usar
@@ -384,17 +388,17 @@ export default function CampaignsPage() {
                     { channel: "WhatsApp", sent: 45, opened: 38, rate: 84 },
                     { channel: "Email", sent: 23, opened: 15, rate: 65 },
                   ].map((channel, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={index} className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center space-x-3">
                         {getTypeIcon(channel.channel.toLowerCase())}
                         <div>
                           <h4 className="font-semibold">{channel.channel}</h4>
-                          <p className="text-sm text-gray-600">{channel.sent} enviados</p>
+                          <p className="text-sm text-slate-600">{channel.sent} enviados</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-bold">{channel.rate}%</div>
-                        <div className="text-sm text-gray-500">{channel.opened} abiertos</div>
+                        <div className="text-sm text-slate-500">{channel.opened} abiertos</div>
                       </div>
                     </div>
                   ))}
@@ -416,10 +420,10 @@ export default function CampaignsPage() {
                     { time: "15:00 - 17:00", rate: 71 },
                     { time: "17:00 - 19:00", rate: 89 },
                   ].map((slot, index) => (
-                    <div key={index} className="flex items-center justify-between">
+                    <div key={index} className="flex items-center justify-between gap-3">
                       <span className="text-sm">{slot.time}</span>
                       <div className="flex items-center space-x-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                        <div className="h-2 w-20 rounded-full bg-slate-200">
                           <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${slot.rate}%` }} />
                         </div>
                         <span className="text-sm font-semibold w-8">{slot.rate}%</span>
@@ -435,7 +439,7 @@ export default function CampaignsPage() {
 
       {/* Dialog para crear/editar campaña */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCampaign ? "Editar Campaña" : "Nueva Campaña"}</DialogTitle>
             <DialogDescription>
@@ -443,15 +447,17 @@ export default function CampaignsPage() {
             </DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList>
-              <TabsTrigger value="basic">Información básica</TabsTrigger>
-              <TabsTrigger value="audience">Audiencia</TabsTrigger>
-              <TabsTrigger value="message">Mensaje</TabsTrigger>
-              <TabsTrigger value="schedule">Programación</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto pb-1">
+              <TabsList className="min-w-max">
+                <TabsTrigger value="basic">Información básica</TabsTrigger>
+                <TabsTrigger value="audience">Audiencia</TabsTrigger>
+                <TabsTrigger value="message">Mensaje</TabsTrigger>
+                <TabsTrigger value="schedule">Programación</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="basic" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="campaign-name">Nombre de la campaña</Label>
                   <Input
@@ -485,16 +491,16 @@ export default function CampaignsPage() {
                 {audiences.map((audience) => (
                   <label
                     key={audience.id}
-                    className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    className="flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-colors hover:bg-slate-50"
                   >
                     <div className="flex items-center space-x-3">
                       <input type="radio" name="audience" value={audience.id} />
                       <div>
                         <div className="font-medium">{audience.name}</div>
-                        <div className="text-sm text-gray-500">{audience.count} clientes</div>
+                        <div className="text-sm text-slate-500">{audience.count} clientes</div>
                       </div>
                     </div>
-                    <Users className="w-4 h-4 text-gray-400" />
+                    <Users className="w-4 h-4 text-slate-400" />
                   </label>
                 ))}
               </div>
@@ -517,13 +523,13 @@ export default function CampaignsPage() {
                   rows={6}
                   defaultValue={editingCampaign?.message || ""}
                 />
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-500">
                   Puedes usar variables como {"{nombre}"}, {"{servicio}"}, {"{fecha}"}
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Vista previa</Label>
-                <div className="p-4 border rounded-lg bg-gray-50">
+                <div className="rounded-xl border bg-slate-50 p-4">
                   <div className="text-sm">
                     <strong>Para:</strong> Ana Rodríguez
                   </div>
@@ -538,7 +544,7 @@ export default function CampaignsPage() {
                   <Switch id="send-now" />
                   <Label htmlFor="send-now">Enviar ahora</Label>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="schedule-date">Fecha de envío</Label>
                     <Input id="schedule-date" type="date" defaultValue="2024-01-16" />
@@ -548,7 +554,7 @@ export default function CampaignsPage() {
                     <Input id="schedule-time" type="time" defaultValue="10:00" />
                   </div>
                 </div>
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-blue-600" />
                     <span className="text-sm text-blue-800">La campaña se enviará el 16 de enero a las 10:00 AM</span>
@@ -557,7 +563,7 @@ export default function CampaignsPage() {
               </div>
             </TabsContent>
           </Tabs>
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </Button>
@@ -571,37 +577,37 @@ export default function CampaignsPage() {
 
       {/* Dialog para ver detalles de campaña */}
       <Dialog open={!!selectedCampaign} onOpenChange={() => setSelectedCampaign(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalles de la campaña</DialogTitle>
             <DialogDescription>Información completa y métricas de la campaña</DialogDescription>
           </DialogHeader>
           {selectedCampaign && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2">Información general</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Nombre:</span>
+                        <span className="text-sm text-slate-600">Nombre:</span>
                         <span className="text-sm font-medium">{selectedCampaign.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Tipo:</span>
+                        <span className="text-sm text-slate-600">Tipo:</span>
                         <div className="flex items-center space-x-1">
                           {getTypeIcon(selectedCampaign.type)}
                           <span className="text-sm font-medium capitalize">{selectedCampaign.type}</span>
                         </div>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Estado:</span>
+                        <span className="text-sm text-slate-600">Estado:</span>
                         <Badge className={getStatusColor(selectedCampaign.status)}>
                           {getStatusText(selectedCampaign.status)}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Audiencia:</span>
+                        <span className="text-sm text-slate-600">Audiencia:</span>
                         <span className="text-sm font-medium">{selectedCampaign.audience}</span>
                       </div>
                     </div>
@@ -612,24 +618,24 @@ export default function CampaignsPage() {
                     <h4 className="font-semibold mb-2">Métricas</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Destinatarios:</span>
+                        <span className="text-sm text-slate-600">Destinatarios:</span>
                         <span className="text-sm font-medium">{selectedCampaign.recipients}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Enviados:</span>
+                        <span className="text-sm text-slate-600">Enviados:</span>
                         <span className="text-sm font-medium">{selectedCampaign.sent}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Entregados:</span>
+                        <span className="text-sm text-slate-600">Entregados:</span>
                         <span className="text-sm font-medium">{selectedCampaign.delivered}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Abiertos:</span>
+                        <span className="text-sm text-slate-600">Abiertos:</span>
                         <span className="text-sm font-medium">{selectedCampaign.opened}</span>
                       </div>
                       {selectedCampaign.delivered > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Tasa de apertura:</span>
+                          <span className="text-sm text-slate-600">Tasa de apertura:</span>
                           <span className="text-sm font-medium">
                             {Math.round((selectedCampaign.opened / selectedCampaign.delivered) * 100)}%
                           </span>
@@ -641,13 +647,13 @@ export default function CampaignsPage() {
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Mensaje enviado</h4>
-                <div className="p-4 border rounded-lg bg-gray-50">
+                <div className="rounded-xl border bg-slate-50 p-4">
                   <p className="text-sm">{selectedCampaign.message}</p>
                 </div>
               </div>
             </div>
           )}
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setSelectedCampaign(null)}>
               Cerrar
             </Button>
