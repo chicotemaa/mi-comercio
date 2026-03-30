@@ -65,6 +65,19 @@ export interface BusinessScheduleBundle {
   isLive: boolean;
 }
 
+export interface BusinessAgendaBundle {
+  business: BusinessRecord;
+  services: ServiceRecord[];
+  staffMembers: StaffRecord[];
+  appointments: AppointmentRecord[];
+  customers: CustomerRecord[];
+  businessHours: BusinessHourRecord[];
+  bookingSettings: BookingSettingsRecord;
+  staffWorkingHours: StaffWorkingHourRecord[];
+  staffServiceAssignments: StaffServiceAssignmentRecord[];
+  isLive: boolean;
+}
+
 export interface BusinessTeamBundle {
   business: BusinessRecord;
   services: ServiceRecord[];
@@ -112,6 +125,7 @@ interface SupabaseStaffRow {
 
 interface SupabaseAppointmentRow {
   id: string;
+  customer_id?: string | null;
   customer_name: string;
   customer_contact: string;
   customer_email: string | null;
@@ -126,7 +140,10 @@ interface SupabaseAppointmentRow {
   price_snapshot: number | string;
   duration_snapshot: number;
   notes: string | null;
+  internal_notes?: string | null;
+  cancellation_reason?: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 interface SupabaseCustomerRow {
@@ -412,6 +429,7 @@ function createDemoBundle(): BusinessDataBundle {
   const appointments: AppointmentRecord[] = [
     {
       id: "apt-1",
+      customerId: null,
       customerName: "Lucas Ferreyra",
       customerContact: "+54 362 455-0011",
       customerEmail: "lucas@email.com",
@@ -427,9 +445,11 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: services[0].durationMinutes,
       notes: "Primer turno desde la web.",
       createdAt: new Date(today.getTime() - 1000 * 60 * 30).toISOString(),
+      updatedAt: new Date(today.getTime() - 1000 * 60 * 30).toISOString(),
     },
     {
       id: "apt-2",
+      customerId: null,
       customerName: "Bruno Sosa",
       customerContact: "@brunososa",
       customerEmail: null,
@@ -445,9 +465,11 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: services[1].durationMinutes,
       notes: null,
       createdAt: new Date(today.getTime() - 1000 * 60 * 10).toISOString(),
+      updatedAt: new Date(today.getTime() - 1000 * 60 * 10).toISOString(),
     },
     {
       id: "apt-3",
+      customerId: null,
       customerName: "Matias Vera",
       customerContact: "+54 362 455-8899",
       customerEmail: null,
@@ -463,9 +485,11 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: services[2].durationMinutes,
       notes: null,
       createdAt: new Date(today.getTime() - 1000 * 60 * 5).toISOString(),
+      updatedAt: new Date(today.getTime() - 1000 * 60 * 5).toISOString(),
     },
     {
       id: "apt-4",
+      customerId: null,
       customerName: "Ivan Lezcano",
       customerContact: "+54 362 411-7722",
       customerEmail: "ivan@email.com",
@@ -481,6 +505,7 @@ function createDemoBundle(): BusinessDataBundle {
       durationMinutes: services[0].durationMinutes,
       notes: "Pidio confirmar por WhatsApp.",
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     },
   ];
 
@@ -640,6 +665,25 @@ function createDemoScheduleBundle(): BusinessScheduleBundle {
   };
 }
 
+function createDemoAgendaBundle(): BusinessAgendaBundle {
+  const teamBundle = createDemoTeamBundle();
+  const scheduleBundle = createDemoScheduleBundle();
+  const operationsBundle = createDemoOperationsBundle();
+
+  return {
+    business: teamBundle.business,
+    services: teamBundle.services,
+    staffMembers: teamBundle.staffMembers,
+    appointments: teamBundle.appointments,
+    customers: operationsBundle.customers,
+    businessHours: scheduleBundle.businessHours,
+    bookingSettings: scheduleBundle.bookingSettings,
+    staffWorkingHours: teamBundle.staffWorkingHours,
+    staffServiceAssignments: teamBundle.staffServiceAssignments,
+    isLive: false,
+  };
+}
+
 function createDemoTeamBundle(): BusinessTeamBundle {
   const demoBundle = createDemoBundle();
   const staffTimeLogs: StaffTimeLogRecord[] = [
@@ -751,6 +795,7 @@ function mapStaff(row: SupabaseStaffRow): StaffRecord {
 function mapAppointment(row: SupabaseAppointmentRow): AppointmentRecord {
   return {
     id: row.id,
+    customerId: row.customer_id ?? null,
     customerName: row.customer_name,
     customerContact: row.customer_contact,
     customerEmail: row.customer_email,
@@ -765,7 +810,10 @@ function mapAppointment(row: SupabaseAppointmentRow): AppointmentRecord {
     price: Number(row.price_snapshot),
     durationMinutes: row.duration_snapshot,
     notes: row.notes,
+    internalNotes: row.internal_notes ?? null,
+    cancellationReason: row.cancellation_reason ?? null,
     createdAt: row.created_at,
+    updatedAt: row.updated_at ?? row.created_at,
   };
 }
 
@@ -999,7 +1047,7 @@ export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
       supabase
         .from("appointments")
         .select(
-          "id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, created_at",
+          "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
         )
         .eq("business_id", business.id)
         .order("appointment_date", { ascending: true })
@@ -1270,6 +1318,174 @@ export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundl
   }
 }
 
+export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
+  const businessSlug = process.env.BUSINESS_SLUG;
+
+  if (!businessSlug || !hasSupabaseAdminConfig()) {
+    return createDemoAgendaBundle();
+  }
+
+  const supabase = createSupabaseAdminClient();
+
+  if (!supabase) {
+    return createDemoAgendaBundle();
+  }
+
+  try {
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("id, name, slug, description, time_zone")
+      .eq("slug", businessSlug)
+      .maybeSingle();
+
+    if (businessError || !business) {
+      console.error("Supabase business lookup for agenda failed", businessError);
+      return createDemoAgendaBundle();
+    }
+
+    const [
+      { data: services, error: servicesError },
+      { data: staffMembers, error: staffError },
+      { data: appointments, error: appointmentsError },
+      { data: customers, error: customersError },
+      businessHoursResult,
+      { data: bookingSettings, error: bookingSettingsError },
+      staffWorkingHoursResult,
+      { data: staffServiceAssignments, error: staffServiceAssignmentsError },
+    ] = await Promise.all([
+      supabase
+        .from("services")
+        .select(
+          "id, name, description, duration_minutes, price, is_active, category",
+        )
+        .eq("business_id", business.id)
+        .order("display_order", { ascending: true }),
+      fetchStaffMembersForBusiness(supabase, business.id),
+      supabase
+        .from("appointments")
+        .select(
+          "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
+        )
+        .eq("business_id", business.id)
+        .order("appointment_date", { ascending: true })
+        .order("appointment_time", { ascending: true }),
+      supabase
+        .from("customers")
+        .select(
+          "id, full_name, primary_contact, email, phone, instagram_handle, address, status, preferred_services, notes, rating, marketing_opt_in, last_visit_at, total_appointments, total_spent, joined_at",
+        )
+        .eq("business_id", business.id)
+        .order("full_name", { ascending: true }),
+      fetchBusinessHoursRows(supabase, business.id),
+      supabase
+        .from("booking_settings")
+        .select(
+          "id, slot_interval_minutes, lead_time_minutes, max_booking_days_in_advance, buffer_between_appointments_minutes",
+        )
+        .eq("business_id", business.id)
+        .maybeSingle(),
+      fetchStaffWorkingHoursRows(supabase),
+      supabase
+        .from("staff_member_services")
+        .select("id, staff_member_id, service_id"),
+    ]);
+
+    const isBookingSettingsMissing = bookingSettingsError?.code === "PGRST205";
+    const businessHoursError = businessHoursResult.error;
+    const staffWorkingHoursError = staffWorkingHoursResult.error;
+
+    if (
+      servicesError ||
+      staffError ||
+      appointmentsError ||
+      customersError ||
+      businessHoursError ||
+      staffWorkingHoursError ||
+      staffServiceAssignmentsError ||
+      (bookingSettingsError && !isBookingSettingsMissing)
+    ) {
+      console.error("Supabase agenda lookup failed", {
+        servicesError,
+        staffError,
+        appointmentsError,
+        customersError,
+        businessHoursError,
+        staffWorkingHoursError,
+        staffServiceAssignmentsError,
+        bookingSettingsError,
+      });
+      return createDemoAgendaBundle();
+    }
+
+    if (isBookingSettingsMissing) {
+      console.warn(
+        "Supabase booking settings table is missing. Falling back to default booking settings.",
+      );
+    }
+
+    if (!businessHoursResult.hasBreakColumns) {
+      console.warn(
+        "Supabase business_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+      );
+    }
+
+    if (!staffWorkingHoursResult.hasBreakColumns) {
+      console.warn(
+        "Supabase staff_member_working_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+      );
+    }
+
+    const staffIds = new Set(
+      (staffMembers as SupabaseStaffRow[] | null)?.map(
+        (staffMember) => staffMember.id,
+      ) ?? [],
+    );
+
+    return {
+      business: mapBusiness(business as SupabaseBusinessRow),
+      services:
+        (services as SupabaseServiceRow[] | null)?.map(mapService) ?? [],
+      staffMembers:
+        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+      appointments:
+        (appointments as SupabaseAppointmentRow[] | null)?.map(
+          mapAppointment,
+        ) ?? [],
+      customers:
+        (customers as SupabaseCustomerRow[] | null)?.map(mapCustomer) ?? [],
+      businessHours: mergeBusinessHours(
+        (businessHoursResult.data ?? []).map(mapBusinessHour),
+      ),
+      bookingSettings:
+        bookingSettings && !isBookingSettingsMissing
+          ? mapBookingSettings(bookingSettings as SupabaseBookingSettingsRow)
+          : createDefaultBookingSettings(),
+      staffWorkingHours:
+        (staffWorkingHoursResult.data ?? [])
+          .filter((workingHour) => staffIds.has(workingHour.staff_member_id))
+          .map(mapStaffWorkingHour) ?? [],
+      staffServiceAssignments:
+        (staffServiceAssignments as
+          | {
+              id: string;
+              staff_member_id: string;
+              service_id: string;
+            }[]
+          | null
+        )?.filter((assignment) => staffIds.has(assignment.staff_member_id))
+          .map((assignment) => ({
+            id: assignment.id,
+            staffMemberId: assignment.staff_member_id,
+            serviceId: assignment.service_id,
+          })) ?? [],
+      isLive: true,
+    };
+  } catch (error) {
+    console.error("Supabase agenda lookup crashed", error);
+    return createDemoAgendaBundle();
+  }
+}
+
 export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
@@ -1315,7 +1531,7 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
       supabase
         .from("appointments")
         .select(
-          "id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, created_at",
+          "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
         )
         .eq("business_id", business.id)
         .order("appointment_date", { ascending: true })

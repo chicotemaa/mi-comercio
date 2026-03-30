@@ -93,6 +93,7 @@ export interface StaffCategoryRateRecord {
 
 export interface AppointmentRecord {
   id: string;
+  customerId?: string | null;
   customerName: string;
   customerContact: string;
   customerEmail: string | null;
@@ -107,7 +108,10 @@ export interface AppointmentRecord {
   price: number;
   durationMinutes: number;
   notes: string | null;
+  internalNotes?: string | null;
+  cancellationReason?: string | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CustomerRecord {

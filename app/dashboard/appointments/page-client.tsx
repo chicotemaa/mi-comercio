@@ -1,81 +1,162 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DashboardPageHeader } from "@/components/dashboard/page-header"
-import { DashboardPageShell } from "@/components/dashboard/page-shell"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
 import {
-  formatAppointmentDate,
-  formatAppointmentTime,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   formatCurrency,
-  getChannelLabel,
-  getStatusBadgeClassName,
-  getStatusLabel,
-} from "@/lib/business-shared"
-import type { AppointmentRecord } from "@/lib/business-shared"
-import { Calendar, Search } from "lucide-react"
+  type AppointmentRecord,
+  type BookingSettingsRecord,
+  type BusinessHourRecord,
+  type CustomerRecord,
+  type ServiceRecord,
+  type StaffRecord,
+  type StaffServiceAssignmentRecord,
+  type StaffWorkingHourRecord,
+} from "@/lib/business-shared";
+import {
+  CalendarDays,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  ListFilter,
+  Plus,
+  Search,
+} from "lucide-react";
+
+import { AppointmentFeedbackDialog } from "./_components/appointment-feedback-dialog";
+import { AppointmentFormDialog } from "./_components/appointment-form-dialog";
+import { AppointmentStatusDialog } from "./_components/appointment-status-dialog";
+import { AppointmentsDayView } from "./_components/appointments-day-view";
+import { AppointmentsMonthView } from "./_components/appointments-month-view";
+import { AppointmentsSelectedDayPanel } from "./_components/appointments-selected-day-panel";
+import { AppointmentsWeekView } from "./_components/appointments-week-view";
+import { AppointmentsYearView } from "./_components/appointments-year-view";
+import type { AgendaViewMode } from "./appointment-types";
+import { useAppointmentsController } from "./use-appointments-controller";
 
 interface AppointmentsPageClientProps {
-  appointments: AppointmentRecord[]
-  businessName: string
-  isLive: boolean
-  todayKey: string
-  timeZone: string
+  appointments: AppointmentRecord[];
+  bookingSettings: BookingSettingsRecord;
+  businessHours: BusinessHourRecord[];
+  businessName: string;
+  customers: CustomerRecord[];
+  isLive: boolean;
+  services: ServiceRecord[];
+  staffMembers: StaffRecord[];
+  staffServiceAssignments: StaffServiceAssignmentRecord[];
+  staffWorkingHours: StaffWorkingHourRecord[];
+  timeZone: string;
+  todayKey: string;
 }
+
+const AGENDA_VIEW_OPTIONS: Array<{ label: string; value: AgendaViewMode }> = [
+  { label: "Día", value: "day" },
+  { label: "Semana", value: "week" },
+  { label: "Mes", value: "month" },
+  { label: "Año", value: "year" },
+];
 
 export function AppointmentsPageClient({
   appointments,
+  bookingSettings,
+  businessHours,
   businessName,
+  customers,
   isLive,
-  todayKey,
+  services,
+  staffMembers,
+  staffServiceAssignments,
+  staffWorkingHours,
   timeZone,
+  todayKey,
 }: AppointmentsPageClientProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [dateFilter, setDateFilter] = useState("all")
+  const controller = useAppointmentsController({
+    appointments,
+    bookingSettings,
+    businessHours,
+    customers,
+    services,
+    staffMembers,
+    staffServiceAssignments,
+    staffWorkingHours,
+    timeZone,
+    todayKey,
+  });
 
-  const filteredAppointments = appointments.filter((appointment) => {
-    const matchesSearch =
-      appointment.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.customerContact.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.serviceName.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || appointment.status === statusFilter
-    const matchesDate =
-      dateFilter === "all" ||
-      (dateFilter === "today" && appointment.appointmentDate === todayKey) ||
-      (dateFilter === "upcoming" && appointment.appointmentDate >= todayKey)
+  function handleSelectAppointment(appointmentId: string, dateKey?: string) {
+    if (dateKey) {
+      controller.selectDate(dateKey);
+    }
 
-    return matchesSearch && matchesStatus && matchesDate
-  })
-
-  const confirmedRevenue = filteredAppointments
-    .filter((appointment) => appointment.status === "confirmed" || appointment.status === "completed")
-    .reduce((total, appointment) => total + appointment.price, 0)
+    controller.setSelectedAppointmentId(appointmentId);
+  }
 
   return (
     <DashboardPageShell>
       <DashboardPageHeader
+        actions={
+          <Button onClick={() => controller.openCreateDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo turno
+          </Button>
+        }
         badge={
-          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
-            {isLive ? "Supabase activo" : "Modo demo"}
+          <Badge
+            className={
+              isLive
+                ? "bg-emerald-100 text-emerald-900"
+                : "bg-amber-100 text-amber-900"
+            }
+          >
+            {isLive ? "Agenda en vivo" : "Agenda demo"}
           </Badge>
         }
-        description={`${businessName} ${isLive ? "sincroniza" : "muestra en demo"} las reservas generadas desde ns-barber, redes y carga interna.`}
-        eyebrow="Agenda operativa"
-        title="Agenda y citas"
+        description={`${businessName} administra aquí la agenda completa: altas manuales, edición, reprogramación y cancelaciones.`}
+        eyebrow="Agenda"
+        supporting={
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+            <CalendarRange className="h-3.5 w-3.5" />
+            <span className="font-medium text-slate-900">
+              {controller.rangeMeta.subtitle}
+            </span>
+            <span className="capitalize">{controller.rangeMeta.title}</span>
+          </div>
+        }
+        title="Calendario operativo"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Citas visibles</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Turnos visibles
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{filteredAppointments.length}</div>
+            <div className="text-3xl font-bold text-slate-900">
+              {controller.agendaMetrics.total}
+            </div>
+            <p className="text-xs text-slate-500">
+              En la vista actual del calendario
+            </p>
           </CardContent>
         </Card>
 
@@ -85,125 +166,276 @@ export function AppointmentsPageClient({
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
-              {filteredAppointments.filter((appointment) => appointment.status === "pending").length}
+              {controller.agendaMetrics.pending}
             </div>
+            <p className="text-xs text-slate-500">
+              Requieren seguimiento o confirmación
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Ingresos confirmados</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Completados
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{formatCurrency(confirmedRevenue)}</div>
+            <div className="text-3xl font-bold text-slate-900">
+              {controller.agendaMetrics.completed}
+            </div>
+            <p className="text-xs text-slate-500">Atenciones realizadas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              Facturación estimada
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-900">
+              {formatCurrency(controller.agendaMetrics.revenue)}
+            </div>
+            <p className="text-xs text-slate-500">
+              Confirmados y completados visibles
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
-          <CardDescription>Busqueda rápida sobre la misma base compartida con el sitio público</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <ListFilter className="h-5 w-5" />
+            Navegación y filtros
+          </CardTitle>
+          <CardDescription>
+            Cambia la escala del calendario y filtra por cliente, estado o
+            profesional sin salir de la agenda.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 lg:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              className="pl-9"
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Buscar por cliente, contacto o servicio"
-              value={searchTerm}
-            />
+        <CardContent className="space-y-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <Tabs
+              value={controller.viewMode}
+              onValueChange={(value) =>
+                controller.changeViewMode(value as AgendaViewMode)
+              }
+            >
+              <TabsList className="grid w-full grid-cols-4 xl:w-[420px]">
+                {AGENDA_VIEW_OPTIONS.map((option) => (
+                  <TabsTrigger key={option.value} value={option.value}>
+                    {option.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => controller.navigate(-1)}
+                type="button"
+                variant="outline"
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" />
+                Anterior
+              </Button>
+              <Button
+                onClick={controller.goToToday}
+                type="button"
+                variant="outline"
+              >
+                <CalendarDays className="mr-2 h-4 w-4" />
+                Hoy
+              </Button>
+              <Button
+                onClick={() => controller.navigate(1)}
+                type="button"
+                variant="outline"
+              >
+                Siguiente
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full lg:w-52">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
-              <SelectItem value="confirmed">Confirmadas</SelectItem>
-              <SelectItem value="completed">Completadas</SelectItem>
-              <SelectItem value="cancelled">Canceladas</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={dateFilter} onValueChange={setDateFilter}>
-            <SelectTrigger className="w-full lg:w-52">
-              <SelectValue placeholder="Fecha" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las fechas</SelectItem>
-              <SelectItem value="today">Solo hoy</SelectItem>
-              <SelectItem value="upcoming">Hoy y proximas</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Reservas</CardTitle>
-          <CardDescription>Las inserciones públicas llegan como pendientes por defecto</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {filteredAppointments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500">
-              No hay reservas que coincidan con los filtros.
+          <div className="grid gap-4 xl:grid-cols-[1.2fr_220px_220px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar por cliente, contacto, servicio o notas"
+                value={controller.searchTerm}
+                onChange={(event) => controller.setSearchTerm(event.target.value)}
+              />
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Servicio</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Canal</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Importe</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAppointments.map((appointment) => (
-                    <TableRow key={appointment.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{appointment.customerName}</p>
-                          <p className="text-sm text-slate-500">{appointment.customerContact}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-slate-900">{appointment.serviceName}</p>
-                          <p className="text-sm text-slate-500">{appointment.staffName ?? "Sin profesional asignado"}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-slate-700">
-                          <Calendar className="h-4 w-4 text-slate-400" />
-                          <div>
-                            <p>{formatAppointmentDate(appointment.appointmentDate, timeZone)}</p>
-                            <p className="text-sm text-slate-500">{formatAppointmentTime(appointment.appointmentTime)}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getChannelLabel(appointment.channel)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusBadgeClassName(appointment.status)}>
-                          {getStatusLabel(appointment.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(appointment.price)}</TableCell>
-                    </TableRow>
+
+            <Select
+              value={controller.staffFilter}
+              onValueChange={controller.setStaffFilter}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Profesional" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todo el equipo</SelectItem>
+                {staffMembers
+                  .filter((staffMember) => staffMember.isActive)
+                  .map((staffMember) => (
+                    <SelectItem key={staffMember.id} value={staffMember.id}>
+                      {staffMember.fullName}
+                    </SelectItem>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={controller.statusFilter}
+              onValueChange={(value) =>
+                controller.setStatusFilter(value as "all" | AppointmentRecord["status"])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+                <SelectItem value="confirmed">Confirmados</SelectItem>
+                <SelectItem value="completed">Completados</SelectItem>
+                <SelectItem value="cancelled">Cancelados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
+
+      <div className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="capitalize">
+              {controller.rangeMeta.title}
+            </CardTitle>
+            <CardDescription>
+              La agenda usa intervalos de {bookingSettings.slotIntervalMinutes}{" "}
+              minutos y respeta la disponibilidad general y del personal.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {controller.viewMode === "day" ? (
+              <AppointmentsDayView
+                appointments={controller.selectedDateAppointments}
+                earliestMinutes={controller.scheduleBounds.earliest}
+                latestMinutes={controller.scheduleBounds.latest}
+                onCreate={(time) =>
+                  controller.openCreateDialog({
+                    dateKey: controller.selectedDateKey,
+                    time,
+                  })
+                }
+                onSelectAppointment={(appointmentId) =>
+                  handleSelectAppointment(
+                    appointmentId,
+                    controller.selectedDateKey,
+                  )
+                }
+                selectedAppointmentId={controller.selectedAppointmentId}
+                slotIntervalMinutes={bookingSettings.slotIntervalMinutes}
+              />
+            ) : null}
+
+            {controller.viewMode === "week" ? (
+              <AppointmentsWeekView
+                appointments={controller.visibleAppointments}
+                onCreate={(dateKey) => controller.openCreateDialog({ dateKey })}
+                onSelectAppointment={handleSelectAppointment}
+                onSelectDate={controller.selectDate}
+                selectedAppointmentId={controller.selectedAppointmentId}
+                selectedDateKey={controller.selectedDateKey}
+                timeZone={timeZone}
+                weekDateKeys={controller.weekDateKeys}
+              />
+            ) : null}
+
+            {controller.viewMode === "month" ? (
+              <AppointmentsMonthView
+                appointments={controller.visibleAppointments}
+                monthGridDays={controller.monthGridDays}
+                onCreate={(dateKey) => controller.openCreateDialog({ dateKey })}
+                onSelectAppointment={handleSelectAppointment}
+                onSelectDate={controller.selectDate}
+                selectedDateKey={controller.selectedDateKey}
+                todayKey={todayKey}
+              />
+            ) : null}
+
+            {controller.viewMode === "year" ? (
+              <AppointmentsYearView
+                appointments={controller.visibleAppointments}
+                monthDateKeys={controller.yearMonthDateKeys}
+                onOpenMonth={controller.openMonth}
+                timeZone={timeZone}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <AppointmentsSelectedDayPanel
+          appointments={controller.selectedDateAppointments}
+          dateKey={controller.selectedDateKey}
+          onCreate={() =>
+            controller.openCreateDialog({ dateKey: controller.selectedDateKey })
+          }
+          onEdit={controller.openEditDialog}
+          onSelectAppointment={controller.setSelectedAppointmentId}
+          onStatusChange={controller.openStatusDialog}
+          selectedAppointmentId={controller.selectedAppointmentId}
+          timeZone={timeZone}
+        />
+      </div>
+
+      <AppointmentFormDialog
+        appointmentBeingEdited={controller.editingAppointment}
+        availableTimeOptions={controller.availableTimeOptions}
+        customers={controller.customers}
+        errorMessage={controller.formError}
+        formState={controller.formState}
+        isOpen={controller.isFormOpen}
+        isSubmitting={controller.isSubmitting || controller.isRefreshing}
+        onOpenChange={(open) => {
+          if (!open) {
+            controller.closeFormDialog();
+          }
+        }}
+        onSubmit={() => void controller.submitForm()}
+        onUpdateField={controller.updateFormField}
+        services={controller.services}
+        staffMembers={controller.compatibleStaffMembers}
+      />
+
+      <AppointmentStatusDialog
+        dialogState={controller.statusDialogState}
+        isSubmitting={controller.isStatusSubmitting || controller.isRefreshing}
+        onConfirm={() => void controller.confirmStatusChange()}
+        onOpenChange={(open) => {
+          if (!open) {
+            controller.closeStatusDialog();
+          }
+        }}
+        onReasonChange={controller.setStatusReason}
+        reason={controller.statusReason}
+      />
+
+      <AppointmentFeedbackDialog
+        feedback={controller.feedbackState}
+        onOpenChange={(open) => {
+          if (!open) {
+            controller.closeFeedbackDialog();
+          }
+        }}
+      />
     </DashboardPageShell>
-  )
+  );
 }
