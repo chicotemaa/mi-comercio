@@ -120,3 +120,126 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .appointments-calendar .fc {
+    --fc-border-color: color-mix(in srgb, var(--border) 88%, white 12%);
+    --fc-button-bg-color: transparent;
+    --fc-button-border-color: transparent;
+    --fc-button-text-color: var(--foreground);
+    --fc-event-border-color: transparent;
+    --fc-neutral-bg-color: color-mix(in srgb, var(--muted) 82%, white 18%);
+    --fc-page-bg-color: transparent;
+    --fc-today-bg-color: color-mix(in srgb, #dbeafe 55%, white 45%);
+    font-size: 0.92rem;
+  }
+
+  .appointments-calendar .fc-theme-standard td,
+  .appointments-calendar .fc-theme-standard th,
+  .appointments-calendar .fc-theme-standard .fc-scrollgrid {
+    border-color: var(--fc-border-color);
+  }
+
+  .appointments-calendar .fc-col-header-cell {
+    background: color-mix(in srgb, var(--muted) 75%, white 25%);
+    padding-block: 0.5rem;
+  }
+
+  .appointments-calendar .fc-col-header-cell-cushion {
+    color: var(--foreground);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .appointments-calendar .fc-timegrid-slot-label-cushion,
+  .appointments-calendar .fc-timegrid-axis-cushion {
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .appointments-calendar .fc-timegrid-slot {
+    height: 3rem;
+  }
+
+  .appointments-calendar .fc-timegrid-col-frame,
+  .appointments-calendar .fc-daygrid-day-frame,
+  .appointments-calendar .fc-multimonth-daygrid-table {
+    background: color-mix(in srgb, var(--card) 96%, white 4%);
+  }
+
+  .appointments-calendar .fc-timegrid-now-indicator-line {
+    border-color: #0f766e;
+  }
+
+  .appointments-calendar .fc-timegrid-now-indicator-arrow {
+    border-color: #0f766e;
+    color: #0f766e;
+  }
+
+  .appointments-calendar .fc-event {
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    padding: 0.15rem;
+  }
+
+  .appointments-calendar .fc-event.is-selected-event {
+    box-shadow: 0 0 0 2px #0f172a;
+    transform: translateY(-1px);
+  }
+
+  .appointments-calendar .fc-appointment-event {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .appointments-calendar .fc-appointment-event__time {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+
+  .appointments-calendar .fc-appointment-event__title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .appointments-calendar .fc-appointment-event__meta {
+    font-size: 0.68rem;
+    line-height: 1.15;
+    opacity: 0.78;
+  }
+
+  .appointments-calendar .fc-daygrid-day-number,
+  .appointments-calendar .fc-multimonth-daygrid-day-number {
+    color: var(--foreground);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.4rem 0.55rem 0 0;
+  }
+
+  .appointments-calendar .fc-day-other .fc-daygrid-day-frame,
+  .appointments-calendar .fc-day-other .fc-multimonth-daygrid-day-frame {
+    background: color-mix(in srgb, var(--muted) 84%, white 16%);
+  }
+
+  .appointments-calendar .fc-bg-event {
+    opacity: 0.65;
+  }
+
+  @media (max-width: 1024px) {
+    .appointments-calendar .fc {
+      font-size: 0.86rem;
+    }
+
+    .appointments-calendar .fc-timegrid-slot {
+      height: 2.5rem;
+    }
+  }
+}

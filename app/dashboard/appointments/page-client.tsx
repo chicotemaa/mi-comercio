@@ -42,13 +42,10 @@ import {
 } from "lucide-react";
 
 import { AppointmentFeedbackDialog } from "./_components/appointment-feedback-dialog";
+import { AppointmentsCalendar } from "./_components/appointments-calendar";
 import { AppointmentFormDialog } from "./_components/appointment-form-dialog";
 import { AppointmentStatusDialog } from "./_components/appointment-status-dialog";
-import { AppointmentsDayView } from "./_components/appointments-day-view";
-import { AppointmentsMonthView } from "./_components/appointments-month-view";
 import { AppointmentsSelectedDayPanel } from "./_components/appointments-selected-day-panel";
-import { AppointmentsWeekView } from "./_components/appointments-week-view";
-import { AppointmentsYearView } from "./_components/appointments-year-view";
 import type { AgendaViewMode } from "./appointment-types";
 import { useAppointmentsController } from "./use-appointments-controller";
 
@@ -312,7 +309,7 @@ export function AppointmentsPageClient({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle className="capitalize">
@@ -324,61 +321,32 @@ export function AppointmentsPageClient({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {controller.viewMode === "day" ? (
-              <AppointmentsDayView
-                appointments={controller.selectedDateAppointments}
-                earliestMinutes={controller.scheduleBounds.earliest}
-                latestMinutes={controller.scheduleBounds.latest}
-                onCreate={(time) =>
-                  controller.openCreateDialog({
-                    dateKey: controller.selectedDateKey,
-                    time,
-                  })
-                }
-                onSelectAppointment={(appointmentId) =>
-                  handleSelectAppointment(
-                    appointmentId,
-                    controller.selectedDateKey,
-                  )
-                }
-                selectedAppointmentId={controller.selectedAppointmentId}
-                slotIntervalMinutes={bookingSettings.slotIntervalMinutes}
-              />
-            ) : null}
-
-            {controller.viewMode === "week" ? (
-              <AppointmentsWeekView
-                appointments={controller.visibleAppointments}
-                onCreate={(dateKey) => controller.openCreateDialog({ dateKey })}
-                onSelectAppointment={handleSelectAppointment}
-                onSelectDate={controller.selectDate}
-                selectedAppointmentId={controller.selectedAppointmentId}
-                selectedDateKey={controller.selectedDateKey}
-                timeZone={timeZone}
-                weekDateKeys={controller.weekDateKeys}
-              />
-            ) : null}
-
-            {controller.viewMode === "month" ? (
-              <AppointmentsMonthView
-                appointments={controller.visibleAppointments}
-                monthGridDays={controller.monthGridDays}
-                onCreate={(dateKey) => controller.openCreateDialog({ dateKey })}
-                onSelectAppointment={handleSelectAppointment}
-                onSelectDate={controller.selectDate}
-                selectedDateKey={controller.selectedDateKey}
-                todayKey={todayKey}
-              />
-            ) : null}
-
-            {controller.viewMode === "year" ? (
-              <AppointmentsYearView
-                appointments={controller.visibleAppointments}
-                monthDateKeys={controller.yearMonthDateKeys}
-                onOpenMonth={controller.openMonth}
-                timeZone={timeZone}
-              />
-            ) : null}
+            <AppointmentsCalendar
+              appointments={controller.visibleAppointments}
+              bookingSettings={bookingSettings}
+              businessHours={businessHours}
+              focusDateKey={controller.focusDateKey}
+              onDateClick={(dateKey, time) => {
+                controller.selectDate(dateKey);
+                controller.openCreateDialog({ dateKey, time });
+              }}
+              onEventClick={handleSelectAppointment}
+              onEventDrop={(appointmentId, nextDateKey, nextTime, revert) =>
+                void controller.moveAppointment(
+                  appointmentId,
+                  nextDateKey,
+                  nextTime,
+                  revert,
+                )
+              }
+              onVisibleDateChange={controller.syncVisibleRangeStart}
+              selectedAppointmentId={controller.selectedAppointmentId}
+              selectedStaffId={
+                controller.staffFilter === "all" ? null : controller.staffFilter
+              }
+              staffWorkingHours={staffWorkingHours}
+              viewMode={controller.viewMode}
+            />
           </CardContent>
         </Card>
 

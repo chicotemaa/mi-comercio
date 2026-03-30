@@ -43,12 +43,15 @@ export function getAppointmentDurationWithBuffer(
   return durationMinutes + bookingSettings.bufferBetweenAppointmentsMinutes;
 }
 
-function getBusinessDayWindow(dateKey: string, businessHours: BusinessHourRecord[]) {
+export function getBusinessDayWindow(
+  dateKey: string,
+  businessHours: BusinessHourRecord[],
+) {
   const dayOfWeek = getDayOfWeekFromDateKey(dateKey);
   return businessHours.find((entry) => entry.dayOfWeek === dayOfWeek) ?? null;
 }
 
-function getStaffDayWindow(
+export function getStaffDayWindow(
   dateKey: string,
   staffMemberId: string,
   businessHours: BusinessHourRecord[],
@@ -84,6 +87,236 @@ function getStaffDayWindow(
       (entry) =>
         entry.staffMemberId === staffMemberId && entry.dayOfWeek === dayOfWeek,
     ) ?? null
+  );
+}
+
+export interface CalendarBlockedRange {
+  endMinutes: number;
+  kind: "business_break" | "staff_break";
+  startMinutes: number;
+}
+
+export interface CalendarDayWindow {
+  blockedRanges: CalendarBlockedRange[];
+  businessDay: BusinessHourRecord | null;
+  closeMinutes: number | null;
+  dateKey: string;
+  isOpen: boolean;
+  openMinutes: number | null;
+  staffDay: StaffWorkingHourRecord | null;
+}
+
+function clampRangeToWindow(
+  startMinutes: number | null,
+  endMinutes: number | null,
+  windowStart: number,
+  windowEnd: number,
+) {
+  if (startMinutes === null || endMinutes === null) {
+    return null;
+  }
+
+  const clampedStart = Math.max(startMinutes, windowStart);
+  const clampedEnd = Math.min(endMinutes, windowEnd);
+
+  if (clampedStart >= clampedEnd) {
+    return null;
+  }
+
+  return {
+    startMinutes: clampedStart,
+    endMinutes: clampedEnd,
+  };
+}
+
+export function getCalendarDayWindow({
+  businessHours,
+  dateKey,
+  staffMemberId = null,
+  staffWorkingHours,
+}: {
+  businessHours: BusinessHourRecord[];
+  dateKey: string;
+  staffMemberId?: string | null;
+  staffWorkingHours: StaffWorkingHourRecord[];
+}): CalendarDayWindow {
+  const businessDay = getBusinessDayWindow(dateKey, businessHours);
+
+  if (
+    !businessDay ||
+    !businessDay.isOpen ||
+    !businessDay.openTime ||
+    !businessDay.closeTime
+  ) {
+    return {
+      dateKey,
+      businessDay,
+      staffDay: null,
+      isOpen: false,
+      openMinutes: null,
+      closeMinutes: null,
+      blockedRanges: [],
+    };
+  }
+
+  const businessOpenMinutes = timeStringToMinutes(businessDay.openTime);
+  const businessCloseMinutes = timeStringToMinutes(businessDay.closeTime);
+
+  if (businessOpenMinutes === null || businessCloseMinutes === null) {
+    return {
+      dateKey,
+      businessDay,
+      staffDay: null,
+      isOpen: false,
+      openMinutes: null,
+      closeMinutes: null,
+      blockedRanges: [],
+    };
+  }
+
+  const staffDay =
+    staffMemberId !== null
+      ? getStaffDayWindow(
+          dateKey,
+          staffMemberId,
+          businessHours,
+          staffWorkingHours,
+        )
+      : null;
+
+  if (
+    staffMemberId !== null &&
+    (!staffDay || !staffDay.isActive || !staffDay.startTime || !staffDay.endTime)
+  ) {
+    return {
+      dateKey,
+      businessDay,
+      staffDay,
+      isOpen: false,
+      openMinutes: null,
+      closeMinutes: null,
+      blockedRanges: [],
+    };
+  }
+
+  const staffOpenMinutes = staffDay
+    ? timeStringToMinutes(staffDay.startTime)
+    : businessOpenMinutes;
+  const staffCloseMinutes = staffDay
+    ? timeStringToMinutes(staffDay.endTime)
+    : businessCloseMinutes;
+
+  if (staffOpenMinutes === null || staffCloseMinutes === null) {
+    return {
+      dateKey,
+      businessDay,
+      staffDay,
+      isOpen: false,
+      openMinutes: null,
+      closeMinutes: null,
+      blockedRanges: [],
+    };
+  }
+
+  const openMinutes = Math.max(businessOpenMinutes, staffOpenMinutes);
+  const closeMinutes = Math.min(businessCloseMinutes, staffCloseMinutes);
+
+  if (openMinutes >= closeMinutes) {
+    return {
+      dateKey,
+      businessDay,
+      staffDay,
+      isOpen: false,
+      openMinutes: null,
+      closeMinutes: null,
+      blockedRanges: [],
+    };
+  }
+
+  const blockedRanges: CalendarBlockedRange[] = [];
+  const businessBreak = clampRangeToWindow(
+    timeStringToMinutes(businessDay.breakStartTime),
+    timeStringToMinutes(businessDay.breakEndTime),
+    openMinutes,
+    closeMinutes,
+  );
+  const staffBreak = clampRangeToWindow(
+    timeStringToMinutes(staffDay?.breakStartTime ?? null),
+    timeStringToMinutes(staffDay?.breakEndTime ?? null),
+    openMinutes,
+    closeMinutes,
+  );
+
+  if (businessBreak) {
+    blockedRanges.push({ ...businessBreak, kind: "business_break" });
+  }
+
+  if (staffBreak) {
+    blockedRanges.push({ ...staffBreak, kind: "staff_break" });
+  }
+
+  return {
+    dateKey,
+    businessDay,
+    staffDay,
+    isOpen: true,
+    openMinutes,
+    closeMinutes,
+    blockedRanges,
+  };
+}
+
+export function getCalendarBoundsForDates({
+  businessHours,
+  dateKeys,
+  staffMemberId = null,
+  staffWorkingHours,
+}: {
+  businessHours: BusinessHourRecord[];
+  dateKeys: string[];
+  staffMemberId?: string | null;
+  staffWorkingHours: StaffWorkingHourRecord[];
+}) {
+  const dayWindows = dateKeys.map((dateKey) =>
+    getCalendarDayWindow({
+      businessHours,
+      dateKey,
+      staffMemberId,
+      staffWorkingHours,
+    }),
+  );
+  const openWindows = dayWindows.filter(
+    (window): window is CalendarDayWindow & {
+      closeMinutes: number;
+      openMinutes: number;
+    } => window.isOpen && window.openMinutes !== null && window.closeMinutes !== null,
+  );
+
+  return {
+    dayWindows,
+    earliest:
+      openWindows.length > 0
+        ? Math.min(...openWindows.map((window) => window.openMinutes))
+        : 8 * 60,
+    latest:
+      openWindows.length > 0
+        ? Math.max(...openWindows.map((window) => window.closeMinutes))
+        : 22 * 60,
+  };
+}
+
+export function slotIsBlocked(
+  slotStartMinutes: number,
+  slotDurationMinutes: number,
+  blockedRanges: CalendarBlockedRange[],
+) {
+  return blockedRanges.some((blockedRange) =>
+    intervalsOverlap(
+      slotStartMinutes,
+      slotStartMinutes + slotDurationMinutes,
+      blockedRange.startMinutes,
+      blockedRange.endMinutes,
+    ),
   );
 }
 

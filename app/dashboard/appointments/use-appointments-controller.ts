@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  getAvailableAppointmentTimes,
-  getScheduleBounds,
-} from "@/lib/appointment-scheduling";
+import { getAvailableAppointmentTimes } from "@/lib/appointment-scheduling";
 import type {
   AppointmentRecord,
   AppointmentStatus,
@@ -31,9 +28,6 @@ import {
   getAgendaMetrics,
   getAgendaRangeMeta,
   getAppointmentsForDate,
-  getMonthGridDays,
-  getWeekDateKeys,
-  getYearMonthDateKeys,
   navigateAgendaDate,
   sortAppointments,
 } from "./appointment-utils";
@@ -291,33 +285,6 @@ export function useAppointmentsController({
   const rangeMeta = useMemo(
     () => getAgendaRangeMeta(viewMode, focusDateKey, timeZone),
     [focusDateKey, timeZone, viewMode],
-  );
-  const weekDateKeys = useMemo(
-    () => getWeekDateKeys(focusDateKey),
-    [focusDateKey],
-  );
-  const monthGridDays = useMemo(
-    () => getMonthGridDays(focusDateKey),
-    [focusDateKey],
-  );
-  const yearMonthDateKeys = useMemo(
-    () => getYearMonthDateKeys(focusDateKey),
-    [focusDateKey],
-  );
-
-  const relevantWorkingHours = useMemo(() => {
-    if (staffFilter === "all") {
-      return staffWorkingHours;
-    }
-
-    return staffWorkingHours.filter(
-      (workingHour) => workingHour.staffMemberId === staffFilter,
-    );
-  }, [staffFilter, staffWorkingHours]);
-
-  const scheduleBounds = useMemo(
-    () => getScheduleBounds(businessHours, relevantWorkingHours),
-    [businessHours, relevantWorkingHours],
   );
 
   const selectedService = useMemo(
@@ -606,6 +573,78 @@ export function useAppointmentsController({
     }
   }
 
+  async function moveAppointment(
+    appointmentId: string,
+    nextDateKey: string,
+    nextTime: string,
+    revert: () => void,
+  ) {
+    const appointment = appointmentsState.find(
+      (currentAppointment) => currentAppointment.id === appointmentId,
+    );
+
+    if (!appointment) {
+      revert();
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/appointments/${appointment.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerId: appointment.customerId ?? null,
+          customerName: appointment.customerName,
+          customerContact: appointment.customerContact,
+          customerEmail: appointment.customerEmail,
+          serviceId: appointment.serviceId,
+          staffMemberId: appointment.staffMemberId,
+          appointmentDate: nextDateKey,
+          appointmentTime: nextTime,
+          status: appointment.status,
+          channel: appointment.channel,
+          notes: appointment.notes,
+          internalNotes: appointment.internalNotes,
+          cancellationReason: appointment.cancellationReason,
+        }),
+      });
+
+      const body = (await response.json().catch(() => null)) as
+        | { appointment?: AppointmentRecord; error?: string }
+        | null;
+
+      if (!response.ok || !body?.appointment) {
+        revert();
+        setFeedbackState(
+          createFeedbackState(
+            "No se pudo mover el turno",
+            body?.error ?? "La reprogramación no pudo guardarse.",
+            "error",
+          ),
+        );
+        return;
+      }
+
+      setAppointmentsState((current) =>
+        upsertAppointment(current, body.appointment as AppointmentRecord),
+      );
+      setSelectedDateKey(body.appointment.appointmentDate);
+      setSelectedAppointmentId(body.appointment.id);
+      refreshData();
+    } catch {
+      revert();
+      setFeedbackState(
+        createFeedbackState(
+          "No se pudo mover el turno",
+          "La reprogramación no pudo guardarse.",
+          "error",
+        ),
+      );
+    }
+  }
+
   function changeViewMode(nextViewMode: AgendaViewMode) {
     setViewMode(nextViewMode);
 
@@ -639,6 +678,10 @@ export function useAppointmentsController({
     setSelectedDateKey(dateKey);
   }
 
+  function syncVisibleRangeStart(dateKey: string) {
+    setFocusDateKey((current) => (current === dateKey ? current : dateKey));
+  }
+
   return {
     agendaMetrics,
     availableTimeOptions,
@@ -656,12 +699,11 @@ export function useAppointmentsController({
     isRefreshing,
     isStatusSubmitting,
     isSubmitting,
-    monthGridDays,
+    moveAppointment,
     openCreateDialog,
     openEditDialog,
     openStatusDialog,
     rangeMeta,
-    scheduleBounds,
     searchTerm,
     selectDate,
     selectedAppointment,
@@ -679,14 +721,13 @@ export function useAppointmentsController({
     statusFilter,
     statusReason,
     submitForm,
+    syncVisibleRangeStart,
     timeZone,
     todayKey,
     updateFormField,
     setStatusReason,
     viewMode,
     visibleAppointments,
-    weekDateKeys,
-    yearMonthDateKeys,
     goToToday,
     navigate,
     changeViewMode,
