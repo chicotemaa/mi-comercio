@@ -263,7 +263,7 @@ export function ReportsPageClient({
       </Card>
       <Tabs defaultValue="overview" className="w-full">
         <div className="overflow-x-auto">
-          <TabsList className="min-w-max">
+          <TabsList className="w-full">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="revenue">Ingresos</TabsTrigger>
             <TabsTrigger value="services">Servicios</TabsTrigger>

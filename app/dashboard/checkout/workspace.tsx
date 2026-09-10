@@ -46,7 +46,9 @@ function readPending(key: string): Pending | null {
   const raw = sessionStorage.getItem(key);
   if (!raw) return null;
   const value = JSON.parse(raw);
-  return value.payload ? {method:"POST",input:JSON.parse(value.payload),key:value.key} : value;
+  return value.payload
+    ? { method: "POST", input: JSON.parse(value.payload), key: value.key }
+    : value;
 }
 export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
   const [data, setData] = useState(initial),
@@ -77,8 +79,11 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
     remaining = data.balanceCents - entered,
     storeKey = `checkout:${a.id}`;
   useEffect(() => {
-    try { setRecover(readPending(storeKey)); }
-    catch { setError("No se pudo leer el intento pendiente del navegador."); }
+    try {
+      setRecover(readPending(storeKey));
+    } catch {
+      setError("No se pudo leer el intento pendiente del navegador.");
+    }
   }, [storeKey]);
   const timestamp = (v: string) =>
     new Intl.DateTimeFormat("es-AR", {
@@ -366,7 +371,7 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
         </aside>
         <div className="space-y-4">
           <section className="checkout-card">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-semibold">Servicio y ajustes</h2>
               <Button
                 variant="ghost"
@@ -377,7 +382,7 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                 Ajustar importe
               </Button>
             </div>
-            <div className="my-6 flex items-center gap-4">
+            <div className="checkout-service-summary my-6 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex">
               <div className="rounded-2xl bg-slate-100 p-4">
                 <Scissors size={24} />
               </div>
@@ -388,7 +393,9 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                   {a.duration_snapshot} minutos · {a.staff_name_snapshot}
                 </p>
               </div>
-              <p className="font-semibold">{money(data.baseTotalCents)}</p>
+              <p className="col-start-2 font-semibold sm:ml-auto">
+                {money(data.baseTotalCents)}
+              </p>
             </div>
             {data.totalCents !== data.baseTotalCents && (
               <div className="flex justify-between border-t py-3 text-sm">
@@ -544,7 +551,9 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                   {splits.map((s, i) => (
                     <div key={i} className="payment-split">
                       <label className="min-w-0 flex-1">
-                        <span className="sr-only">Medio de pago {i + 1}</span>
+                        <span className="payment-field-label">
+                          Medio de pago {i + 1}
+                        </span>
                         <select
                           className="w-full bg-transparent py-2 text-sm outline-none"
                           value={s.method}
@@ -571,10 +580,13 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                           )}
                         </select>
                       </label>
-                      <label className="w-[110px]">
-                        <span className="sr-only">Importe {i + 1}</span>
+                      <label className="payment-split-amount">
+                        <span className="payment-field-label">
+                          Importe {i + 1}
+                        </span>
                         <input
                           className="w-full bg-transparent py-2 text-right font-semibold outline-none"
+                          inputMode="decimal"
                           type="number"
                           min="0.01"
                           max={data.balanceCents / 100}
@@ -594,7 +606,7 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                         <button
                           type="button"
                           aria-label={`Quitar medio ${i + 1}`}
-                          className="p-1 text-slate-400"
+                          className="payment-split-remove text-slate-500"
                           onClick={() =>
                             setSplits((v) => v.filter((_, j) => j !== i))
                           }
@@ -696,6 +708,7 @@ export function CheckoutWorkspace({ initial }: { initial: CheckoutSummary }) {
                 Nuevo total del turno
                 <input
                   name="total"
+                  inputMode="decimal"
                   type="number"
                   min={data.paidCents / 100}
                   max="10000000000"

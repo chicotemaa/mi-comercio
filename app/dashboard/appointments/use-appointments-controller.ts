@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { getAvailableAppointmentTimes } from "@/lib/appointment-scheduling";
@@ -149,13 +150,21 @@ export function useAppointmentsController({
   const [appointmentsState, setAppointmentsState] = useState(
     ensureSortedAppointments(appointments),
   );
-  const [viewMode, setViewMode] = useState<AgendaViewMode>(
-    initialAppointmentId ? "day" : "week",
+  const isMobile = useIsMobile();
+  const [requestedViewMode, setViewMode] = useState<AgendaViewMode | null>(
+    null,
   );
-  const [focusDateKey, setFocusDateKey] = useState(initialDateKey || todayKey);
+  const viewMode =
+    requestedViewMode ?? (initialAppointmentId || isMobile ? "day" : "week");
+  const [rangeFocusDateKey, setFocusDateKey] = useState(
+    initialDateKey || todayKey,
+  );
   const [selectedDateKey, setSelectedDateKey] = useState(
     initialDateKey || todayKey,
   );
+  // The daily calendar and its detail list always represent the same date,
+  // including when hydration switches the initial week view to mobile day view.
+  const focusDateKey = viewMode === "day" ? selectedDateKey : rangeFocusDateKey;
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(initialAppointmentId);
@@ -729,6 +738,12 @@ export function useAppointmentsController({
     }
   }
 
+  function openDay(dateKey: string) {
+    setViewMode("day");
+    setSelectedDateKey(dateKey);
+    setFocusDateKey(dateKey);
+  }
+
   function openMonth(dateKey: string) {
     setViewMode("month");
     setFocusDateKey(dateKey);
@@ -788,6 +803,7 @@ export function useAppointmentsController({
     goToToday,
     navigate,
     changeViewMode,
+    openDay,
     confirmStatusChange,
     openMonth,
   };

@@ -153,7 +153,11 @@ function buildBusinessHours(
   staffWorkingHours: StaffWorkingHourRecord[],
 ) {
   return businessHours.flatMap((businessDay) => {
-    if (!businessDay.isOpen || !businessDay.openTime || !businessDay.closeTime) {
+    if (
+      !businessDay.isOpen ||
+      !businessDay.openTime ||
+      !businessDay.closeTime
+    ) {
       return [];
     }
 
@@ -319,7 +323,13 @@ export function AppointmentsCalendar({
             staffWorkingHours,
           )
         : [],
-    [businessHours, selectedStaffId, staffWorkingHours, viewMode, visibleDateKeys],
+    [
+      businessHours,
+      selectedStaffId,
+      staffWorkingHours,
+      viewMode,
+      visibleDateKeys,
+    ],
   );
 
   const businessHoursConfig = useMemo(
@@ -362,7 +372,9 @@ export function AppointmentsCalendar({
 
   function handleEventClick(info: EventClickArg) {
     const appointmentId = info.event.id;
-    const dateKey = info.event.start ? getDateKeyFromDate(info.event.start) : focusDateKey;
+    const dateKey = info.event.start
+      ? getDateKeyFromDate(info.event.start)
+      : focusDateKey;
     onEventClick(appointmentId, dateKey);
   }
 
@@ -382,9 +394,9 @@ export function AppointmentsCalendar({
 
   function handleEventAllow(
     dropInfo: { start: Date | null },
-    draggedEvent:
-      | { extendedProps?: { appointment?: AppointmentRecord } }
-      | null,
+    draggedEvent: {
+      extendedProps?: { appointment?: AppointmentRecord };
+    } | null,
   ) {
     const appointment = draggedEvent?.extendedProps?.appointment;
 
@@ -425,7 +437,16 @@ export function AppointmentsCalendar({
   }
 
   return (
-    <div className="appointments-calendar rounded-3xl border border-slate-200 bg-white p-3">
+    <div
+      className="appointments-calendar min-w-0 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 sm:p-3"
+      data-view={viewMode}
+    >
+      {viewMode === "week" && (
+        <p className="mb-3 text-xs text-slate-500 lg:hidden">
+          Deslizá el calendario hacia los costados para ver toda la semana. Tocá
+          un turno para gestionarlo.
+        </p>
+      )}
       <FullCalendar
         ref={calendarRef}
         plugins={[
@@ -439,8 +460,12 @@ export function AppointmentsCalendar({
         locale={esLocale}
         headerToolbar={false}
         height="auto"
-        editable={viewMode === "day" || viewMode === "week" || viewMode === "month"}
+        editable={
+          viewMode === "day" || viewMode === "week" || viewMode === "month"
+        }
         selectable={false}
+        eventLongPressDelay={600}
+        eventStartEditable={true}
         weekends
         slotDuration={`${String(Math.floor(bookingSettings.slotIntervalMinutes / 60)).padStart(2, "0")}:${String(bookingSettings.slotIntervalMinutes % 60).padStart(2, "0")}:00`}
         slotMinTime={`${String(Math.floor(calendarBounds.earliest / 60)).padStart(2, "0")}:${String(calendarBounds.earliest % 60).padStart(2, "0")}:00`}
@@ -448,7 +473,9 @@ export function AppointmentsCalendar({
         nowIndicator
         allDaySlot={false}
         expandRows
-        dayMaxEventRows={viewMode === "month" || viewMode === "year" ? 4 : undefined}
+        dayMaxEventRows={
+          viewMode === "month" || viewMode === "year" ? 4 : undefined
+        }
         eventOrder="start,-duration,title"
         eventOrderStrict
         events={[...events, ...breakBackgroundEvents]}
@@ -458,10 +485,12 @@ export function AppointmentsCalendar({
         eventDrop={handleEventDrop}
         eventAllow={handleEventAllow}
         eventOverlap={(stillEvent, movingEvent) => {
-          const stillAppointment = stillEvent.extendedProps
-            .appointment as AppointmentRecord | undefined;
-          const movingAppointment = movingEvent?.extendedProps
-            .appointment as AppointmentRecord | undefined;
+          const stillAppointment = stillEvent.extendedProps.appointment as
+            | AppointmentRecord
+            | undefined;
+          const movingAppointment = movingEvent?.extendedProps.appointment as
+            | AppointmentRecord
+            | undefined;
 
           if (!stillAppointment || !movingAppointment) {
             return true;
@@ -478,7 +507,9 @@ export function AppointmentsCalendar({
             return true;
           }
 
-          return stillAppointment.staffMemberId !== movingAppointment.staffMemberId;
+          return (
+            stillAppointment.staffMemberId !== movingAppointment.staffMemberId
+          );
         }}
         datesSet={(info) => {
           onVisibleDateChange(getDateKeyFromDate(info.view.currentStart));
@@ -487,8 +518,9 @@ export function AppointmentsCalendar({
           arg.event.id === selectedAppointmentId ? ["is-selected-event"] : []
         }
         eventContent={(contentArg) => {
-          const appointment = contentArg.event.extendedProps
-            .appointment as AppointmentRecord | undefined;
+          const appointment = contentArg.event.extendedProps.appointment as
+            | AppointmentRecord
+            | undefined;
 
           if (!appointment) {
             return <span>{contentArg.event.title}</span>;

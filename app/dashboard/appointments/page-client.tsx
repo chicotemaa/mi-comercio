@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DashboardPageHeader } from "@/components/dashboard/page-header";
@@ -91,6 +92,7 @@ export function AppointmentsPageClient({
   timeZone,
   todayKey,
 }: AppointmentsPageClientProps) {
+  const isMobile = useIsMobile();
   const controller = useAppointmentsController({
     initialDateKey,
     initialAppointmentId,
@@ -320,8 +322,22 @@ export function AppointmentsPageClient({
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
-        <Card>
+      <label className="grid gap-2 text-sm font-medium lg:hidden">
+        Día de atención
+        <Input
+          type="date"
+          value={controller.selectedDateKey}
+          onChange={(event) => {
+            if (event.target.value) controller.openDay(event.target.value);
+          }}
+        />
+      </label>
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
+        <Card
+          className={
+            isMobile && controller.viewMode === "day" ? "hidden" : "min-w-0"
+          }
+        >
           <CardHeader>
             <CardTitle className="capitalize">
               {controller.rangeMeta.title}

@@ -28,7 +28,18 @@ export function EmployeesTable({
   onToggleStatus,
 }: EmployeesTableProps) {
   return (
-    <Table>
+    <Table
+      mobileLabels={[
+        "Profesional",
+        "Liquidación",
+        "Citas",
+        "Hs registradas",
+        "Facturación",
+        "Remuneración generada",
+        "Estado",
+        "Acciones",
+      ]}
+    >
       <TableHeader>
         <TableRow>
           <TableHead>Profesional</TableHead>
@@ -107,6 +118,7 @@ export function EmployeesTable({
                 <Button
                   size="sm"
                   variant="outline"
+                  aria-label="Editar registro"
                   onClick={() => onEdit(employee)}
                 >
                   <PencilLine className="mr-2 h-4 w-4" />
@@ -115,6 +127,7 @@ export function EmployeesTable({
                 <Button
                   size="sm"
                   variant="ghost"
+                  aria-label="Cambiar estado"
                   onClick={() => onToggleStatus(employee)}
                 >
                   {employee.isActive ? (

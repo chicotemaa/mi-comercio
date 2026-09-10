@@ -1,4 +1,12 @@
 "use client";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -104,22 +112,31 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
       </div>
       {!dialog && write.feedback}
       <div className="overflow-x-auto rounded-2xl border bg-white">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead className="border-b bg-slate-50 text-left text-slate-600">
-            <tr>
+        <Table
+          mobileLabels={[
+            "Concepto",
+            "Vencimiento",
+            "Importe",
+            "Estado",
+            "Acciones",
+          ]}
+          className="w-full min-w-[760px] text-sm"
+        >
+          <TableHeader className="border-b bg-slate-50 text-left text-slate-600">
+            <TableRow>
               {["Concepto", "Vencimiento", "Importe", "Estado", "Acciones"].map(
                 (t) => (
-                  <th className="p-4 font-medium" key={t}>
+                  <TableHead className="p-4 font-medium" key={t}>
                     {t}
-                  </th>
+                  </TableHead>
                 ),
               )}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.rows.map((row) => (
-              <tr key={row.id} className="border-b last:border-0">
-                <td className="p-4">
+              <TableRow key={row.id} className="border-b last:border-0">
+                <TableCell className="p-4">
                   <p className="font-medium">{row.title}</p>
                   <p className="text-xs text-slate-500">
                     {row.category} ·{" "}
@@ -130,10 +147,12 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                   {row.vendor && (
                     <p className="text-xs text-slate-500">{row.vendor}</p>
                   )}
-                </td>
-                <td className="p-4">{shortDate(row.dueDate)}</td>
-                <td className="p-4 font-medium">{money(row.amountCents)}</td>
-                <td className="p-4">
+                </TableCell>
+                <TableCell className="p-4">{shortDate(row.dueDate)}</TableCell>
+                <TableCell className="p-4 font-medium">
+                  {money(row.amountCents)}
+                </TableCell>
+                <TableCell className="p-4">
                   <span
                     className={
                       row.overdue
@@ -161,8 +180,8 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                           : row.method}
                     </p>
                   )}
-                </td>
-                <td className="p-4">
+                </TableCell>
+                <TableCell className="p-4">
                   <div className="flex flex-wrap gap-2">
                     {row.state === "pending" && (
                       <>
@@ -209,11 +228,11 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                         </Button>
                       )}
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {!data.rows.length && (
           <div className="p-10 text-center">
             <p className="font-medium">
@@ -255,7 +274,7 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                       placeholder="Ej.: alquiler"
                     />
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="grid gap-1 text-sm">
                       Categoría
                       <input
@@ -298,7 +317,7 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                 </>
               )}
               {["plan", "edit-expense"].includes(dialog.action) && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="grid gap-1 text-sm">
                     Importe
                     <input

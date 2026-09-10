@@ -88,7 +88,7 @@ export function HoursPageClient({
         title="Horarios"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="metric-grid grid gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Días abiertos</CardTitle>

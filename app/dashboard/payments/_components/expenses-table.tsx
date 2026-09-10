@@ -35,7 +35,18 @@ export function ExpensesTable({
 }: ExpensesTableProps) {
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[980px]">
+      <Table
+        mobileLabels={[
+          "Fecha",
+          "Categoría",
+          "Detalle",
+          "Proveedor",
+          "Método",
+          "Importe",
+          "Acciones",
+        ]}
+        className="min-w-[980px]"
+      >
         <TableHeader>
           <TableRow>
             <TableHead>Fecha</TableHead>
@@ -74,6 +85,7 @@ export function ExpensesTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Ver detalle"
                     onClick={() => onView(expense)}
                   >
                     <Eye className="h-4 w-4" />
@@ -82,7 +94,10 @@ export function ExpensesTable({
                     size="sm"
                     variant="ghost"
                     disabled={!!expense.importRef}
-                    title={expense.importRef ? "Movimiento registrado" : "Editar"}
+                    title={
+                      expense.importRef ? "Movimiento registrado" : "Editar"
+                    }
+                    aria-label="Editar registro"
                     onClick={() => onEdit(expense)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -91,6 +106,7 @@ export function ExpensesTable({
                     size="sm"
                     variant="ghost"
                     disabled={!!expense.importRef}
+                    aria-label="Eliminar registro"
                     onClick={() => onDelete(expense)}
                   >
                     <Trash2 className="h-4 w-4" />

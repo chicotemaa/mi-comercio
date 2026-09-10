@@ -37,7 +37,18 @@ export function ClientsTable({
 }: ClientsTableProps) {
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[920px]">
+      <Table
+        mobileLabels={[
+          "Cliente",
+          "Contacto",
+          "Última visita",
+          "Citas",
+          "Total gastado",
+          "Estado",
+          "Acciones",
+        ]}
+        className="min-w-[920px]"
+      >
         <TableHeader>
           <TableRow>
             <TableHead>Cliente</TableHead>
@@ -103,6 +114,7 @@ export function ClientsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Ver detalle"
                     onClick={() => onView(client)}
                   >
                     <Eye className="h-4 w-4" />
@@ -110,6 +122,7 @@ export function ClientsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Editar registro"
                     onClick={() => onEdit(client)}
                   >
                     <Pencil className="h-4 w-4" />

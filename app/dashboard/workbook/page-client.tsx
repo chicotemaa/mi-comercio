@@ -1,4 +1,12 @@
 "use client";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -263,9 +271,23 @@ export function WorkbookClient({
           : "El importe de cada trabajo se conserva aunque cambien los precios del catálogo."}
       </p>
       <div className="overflow-x-auto rounded-xl border bg-white">
-        <table className="w-full min-w-[680px] text-sm">
-          <thead className="bg-slate-50 text-left">
-            <tr>
+        <Table
+          mobileLabels={
+            tab === "works"
+              ? [
+                  "Fecha",
+                  "Cliente",
+                  "Servicio",
+                  "Profesional",
+                  "Importe",
+                  "Cobro",
+                ]
+              : ["Servicio", "Variante", "Precio", "Reservas", "Acciones"]
+          }
+          className="w-full min-w-[680px] text-sm"
+        >
+          <TableHeader className="bg-slate-50 text-left">
+            <TableRow>
               {(tab === "works"
                 ? [
                     "Fecha",
@@ -277,16 +299,16 @@ export function WorkbookClient({
                   ]
                 : ["Servicio", "Variante", "Precio", "Reservas", ""]
               ).map((name, i) => (
-                <th className="p-3" key={name || i}>
+                <TableHead className="p-3" key={name || i}>
                   {name}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {tab === "works" &&
               data.rows.map((row) => (
-                <tr className="border-t" key={String(row.id)}>
+                <TableRow className="border-t" key={String(row.id)}>
                   {[
                     row.work_date,
                     row.customer_name,
@@ -294,32 +316,34 @@ export function WorkbookClient({
                     row.staff_name || "Sin asignar",
                     formatCurrency(Number(row.amount)),
                   ].map((value, i) => (
-                    <td className="p-3 align-top" key={i}>
+                    <TableCell className="p-3 align-top" key={i}>
                       {String(value ?? "")}
-                    </td>
+                    </TableCell>
                   ))}
-                  <td className="p-3 align-top">
+                  <TableCell className="p-3 align-top">
                     <CollectWork row={row} today={today} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
             {tab === "prices" &&
               data.rows.flatMap((row) =>
                 data.variants
                   .filter((v) => v.service_id === row.id && v.is_active)
                   .map((variant) => (
-                    <tr className="border-t" key={variant.id}>
-                      <td className="p-3">{String(row.name)}</td>
-                      <td className="p-3">{variant.variant_name}</td>
-                      <td className="p-3">
+                    <TableRow className="border-t" key={variant.id}>
+                      <TableCell className="p-3">{String(row.name)}</TableCell>
+                      <TableCell className="p-3">
+                        {variant.variant_name}
+                      </TableCell>
+                      <TableCell className="p-3">
                         {formatCurrency(Number(variant.price))}
-                      </td>
-                      <td className="p-3">
+                      </TableCell>
+                      <TableCell className="p-3">
                         {row.booking_enabled && row.duration_minutes
                           ? "Habilitadas"
                           : "Sin habilitar"}
-                      </td>
-                      <td className="p-3">
+                      </TableCell>
+                      <TableCell className="p-3">
                         <Button
                           size="sm"
                           variant="outline"
@@ -335,19 +359,22 @@ export function WorkbookClient({
                         >
                           Editar precio
                         </Button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )),
               )}
             {!data.rows.length && (
-              <tr>
-                <td colSpan={6} className="p-8 text-center text-slate-500">
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="p-8 text-center text-slate-500"
+                >
                   No hay registros para esta búsqueda.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       <div className="flex items-center justify-between">
         <Link
@@ -494,7 +521,7 @@ export function WorkbookClient({
                     ))}
                 </select>
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="text-sm">
                   Importe de la atención
                   <input

@@ -1,4 +1,12 @@
 "use client";
+import {
+  Table,
+  TableHeader,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -213,9 +221,18 @@ export function Payroll({
             jornadas cargadas.
           </p>
         </div>
-        <table className="w-full min-w-[680px] text-sm">
-          <thead className="bg-slate-50 text-left">
-            <tr>
+        <Table
+          mobileLabels={[
+            "Fecha",
+            "Trabajo o jornada",
+            "Base y tarifa",
+            "A pagar",
+            "Estado",
+          ]}
+          className="w-full min-w-[680px] text-sm"
+        >
+          <TableHeader className="bg-slate-50 text-left">
+            <TableRow>
               {[
                 "Fecha",
                 "Trabajo o jornada",
@@ -223,34 +240,36 @@ export function Payroll({
                 "A pagar",
                 "Estado",
               ].map((t) => (
-                <th className="p-4 font-medium" key={t}>
+                <TableHead className="p-4 font-medium" key={t}>
                   {t}
-                </th>
+                </TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.lines.map((line) => (
-              <tr className="border-t" key={line.key}>
-                <td className="p-4">{shortDate(line.date)}</td>
-                <td className="p-4">{line.description}</td>
-                <td className="p-4">
+              <TableRow className="border-t" key={line.key}>
+                <TableCell className="p-4">{shortDate(line.date)}</TableCell>
+                <TableCell className="p-4">{line.description}</TableCell>
+                <TableCell className="p-4">
                   {line.kind === "payment"
                     ? `${money(Math.round(line.base * 100))} × ${line.rate}%`
                     : `${line.base} h × ${money(Math.round(line.rate * 100))}`}
-                </td>
-                <td className="p-4 font-medium">{money(line.amountCents)}</td>
-                <td className="p-4">
+                </TableCell>
+                <TableCell className="p-4 font-medium">
+                  {money(line.amountCents)}
+                </TableCell>
+                <TableCell className="p-4">
                   {line.paid ? (
                     <span className="text-emerald-700">Liquidado</span>
                   ) : (
                     "Pendiente"
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {!data.lines.length && (
           <p className="p-8 text-center text-sm text-slate-500">
             No hay comisiones ni horas con importe para este período.

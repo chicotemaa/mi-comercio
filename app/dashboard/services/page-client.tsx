@@ -1,33 +1,49 @@
-"use client"
+"use client";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DashboardPageHeader } from "@/components/dashboard/page-header"
-import { DashboardPageShell } from "@/components/dashboard/page-shell"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SERVICE_CATEGORIES } from "@/lib/service-catalog"
-import { formatCurrency, getServiceCategoryLabel } from "@/lib/business-shared"
-import { Plus, Search } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { DashboardPageHeader } from "@/components/dashboard/page-header";
+import { DashboardPageShell } from "@/components/dashboard/page-shell";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
+import { formatCurrency, getServiceCategoryLabel } from "@/lib/business-shared";
+import { Plus, Search } from "lucide-react";
 
-import { ServiceDeleteDialog } from "./_components/service-delete-dialog"
-import { ServiceFeedbackDialog } from "./_components/service-feedback-dialog"
-import { ServiceFormDialog } from "./_components/service-form-dialog"
-import { ServiceStatusDialog } from "./_components/service-status-dialog"
-import { ServicesTable } from "./_components/services-table"
-import type { ServiceSummary } from "./service-types"
-import { useServicesController } from "./use-services-controller"
+import { ServiceDeleteDialog } from "./_components/service-delete-dialog";
+import { ServiceFeedbackDialog } from "./_components/service-feedback-dialog";
+import { ServiceFormDialog } from "./_components/service-form-dialog";
+import { ServiceStatusDialog } from "./_components/service-status-dialog";
+import { ServicesTable } from "./_components/services-table";
+import type { ServiceSummary } from "./service-types";
+import { useServicesController } from "./use-services-controller";
 
 interface ServicesPageClientProps {
-  businessName: string
-  isLive: boolean
-  services: ServiceSummary[]
+  businessName: string;
+  isLive: boolean;
+  services: ServiceSummary[];
 }
 
-export function ServicesPageClient({ businessName, isLive, services }: ServicesPageClientProps) {
-  const controller = useServicesController(services)
+export function ServicesPageClient({
+  businessName,
+  isLive,
+  services,
+}: ServicesPageClientProps) {
+  const controller = useServicesController(services);
 
   return (
     <DashboardPageShell>
@@ -39,7 +55,13 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
           </Button>
         }
         badge={
-          <Badge className={isLive ? "bg-emerald-100 text-emerald-900" : "bg-amber-100 text-amber-900"}>
+          <Badge
+            className={
+              isLive
+                ? "bg-emerald-100 text-emerald-900"
+                : "bg-amber-100 text-amber-900"
+            }
+          >
             {isLive ? "Catálogo en vivo" : "Catálogo demo"}
           </Badge>
         }
@@ -48,11 +70,18 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
         title="Servicios"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link className="inline-flex rounded-lg border bg-white px-4 py-2 text-sm font-medium" href="/dashboard/services/prices">Editar precios y variantes</Link>
-      <Card>
+      <div className="metric-grid grid gap-4">
+        <Link
+          className="inline-flex rounded-lg border bg-white px-4 py-2 text-sm font-medium"
+          href="/dashboard/services/prices"
+        >
+          Editar precios y variantes
+        </Link>
+        <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Servicios activos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Servicios activos
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -63,17 +92,25 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Ticket promedio</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Ticket promedio
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-900">{formatCurrency(controller.averageTicket)}</div>
-            <p className="text-xs text-slate-500">Promedio ponderado por reservas registradas</p>
+            <div className="text-3xl font-bold text-slate-900">
+              {formatCurrency(controller.averageTicket)}
+            </div>
+            <p className="text-xs text-slate-500">
+              Promedio ponderado por reservas registradas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Reservas acumuladas</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Reservas acumuladas
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -86,7 +123,9 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
       <Card>
         <CardHeader>
           <CardTitle>Buscar servicio</CardTitle>
-          <CardDescription>Filtra por nombre, descripción o categoría</CardDescription>
+          <CardDescription>
+            Filtra por nombre, descripción o categoría
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 lg:flex-row">
           <div className="relative flex-1">
@@ -98,7 +137,10 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
               value={controller.searchTerm}
             />
           </div>
-          <Select value={controller.categoryFilter} onValueChange={controller.setCategoryFilter}>
+          <Select
+            value={controller.categoryFilter}
+            onValueChange={controller.setCategoryFilter}
+          >
             <SelectTrigger className="w-full lg:w-56">
               <SelectValue placeholder="Categoría" />
             </SelectTrigger>
@@ -117,7 +159,10 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
       <Card>
         <CardHeader>
           <CardTitle>Catálogo</CardTitle>
-          <CardDescription>Activá las reservas online de cada servicio cuando su duración esté definida</CardDescription>
+          <CardDescription>
+            Activá las reservas online de cada servicio cuando su duración esté
+            definida
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {controller.filteredServices.length === 0 ? (
@@ -151,7 +196,7 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
         onConfirm={() => void controller.confirmDelete()}
         onOpenChange={(open) => {
           if (!open) {
-            controller.closeDeleteDialog()
+            controller.closeDeleteDialog();
           }
         }}
         service={controller.selectedServiceToDelete}
@@ -162,7 +207,7 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
         onConfirm={() => void controller.confirmToggleStatus()}
         onOpenChange={(open) => {
           if (!open) {
-            controller.closeToggleDialog()
+            controller.closeToggleDialog();
           }
         }}
         service={controller.selectedServiceToToggle}
@@ -172,10 +217,10 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
         feedback={controller.feedbackState}
         onOpenChange={(open) => {
           if (!open) {
-            controller.closeFeedbackDialog()
+            controller.closeFeedbackDialog();
           }
         }}
       />
     </DashboardPageShell>
-  )
+  );
 }

@@ -42,6 +42,7 @@ import {
   Building2,
   CalendarDays,
 } from "lucide-react";
+import { MobileNavigation, SidebarRouteLink } from "./mobile-navigation";
 import { NotificationBell } from "./notification-bell";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -160,7 +161,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
   brand: Brand;
 }) {
-  useEffect(() => { document.documentElement.dataset.palette = brand.palette; }, [brand.palette]);
+  useEffect(() => {
+    document.documentElement.dataset.palette = brand.palette;
+  }, [brand.palette]);
   const pathname = usePathname();
   const currentRoute = getRouteMeta(pathname);
   const todayLabel = new Intl.DateTimeFormat("es-AR", {
@@ -172,6 +175,9 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider data-palette={brand.palette} className="admin-shell">
+      <a href="#admin-content" className="skip-link">
+        Ir al contenido
+      </a>
       <Sidebar variant="inset" className="brand-sidebar border-none">
         <SidebarHeader className="px-4 pb-4 pt-5">
           <div className="sidebar-brand p-3">
@@ -212,10 +218,10 @@ export default function DashboardLayout({
                     }
                     className="brand-nav-item h-10 rounded-xl px-3 transition-colors"
                   >
-                    <Link href={item.url}>
+                    <SidebarRouteLink href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
-                    </Link>
+                    </SidebarRouteLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -284,10 +290,15 @@ export default function DashboardLayout({
           </div>
           <NotificationBell />
         </header>
-        <main className="flex-1 overflow-auto">
+        <div
+          tabIndex={-1}
+          id="admin-content"
+          className="admin-content min-w-0 flex-1"
+        >
           <div className="min-h-full">{children}</div>
-        </main>
+        </div>
       </SidebarInset>
+      <MobileNavigation />
     </SidebarProvider>
   );
 }

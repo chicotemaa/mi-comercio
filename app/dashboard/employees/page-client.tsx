@@ -79,10 +79,10 @@ export function EmployeesPageClient({
 
       <p className="text-sm text-slate-600">
         Configurá el cargo, la modalidad y el calendario de pago con Editar.
-        Este resumen muestra importes acumulados; en Liquidaciones podés
-        revisar cada período y los pagos registrados.
+        Este resumen muestra importes acumulados; en Liquidaciones podés revisar
+        cada período y los pagos registrados.
       </p>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="metric-grid grid gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Profesionales</CardTitle>
