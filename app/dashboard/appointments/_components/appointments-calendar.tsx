@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, {
   type DateClickArg,
 } from "@fullcalendar/interaction";
 import type { EventClickArg, EventDropArg } from "@fullcalendar/core";
-import multiMonthPlugin from "@fullcalendar/multimonth";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import esLocale from "@fullcalendar/core/locales/es";
 import type { EventInput } from "@fullcalendar/core";
@@ -29,6 +28,7 @@ import {
 
 import type { AgendaViewMode } from "../appointment-types";
 import { getWeekDateKeys } from "../appointment-utils";
+import { AppointmentsYear } from "./appointments-year";
 import {
   isHistoricalEntry,
   getAgendaEventTiming,
@@ -83,32 +83,38 @@ function buildCalendarEvents(
         startDate.getTime() + timing.durationMinutes * 60000,
       );
 
-      const palette =
-        appointment.status === "cancelled"
+      const palette = isHistoricalEntry(appointment)
+        ? {
+            backgroundColor: "#f1f3f5",
+            borderColor: "#9ca5b1",
+            textColor: "#334155",
+          }
+        : appointment.status === "cancelled"
           ? {
-              backgroundColor: "#ffe4e6",
-              borderColor: "#fb7185",
+              backgroundColor: "#fff1f2",
+              borderColor: "#d9949f",
               textColor: "#881337",
             }
           : appointment.status === "completed"
             ? {
-                backgroundColor: "#e0f2fe",
-                borderColor: "#38bdf8",
+                backgroundColor: "#edf5fa",
+                borderColor: "#8bacbf",
                 textColor: "#0c4a6e",
               }
             : appointment.status === "pending"
               ? {
-                  backgroundColor: "#fef3c7",
-                  borderColor: "#f59e0b",
+                  backgroundColor: "#fff8e7",
+                  borderColor: "#c9a75a",
                   textColor: "#78350f",
                 }
               : {
-                  backgroundColor: "#dcfce7",
-                  borderColor: "#22c55e",
+                  backgroundColor: "#eef6f0",
+                  borderColor: "#87ab91",
                   textColor: "#14532d",
                 };
 
       return {
+        display: "block",
         startEditable: timing.startEditable,
         durationEditable: timing.durationEditable,
         id: appointment.id,
@@ -239,6 +245,8 @@ interface AppointmentsCalendarProps {
   businessHours: BusinessHourRecord[];
   focusDateKey: string;
   onDateClick: (dateKey: string, time?: string) => void;
+  onOpenDay: (dateKey: string) => void;
+  onOpenMonth: (dateKey: string) => void;
   onEventClick: (appointmentId: string, dateKey: string) => void;
   onEventDrop: (
     appointmentId: string,
@@ -259,6 +267,8 @@ export function AppointmentsCalendar({
   businessHours,
   focusDateKey,
   onDateClick,
+  onOpenDay,
+  onOpenMonth,
   onEventClick,
   onEventDrop,
   onVisibleDateChange,
@@ -268,6 +278,19 @@ export function AppointmentsCalendar({
   viewMode,
 }: AppointmentsCalendarProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [compactMonth, setCompactMonth] = useState(false);
+  const summaryOnly =
+    viewMode === "year" || (viewMode === "month" && compactMonth);
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setCompactMonth(entry.contentRect.width < 560),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const fullCalendarView = mapViewModeToFullCalendarView(viewMode);
 
   useEffect(() => {
@@ -367,6 +390,10 @@ export function AppointmentsCalendar({
 
   function handleDateClick(info: DateClickArg) {
     const dateKey = info.dateStr.slice(0, 10);
+    if (info.allDay) {
+      onOpenDay(dateKey);
+      return;
+    }
     const timeValue = info.allDay ? undefined : getTimeValueFromDate(info.date);
 
     if (timeValue) {
@@ -399,6 +426,7 @@ export function AppointmentsCalendar({
   }
 
   function handleEventClick(info: EventClickArg) {
+    info.el.focus({ preventScroll: true });
     const appointmentId = info.event.id;
     const dateKey = info.event.start
       ? getDateKeyFromDate(info.event.start)
@@ -469,125 +497,149 @@ export function AppointmentsCalendar({
 
   return (
     <div
-      className="appointments-calendar min-w-0 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2 sm:p-3"
+      ref={containerRef}
+      className="appointments-calendar"
       data-view={viewMode}
+      data-summary={summaryOnly ? "true" : "false"}
     >
+      {summaryOnly && (
+        <p className="mb-3 text-xs text-slate-500">
+          Cada número indica las atenciones del día. Tocá para verlas.
+        </p>
+      )}
       {viewMode === "week" && (
         <p className="mb-3 text-xs text-slate-500 lg:hidden">
           Deslizá el calendario hacia los costados para ver toda la semana. Tocá
           un turno para gestionarlo.
         </p>
       )}
-      <FullCalendar
-        ref={calendarRef}
-        plugins={[
-          dayGridPlugin,
-          timeGridPlugin,
-          interactionPlugin,
-          multiMonthPlugin,
-        ]}
-        initialView={fullCalendarView}
-        initialDate={focusDateKey}
-        locale={esLocale}
-        headerToolbar={false}
-        height="auto"
-        editable={
-          viewMode === "day" || viewMode === "week" || viewMode === "month"
-        }
-        selectable={false}
-        eventLongPressDelay={600}
-        eventStartEditable={true}
-        weekends
-        slotDuration={`${String(Math.floor(bookingSettings.slotIntervalMinutes / 60)).padStart(2, "0")}:${String(bookingSettings.slotIntervalMinutes % 60).padStart(2, "0")}:00`}
-        slotMinTime={`${String(Math.floor(displayBounds.earliest / 60)).padStart(2, "0")}:${String(displayBounds.earliest % 60).padStart(2, "0")}:00`}
-        slotMaxTime={`${String(Math.floor(displayBounds.latest / 60)).padStart(2, "0")}:${String(displayBounds.latest % 60).padStart(2, "0")}:00`}
-        nowIndicator
-        allDaySlot={false}
-        expandRows
-        dayMaxEventRows={
-          viewMode === "month" || viewMode === "year" ? 4 : undefined
-        }
-        eventOrder="start,-duration,title"
-        eventOrderStrict
-        events={[...events, ...breakBackgroundEvents]}
-        businessHours={businessHoursConfig}
-        dateClick={handleDateClick}
-        eventClick={handleEventClick}
-        eventDrop={handleEventDrop}
-        eventAllow={handleEventAllow}
-        eventOverlap={(stillEvent, movingEvent) => {
-          const stillAppointment = stillEvent.extendedProps.appointment as
-            | AgendaEntry
-            | undefined;
-          const movingAppointment = movingEvent?.extendedProps.appointment as
-            | AgendaEntry
-            | undefined;
-
-          if (
-            !stillAppointment ||
-            !movingAppointment ||
-            isHistoricalEntry(stillAppointment) ||
-            isHistoricalEntry(movingAppointment)
-          ) {
-            return true;
+      {viewMode === "year" ? (
+        <AppointmentsYear
+          appointments={appointments}
+          focusDateKey={focusDateKey}
+          onOpenDay={onOpenDay}
+          onOpenMonth={onOpenMonth}
+        />
+      ) : (
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView={fullCalendarView}
+          initialDate={focusDateKey}
+          locale={esLocale}
+          headerToolbar={false}
+          height="auto"
+          editable={
+            viewMode === "day" || viewMode === "week" || viewMode === "month"
           }
-
-          if (stillAppointment.id === movingAppointment.id) {
-            return true;
+          selectable={false}
+          eventLongPressDelay={600}
+          eventInteractive
+          eventMinHeight={44}
+          eventMaxStack={viewMode === "week" ? 2 : 4}
+          eventShortHeight={65}
+          slotEventOverlap={false}
+          eventStartEditable={true}
+          weekends
+          slotDuration={`${String(Math.floor(bookingSettings.slotIntervalMinutes / 60)).padStart(2, "0")}:${String(bookingSettings.slotIntervalMinutes % 60).padStart(2, "0")}:00`}
+          slotMinTime={`${String(Math.floor(displayBounds.earliest / 60)).padStart(2, "0")}:${String(displayBounds.earliest % 60).padStart(2, "0")}:00`}
+          slotMaxTime={`${String(Math.floor(displayBounds.latest / 60)).padStart(2, "0")}:${String(displayBounds.latest % 60).padStart(2, "0")}:00`}
+          nowIndicator
+          allDaySlot={false}
+          expandRows
+          dayMaxEvents={summaryOnly ? 0 : viewMode === "month" ? 3 : false}
+          moreLinkContent={(arg) =>
+            summaryOnly ? `${arg.num}` : `+${arg.num} más`
           }
+          moreLinkClick={(arg) => {
+            // FullCalendar passes its UTC date marker here, unlike event.start.
+            // Local date getters would open the previous day in Argentina.
+            onOpenDay(arg.date.toISOString().slice(0, 10));
+            return "timeGridDay";
+          }}
+          moreLinkDidMount={({ el }) => el.setAttribute("role", "button")}
+          navLinks
+          navLinkDayClick={(date) => onOpenDay(getDateKeyFromDate(date))}
+          eventOrder="start,-duration,title"
+          eventOrderStrict
+          events={[...events, ...breakBackgroundEvents]}
+          businessHours={businessHoursConfig}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          eventDidMount={({ el, event }) => {
+            if (event.extendedProps.appointment)
+              el.setAttribute("aria-haspopup", "dialog");
+          }}
+          eventDrop={handleEventDrop}
+          eventAllow={handleEventAllow}
+          eventOverlap={(stillEvent, movingEvent) => {
+            const stillAppointment = stillEvent.extendedProps.appointment as
+              | AgendaEntry
+              | undefined;
+            const movingAppointment = movingEvent?.extendedProps.appointment as
+              | AgendaEntry
+              | undefined;
 
-          if (
-            stillAppointment.status === "cancelled" ||
-            movingAppointment.status === "cancelled"
-          ) {
-            return true;
+            if (
+              !stillAppointment ||
+              !movingAppointment ||
+              isHistoricalEntry(stillAppointment) ||
+              isHistoricalEntry(movingAppointment)
+            ) {
+              return true;
+            }
+
+            if (stillAppointment.id === movingAppointment.id) {
+              return true;
+            }
+
+            if (
+              stillAppointment.status === "cancelled" ||
+              movingAppointment.status === "cancelled"
+            ) {
+              return true;
+            }
+
+            return (
+              stillAppointment.staffMemberId !== movingAppointment.staffMemberId
+            );
+          }}
+          datesSet={(info) => {
+            onVisibleDateChange(getDateKeyFromDate(info.view.currentStart));
+          }}
+          eventClassNames={(arg) =>
+            arg.event.id === selectedAppointmentId ? ["is-selected-event"] : []
           }
+          eventContent={(contentArg) => {
+            const appointment = contentArg.event.extendedProps.appointment as
+              | AgendaEntry
+              | undefined;
 
-          return (
-            stillAppointment.staffMemberId !== movingAppointment.staffMemberId
-          );
-        }}
-        datesSet={(info) => {
-          onVisibleDateChange(getDateKeyFromDate(info.view.currentStart));
-        }}
-        eventClassNames={(arg) =>
-          arg.event.id === selectedAppointmentId ? ["is-selected-event"] : []
-        }
-        eventContent={(contentArg) => {
-          const appointment = contentArg.event.extendedProps.appointment as
-            | AgendaEntry
-            | undefined;
+            if (!appointment) {
+              return <span>{contentArg.event.title}</span>;
+            }
 
-          if (!appointment) {
-            return <span>{contentArg.event.title}</span>;
-          }
-
-          return (
-            <div
-              className="fc-appointment-event"
-              title={
-                isHistoricalEntry(appointment)
-                  ? "Atención realizada · Hora y duración estimadas"
-                  : undefined
-              }
-            >
-              <div className="fc-appointment-event__time">
-                {formatAppointmentTime(appointment.appointmentTime)}
-                {isHistoricalEntry(appointment) && " · Estimada"}
+            const label = `${formatAppointmentTime(appointment.appointmentTime)}${isHistoricalEntry(appointment) ? ", hora estimada" : ""} · ${appointment.customerName} · ${appointment.serviceName} · ${appointment.staffName || "Sin profesional"} · ${getStatusLabel(appointment.status)}`;
+            return (
+              <div className="fc-appointment-event" title={label}>
+                <span className="sr-only">Ver detalle: {label}</span>
+                <div className="fc-appointment-event__time" aria-hidden="true">
+                  {formatAppointmentTime(appointment.appointmentTime)}
+                  {isHistoricalEntry(appointment) && (
+                    <span aria-hidden="true"> ≈</span>
+                  )}
+                </div>
+                <div className="fc-appointment-event__title" aria-hidden="true">
+                  {appointment.customerName}
+                </div>
+                <div className="fc-appointment-event__meta" aria-hidden="true">
+                  {appointment.serviceName}
+                </div>
               </div>
-              <div className="fc-appointment-event__title">
-                {appointment.customerName}
-              </div>
-              <div className="fc-appointment-event__meta">
-                {appointment.serviceName} ·{" "}
-                {isHistoricalEntry(appointment)
-                  ? "Historial"
-                  : getStatusLabel(appointment.status)}
-              </div>
-            </div>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

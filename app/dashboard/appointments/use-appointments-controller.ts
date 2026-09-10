@@ -107,6 +107,7 @@ function upsertAppointment(
 }
 
 export function useAppointmentsController({
+  initialViewMode,
   initialDateKey,
   initialAppointmentId = null,
   initialCreate = false,
@@ -122,6 +123,7 @@ export function useAppointmentsController({
   timeZone,
   todayKey,
 }: {
+  initialViewMode?: AgendaViewMode;
   initialDateKey?: string;
   initialAppointmentId?: string | null;
   initialCreate?: boolean;
@@ -160,7 +162,7 @@ export function useAppointmentsController({
   );
   const isMobile = useIsMobile();
   const [requestedViewMode, setViewMode] = useState<AgendaViewMode | null>(
-    null,
+    initialViewMode ?? null,
   );
   const viewMode =
     requestedViewMode ?? (initialAppointmentId || isMobile ? "day" : "week");

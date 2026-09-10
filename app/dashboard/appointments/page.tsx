@@ -2,6 +2,7 @@ import { getBusinessAgendaBundle } from "@/lib/business-data";
 import { getDateKeyInTimeZone } from "@/lib/business-shared";
 
 import { AppointmentsPageClient } from "./page-client";
+import type { AgendaViewMode } from "./appointment-types";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +44,16 @@ export default async function AppointmentsPage({
   const initialEntryId =
     selected?.id || (selectedWork ? `history:${selectedWork.id}` : null);
   const initialCreate = query.new === "1";
+  const initialViewMode =
+    typeof query.view === "string" &&
+    ["day", "week", "month", "year"].includes(query.view)
+      ? (query.view as AgendaViewMode)
+      : undefined;
 
   return (
     <AppointmentsPageClient
-      key={`${initialEntryId || ""}:${initialDateKey}:${initialCreate}`}
+      key={`${initialEntryId || ""}:${initialDateKey}:${initialCreate}:${initialViewMode || ""}`}
+      initialViewMode={initialViewMode}
       initialDateKey={initialDateKey}
       initialAppointmentId={initialEntryId}
       initialCreate={initialCreate}

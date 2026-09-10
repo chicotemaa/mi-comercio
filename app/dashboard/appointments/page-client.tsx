@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,11 +49,13 @@ import { AppointmentsCalendar } from "./_components/appointments-calendar";
 import { AppointmentFormDialog } from "./_components/appointment-form-dialog";
 import { AppointmentStatusDialog } from "./_components/appointment-status-dialog";
 import { AppointmentsSelectedDayPanel } from "./_components/appointments-selected-day-panel";
+import { AppointmentDetailDialog } from "./_components/appointment-detail-dialog";
 import type { AgendaViewMode } from "./appointment-types";
 import type { AgendaSourceFilter } from "@/lib/agenda-history";
 import { useAppointmentsController } from "./use-appointments-controller";
 
 interface AppointmentsPageClientProps {
+  initialViewMode?: AgendaViewMode;
   initialDateKey?: string;
   initialAppointmentId?: string | null;
   initialCreate?: boolean;
@@ -79,6 +82,7 @@ const AGENDA_VIEW_OPTIONS: Array<{ label: string; value: AgendaViewMode }> = [
 ];
 
 export function AppointmentsPageClient({
+  initialViewMode,
   initialDateKey,
   initialAppointmentId,
   initialCreate,
@@ -97,7 +101,10 @@ export function AppointmentsPageClient({
   todayKey,
 }: AppointmentsPageClientProps) {
   const isMobile = useIsMobile();
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
   const controller = useAppointmentsController({
+    initialViewMode,
     initialDateKey,
     initialAppointmentId,
     initialCreate,
@@ -115,11 +122,16 @@ export function AppointmentsPageClient({
   });
 
   function handleSelectAppointment(appointmentId: string, dateKey?: string) {
+    detailTriggerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     if (dateKey) {
       controller.selectDate(dateKey);
     }
 
     controller.setSelectedAppointmentId(appointmentId);
+    setIsDetailOpen(true);
   }
 
   return (
@@ -325,7 +337,7 @@ export function AppointmentsPageClient({
         </CardContent>
       </Card>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
+      <div className="agenda-workspace" data-view={controller.viewMode}>
         <Card
           className={
             isMobile && controller.viewMode === "day" ? "hidden" : "min-w-0"
@@ -347,6 +359,8 @@ export function AppointmentsPageClient({
             <AppointmentsCalendar
               appointments={controller.visibleAppointments}
               bookingSettings={bookingSettings}
+              onOpenDay={controller.openDay}
+              onOpenMonth={controller.openMonth}
               businessHours={businessHours}
               focusDateKey={controller.focusDateKey}
               onDateClick={(dateKey, time) => {
@@ -382,14 +396,31 @@ export function AppointmentsPageClient({
           onCreate={() =>
             controller.openCreateDialog({ dateKey: controller.selectedDateKey })
           }
-          onEdit={controller.openEditDialog}
-          onSelectAppointment={controller.setSelectedAppointmentId}
-          onStatusChange={controller.openStatusDialog}
+          onSelectAppointment={handleSelectAppointment}
           selectedAppointmentId={controller.selectedAppointmentId}
           timeZone={timeZone}
         />
       </div>
 
+      <AppointmentDetailDialog
+        entry={controller.selectedAppointment}
+        isOpen={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        timeZone={timeZone}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (!controller.isFormOpen && !controller.statusDialogState)
+            detailTriggerRef.current?.focus({ preventScroll: true });
+        }}
+        onEdit={(entry) => {
+          setIsDetailOpen(false);
+          controller.openEditDialog(entry);
+        }}
+        onStatusChange={(entry, status) => {
+          setIsDetailOpen(false);
+          controller.openStatusDialog(entry, status);
+        }}
+      />
       <AppointmentFormDialog
         appointmentBeingEdited={controller.editingAppointment}
         availableTimeOptions={controller.availableTimeOptions}
