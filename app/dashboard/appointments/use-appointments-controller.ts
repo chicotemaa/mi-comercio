@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { getAvailableAppointmentTimes } from "@/lib/appointment-scheduling";
+import {
+  buildHistoricalAgendaEntries,
+  matchesAgendaSource,
+  type AgendaSourceFilter,
+} from "@/lib/agenda-history";
 import type {
   AppointmentRecord,
+  WorkRecord,
   AppointmentStatus,
   BookingSettingsRecord,
   BusinessHourRecord,
@@ -100,7 +107,12 @@ function upsertAppointment(
 }
 
 export function useAppointmentsController({
+  initialViewMode,
+  initialDateKey,
+  initialAppointmentId = null,
+  initialCreate = false,
   appointments,
+  workRecords,
   bookingSettings,
   businessHours,
   customers,
@@ -111,7 +123,12 @@ export function useAppointmentsController({
   timeZone,
   todayKey,
 }: {
+  initialViewMode?: AgendaViewMode;
+  initialDateKey?: string;
+  initialAppointmentId?: string | null;
+  initialCreate?: boolean;
   appointments: AppointmentRecord[];
+  workRecords: WorkRecord[];
   bookingSettings: BookingSettingsRecord;
   businessHours: BusinessHourRecord[];
   customers: CustomerRecord[];
@@ -123,28 +140,64 @@ export function useAppointmentsController({
   todayKey: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    let last = 0;
+    const refresh = () => {
+      if (document.visibilityState === "visible" && Date.now() - last > 15000) {
+        last = Date.now();
+        router.refresh();
+      }
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [router]);
   const [isRefreshing, startTransition] = useTransition();
   const [appointmentsState, setAppointmentsState] = useState(
     ensureSortedAppointments(appointments),
   );
-  const [viewMode, setViewMode] = useState<AgendaViewMode>("week");
-  const [focusDateKey, setFocusDateKey] = useState(todayKey);
-  const [selectedDateKey, setSelectedDateKey] = useState(todayKey);
+  const isMobile = useIsMobile();
+  const [requestedViewMode, setViewMode] = useState<AgendaViewMode | null>(
+    initialViewMode ?? null,
+  );
+  const viewMode =
+    requestedViewMode ?? (initialAppointmentId || isMobile ? "day" : "week");
+  const [rangeFocusDateKey, setFocusDateKey] = useState(
+    initialDateKey || todayKey,
+  );
+  const [selectedDateKey, setSelectedDateKey] = useState(
+    initialDateKey || todayKey,
+  );
+  // The daily calendar and its detail list always represent the same date,
+  // including when hydration switches the initial week view to mobile day view.
+  const focusDateKey = viewMode === "day" ? selectedDateKey : rangeFocusDateKey;
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
-  >(null);
+  >(initialAppointmentId);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | AppointmentStatus>(
     "all",
   );
   const [staffFilter, setStaffFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState<AgendaSourceFilter>("all");
   const [editingAppointment, setEditingAppointment] =
     useState<AppointmentRecord | null>(null);
-  const [formState, setFormState] = useState<AppointmentFormState>(
-    createAppointmentFormState({ dateKey: todayKey }),
-  );
+  const [formState, setFormState] = useState<AppointmentFormState>(() => ({
+    ...createAppointmentFormState({ dateKey: initialDateKey || todayKey }),
+    ...(initialCreate
+      ? {
+          serviceId:
+            services.find((s) => s.isActive && s.durationMinutes > 0)?.id || "",
+          staffMemberId: staffMembers.find((s) => s.isActive)?.id || "",
+        }
+      : {}),
+  }));
   const [formError, setFormError] = useState<string | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(initialCreate);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusDialogState, setStatusDialogState] =
     useState<AppointmentStatusDialogState | null>(null);
@@ -160,7 +213,9 @@ export function useAppointmentsController({
   const activeServices = useMemo(
     () =>
       services.filter(
-        (service) => service.isActive || service.id === formState.serviceId,
+        (service) =>
+          (service.isActive && service.durationMinutes > 0) ||
+          service.id === formState.serviceId,
       ),
     [formState.serviceId, services],
   );
@@ -191,11 +246,7 @@ export function useAppointmentsController({
         (assignment) => assignment.serviceId === formState.serviceId,
       );
     });
-  }, [
-    activeStaffMembers,
-    formState.serviceId,
-    staffServiceAssignments,
-  ]);
+  }, [activeStaffMembers, formState.serviceId, staffServiceAssignments]);
 
   function getCompatibleStaffForService(serviceId: string) {
     if (!serviceId) {
@@ -211,7 +262,9 @@ export function useAppointmentsController({
         return true;
       }
 
-      return assignments.some((assignment) => assignment.serviceId === serviceId);
+      return assignments.some(
+        (assignment) => assignment.serviceId === serviceId,
+      );
     });
   }
 
@@ -235,24 +288,48 @@ export function useAppointmentsController({
     }));
   }, [compatibleStaffMembers, formState.staffMemberId, isFormOpen]);
 
+  const historicalEntries = useMemo(
+    () =>
+      buildHistoricalAgendaEntries(
+        workRecords,
+        appointmentsState,
+        businessHours,
+      ),
+    [workRecords, appointmentsState, businessHours],
+  );
+  const agendaEntries = useMemo(
+    () =>
+      [...appointmentsState, ...historicalEntries].filter((entry) =>
+        matchesAgendaSource(entry, sourceFilter),
+      ),
+    [appointmentsState, historicalEntries, sourceFilter],
+  );
+  const latestHistoryDate = historicalEntries.at(-1)?.appointmentDate ?? null;
   const visibleAppointments = useMemo(
     () =>
-      filterAppointmentsForAgenda(appointmentsState, viewMode, focusDateKey, {
+      filterAppointmentsForAgenda(agendaEntries, viewMode, focusDateKey, {
         searchTerm,
         staffFilter,
         statusFilter,
       }),
-    [appointmentsState, focusDateKey, searchTerm, staffFilter, statusFilter, viewMode],
+    [
+      agendaEntries,
+      focusDateKey,
+      searchTerm,
+      staffFilter,
+      statusFilter,
+      viewMode,
+    ],
   );
 
   const selectedDateAppointments = useMemo(
     () =>
-      getAppointmentsForDate(appointmentsState, selectedDateKey, {
+      getAppointmentsForDate(agendaEntries, selectedDateKey, {
         searchTerm,
         staffFilter,
         statusFilter,
       }),
-    [appointmentsState, searchTerm, selectedDateKey, staffFilter, statusFilter],
+    [agendaEntries, searchTerm, selectedDateKey, staffFilter, statusFilter],
   );
 
   useEffect(() => {
@@ -288,7 +365,8 @@ export function useAppointmentsController({
   );
 
   const selectedService = useMemo(
-    () => services.find((service) => service.id === formState.serviceId) ?? null,
+    () =>
+      services.find((service) => service.id === formState.serviceId) ?? null,
     [formState.serviceId, services],
   );
 
@@ -403,10 +481,21 @@ export function useAppointmentsController({
       activeStaffMembers[0] ??
       null;
 
+    const customer = customers.find(
+      (c) => c.id === searchParams.get("customer"),
+    );
     setEditingAppointment(null);
     setFormError(null);
     setFormState({
       ...createAppointmentFormState({ dateKey, time }),
+      ...(customer
+        ? {
+            customerId: customer.id,
+            customerName: customer.fullName,
+            customerContact: customer.primaryContact,
+            customerEmail: customer.email || "",
+          }
+        : {}),
       serviceId: defaultService?.id ?? "",
       staffMemberId: defaultStaff?.id ?? "",
     });
@@ -468,9 +557,10 @@ export function useAppointmentsController({
         }),
       });
 
-      const body = (await response.json().catch(() => null)) as
-        | { appointment?: AppointmentRecord; error?: string }
-        | null;
+      const body = (await response.json().catch(() => null)) as {
+        appointment?: AppointmentRecord;
+        error?: string;
+      } | null;
 
       if (!response.ok || !body?.appointment) {
         setFormError(body?.error ?? "No se pudo guardar el turno.");
@@ -485,7 +575,9 @@ export function useAppointmentsController({
       setIsFormOpen(false);
       setEditingAppointment(null);
       setFormState(
-        createAppointmentFormState({ dateKey: body.appointment.appointmentDate }),
+        createAppointmentFormState({
+          dateKey: body.appointment.appointmentDate,
+        }),
       );
       setFeedbackState(
         createFeedbackState(
@@ -529,9 +621,10 @@ export function useAppointmentsController({
         },
       );
 
-      const body = (await response.json().catch(() => null)) as
-        | { appointment?: AppointmentRecord; error?: string }
-        | null;
+      const body = (await response.json().catch(() => null)) as {
+        appointment?: AppointmentRecord;
+        error?: string;
+      } | null;
 
       if (!response.ok || !body?.appointment) {
         closeStatusDialog();
@@ -611,9 +704,10 @@ export function useAppointmentsController({
         }),
       });
 
-      const body = (await response.json().catch(() => null)) as
-        | { appointment?: AppointmentRecord; error?: string }
-        | null;
+      const body = (await response.json().catch(() => null)) as {
+        appointment?: AppointmentRecord;
+        error?: string;
+      } | null;
 
       if (!response.ok || !body?.appointment) {
         revert();
@@ -647,10 +741,9 @@ export function useAppointmentsController({
 
   function changeViewMode(nextViewMode: AgendaViewMode) {
     setViewMode(nextViewMode);
-
-    if (nextViewMode === "day") {
-      setFocusDateKey(selectedDateKey);
-    }
+    // Switching from a month back to a week keeps the selected attention in
+    // view, instead of jumping to the week containing the first of the month.
+    setFocusDateKey(selectedDateKey);
   }
 
   function navigate(direction: -1 | 1) {
@@ -672,6 +765,12 @@ export function useAppointmentsController({
     }
   }
 
+  function openDay(dateKey: string) {
+    setViewMode("day");
+    setSelectedDateKey(dateKey);
+    setFocusDateKey(dateKey);
+  }
+
   function openMonth(dateKey: string) {
     setViewMode("month");
     setFocusDateKey(dateKey);
@@ -683,6 +782,9 @@ export function useAppointmentsController({
   }
 
   return {
+    latestHistoryDate,
+    sourceFilter,
+    setSourceFilter,
     agendaMetrics,
     availableTimeOptions,
     closeFeedbackDialog,
@@ -731,6 +833,7 @@ export function useAppointmentsController({
     goToToday,
     navigate,
     changeViewMode,
+    openDay,
     confirmStatusChange,
     openMonth,
   };

@@ -17,9 +17,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 
   const { id } = await context.params
-  const { supabase, business } = businessResult.data
+  const { backend, business } = businessResult.data
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("services")
     .update({
       is_active: parsed.isActive,
@@ -35,7 +35,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "No se pudo actualizar el estado del servicio." }, { status: 500 })
   }
 
-  await supabase
+  await backend
     .from("service_price_variants")
     .update({
       is_active: parsed.isActive,

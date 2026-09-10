@@ -27,9 +27,9 @@ export async function POST(request: Request) {
     return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("expenses")
     .insert({
       business_id: business.id,

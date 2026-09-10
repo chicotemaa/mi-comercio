@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,12 @@ export function PaymentsPageClient({
       <DashboardPageHeader
         actions={
           <>
+            <Button asChild>
+              <Link href="/dashboard/checkout">
+                <Wallet className="mr-2 h-4 w-4" />
+                Abrir checkout
+              </Link>
+            </Button>
             <Button
               variant={
                 controller.activeTab === "payments" ? "default" : "outline"
@@ -152,7 +159,7 @@ export function PaymentsPageClient({
               onClick={() => controller.openCreateDialog("payment")}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo cobro
+              Cobro sin turno
             </Button>
             <Button
               variant={
@@ -164,7 +171,9 @@ export function PaymentsPageClient({
               Nuevo gasto
             </Button>
             <Button
-              variant={controller.activeTab === "payouts" ? "default" : "outline"}
+              variant={
+                controller.activeTab === "payouts" ? "default" : "outline"
+              }
               onClick={() => controller.openCreateDialog("payout")}
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -173,17 +182,13 @@ export function PaymentsPageClient({
           </>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Caja en vivo" : "Caja demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} centraliza aquí cobros, gastos y distribuciones sobre la misma base operativa.`}
+        description={`Ingresos, gastos y pagos de ${businessName}.`}
         eyebrow="Caja"
         supporting={
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
@@ -197,7 +202,7 @@ export function PaymentsPageClient({
         title="Caja y movimientos"
       />
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="metric-grid grid gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Cobrado</CardTitle>
@@ -290,7 +295,9 @@ export function PaymentsPageClient({
               <Button
                 key={option.value}
                 variant={
-                  controller.periodFilter === option.value ? "default" : "outline"
+                  controller.periodFilter === option.value
+                    ? "default"
+                    : "outline"
                 }
                 onClick={() => controller.setPeriodFilter(option.value)}
                 size="sm"
@@ -305,7 +312,9 @@ export function PaymentsPageClient({
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
                 className="pl-9"
-                onChange={(event) => controller.setSearchTerm(event.target.value)}
+                onChange={(event) =>
+                  controller.setSearchTerm(event.target.value)
+                }
                 placeholder="Buscar movimiento"
                 value={controller.searchTerm}
               />
@@ -340,7 +349,7 @@ export function PaymentsPageClient({
         className="w-full"
       >
         <div className="overflow-x-auto">
-          <TabsList className="min-w-max">
+          <TabsList className="w-full">
             <TabsTrigger value="payments">Cobros</TabsTrigger>
             <TabsTrigger value="expenses">Gastos</TabsTrigger>
             <TabsTrigger value="payouts">Distribuciones</TabsTrigger>
@@ -563,7 +572,7 @@ export function PaymentsPageClient({
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="metric-grid grid gap-4">
             <Card>
               <CardContent className="flex items-center gap-3 pt-6">
                 <ArrowDownCircle className="h-8 w-8 text-emerald-600" />

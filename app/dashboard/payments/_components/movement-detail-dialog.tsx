@@ -73,7 +73,7 @@ export function MovementDetailDialog({
                 <p>
                   <span className="font-medium text-slate-900">Fecha:</span>{" "}
                   {formatDisplayDate(
-                    movement.data.processedAt ?? movement.data.createdAt,
+                    movement.data.collectionDate ?? movement.data.processedAt ?? movement.data.createdAt,
                     timeZone,
                   )}
                 </p>

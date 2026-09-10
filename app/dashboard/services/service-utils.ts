@@ -4,6 +4,7 @@ import type { ServiceCategory } from "@/lib/business-shared"
 import type { ServiceFormState, ServiceSummary } from "./service-types"
 
 export const INITIAL_SERVICE_FORM: ServiceFormState = {
+  bookingEnabled: true,
   name: "",
   description: "",
   price: "",
@@ -34,6 +35,7 @@ export function createServiceFormState(service?: ServiceSummary | null): Service
     description: service.description ?? "",
     price: String(service.price),
     category: service.category ?? "corte",
-    durationMinutes: String(service.durationMinutes),
+    durationMinutes: service.durationMinutes ? String(service.durationMinutes) : "",
+    bookingEnabled: service.bookingEnabled !== false && service.durationMinutes > 0,
   }
 }

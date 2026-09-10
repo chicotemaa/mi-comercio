@@ -10,10 +10,7 @@ import {
 import { parseDailyScheduleDay } from "@/lib/daily-schedule";
 import type { ManagedBusinessContext } from "@/lib/managed-business";
 export { getManagedBusiness } from "@/lib/managed-business";
-import {
-  fetchBusinessHoursRows,
-  isMissingScheduleBreakColumnsError,
-} from "@/lib/schedule-schema";
+import { fetchBusinessHoursRows } from "@/lib/schedule-schema";
 import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
 export type { ManagedBusinessContext } from "@/lib/managed-business";
 
@@ -27,6 +24,12 @@ export interface EmployeeWorkingHourPayload {
 }
 
 export interface EmployeePayload {
+  collectionCommissionRate?: unknown;
+  payrollCadence?: unknown;
+  payrollWeekday?: unknown;
+  payrollCutoffFirst?: unknown;
+  payrollCutoffSecond?: unknown;
+  payrollPayDelay?: unknown;
   fullName?: unknown;
   role?: unknown;
   email?: unknown;
@@ -43,6 +46,12 @@ export interface EmployeePayload {
 }
 
 export interface ParsedEmployeePayload {
+  collectionCommissionRate: number;
+  payrollCadence: "weekly" | "semimonthly" | "monthly";
+  payrollWeekday: number;
+  payrollCutoffFirst: number;
+  payrollCutoffSecond: number;
+  payrollPayDelay: number;
   fullName: string;
   role: string | null;
   email: string | null;
@@ -183,6 +192,43 @@ export function parseEmployeePayload(payload: EmployeePayload): {
   data?: ParsedEmployeePayload;
   error?: string;
 } {
+  const collectionCommissionRate = Number(
+    payload.collectionCommissionRate ?? 0,
+  );
+  const payrollCadence =
+    payload.payrollCadence === "weekly"
+      ? "weekly"
+      : payload.payrollCadence === "monthly"
+        ? "monthly"
+        : "semimonthly";
+  const payrollWeekday = Number(payload.payrollWeekday ?? 0),
+    payrollCutoffFirst = Number(payload.payrollCutoffFirst ?? 15),
+    payrollCutoffSecond = Number(payload.payrollCutoffSecond ?? 31),
+    payrollPayDelay = Number(payload.payrollPayDelay ?? 0);
+  if (
+    !Number.isFinite(collectionCommissionRate) ||
+    collectionCommissionRate < 0 ||
+    collectionCommissionRate > 100
+  )
+    return { error: "El porcentaje debe estar entre 0 y 100." };
+  if (
+    ![
+      payrollWeekday,
+      payrollCutoffFirst,
+      payrollCutoffSecond,
+      payrollPayDelay,
+    ].every(Number.isInteger) ||
+    payrollWeekday < 0 ||
+    payrollWeekday > 6 ||
+    payrollCutoffFirst < 1 ||
+    payrollCutoffFirst > 27 ||
+    (payrollCadence === "semimonthly" && payrollCutoffSecond <= payrollCutoffFirst) ||
+    payrollCutoffSecond < 1 ||
+    payrollCutoffSecond > 31 ||
+    payrollPayDelay < 0 ||
+    payrollPayDelay > 30
+  )
+    return { error: "Revisá los días de corte y el plazo de pago." };
   const fullName =
     typeof payload.fullName === "string" ? payload.fullName.trim() : "";
   const employeeCode =
@@ -237,6 +283,12 @@ export function parseEmployeePayload(payload: EmployeePayload): {
   return {
     data: {
       fullName,
+      collectionCommissionRate,
+      payrollCadence,
+      payrollWeekday,
+      payrollCutoffFirst,
+      payrollCutoffSecond,
+      payrollPayDelay,
       role: normalizeOptionalText(payload.role),
       email: normalizeOptionalText(payload.email),
       phone: normalizeOptionalText(payload.phone),
@@ -268,7 +320,7 @@ export async function validateEmployeeWorkingHoursAgainstBusinessHours(
   workingHours: ParsedEmployeePayload["workingHours"],
 ) {
   const businessHoursResult = await fetchBusinessHoursRows(
-    context.supabase,
+    context.backend,
     context.business.id,
   );
 
@@ -332,7 +384,7 @@ export async function validateAssignedServices(
     return { data: [] as string[] };
   }
 
-  const { data, error } = await context.supabase
+  const { data, error } = await context.backend
     .from("services")
     .select("id")
     .eq("business_id", context.business.id)
@@ -359,11 +411,12 @@ export async function syncEmployeeRelations(
   staffMemberId: string,
   payload: ParsedEmployeePayload,
 ) {
-  const timestamp = new Date().toISOString();
-  let warning: string | null = null;
-  let workingHoursError = (
-    await context.supabase.from("staff_member_working_hours").upsert(
-      payload.workingHours.map((day) => ({
+  const operations: import("@/lib/backend/client").BatchOperation[] = [
+    {
+      resource: "staff_member_working_hours",
+      operation: "upsert",
+      onConflict: "staff_member_id,day_of_week",
+      data: payload.workingHours.map((day) => ({
         staff_member_id: staffMemberId,
         day_of_week: day.dayOfWeek,
         start_time: day.startTime,
@@ -372,87 +425,36 @@ export async function syncEmployeeRelations(
         break_end_time: day.breakEndTime,
         is_active: day.isActive,
       })),
-      { onConflict: "staff_member_id,day_of_week" },
-    )
-  ).error;
-
-  if (
-    workingHoursError &&
-    isMissingScheduleBreakColumnsError(workingHoursError)
-  ) {
-    workingHoursError = (
-      await context.supabase.from("staff_member_working_hours").upsert(
-        payload.workingHours.map((day) => ({
-          staff_member_id: staffMemberId,
-          day_of_week: day.dayOfWeek,
-          start_time: day.startTime,
-          end_time: day.endTime,
-          is_active: day.isActive,
-        })),
-        { onConflict: "staff_member_id,day_of_week" },
-      )
-    ).error;
-
-    if (!workingHoursError) {
-      warning =
-        "El horario semanal del profesional se guardó, pero la pausa de almuerzo no porque falta aplicar la última versión de schema.sql en Supabase.";
-    }
-  }
-
-  if (workingHoursError) {
-    return { error: "No se pudo guardar el horario semanal del profesional." };
-  }
-
-  const { error: assignmentsDeleteError } = await context.supabase
-    .from("staff_member_services")
-    .delete()
-    .eq("staff_member_id", staffMemberId);
-
-  if (assignmentsDeleteError) {
-    return {
-      error:
-        "No se pudieron actualizar los servicios asignados del profesional.",
-    };
-  }
-
-  if (payload.assignedServiceIds.length > 0) {
-    const { error: assignmentsInsertError } = await context.supabase
-      .from("staff_member_services")
-      .insert(
-        payload.assignedServiceIds.map((serviceId) => ({
-          staff_member_id: staffMemberId,
-          service_id: serviceId,
-        })),
-      );
-
-    if (assignmentsInsertError) {
-      return {
-        error:
-          "No se pudieron guardar los servicios asignados del profesional.",
-      };
-    }
-  }
-
-  const { error: categoryRatesError } = await context.supabase
-    .from("staff_member_category_rates")
-    .upsert(
-      SERVICE_CATEGORIES.map((category) => ({
+    },
+    {
+      resource: "staff_member_services",
+      operation: "delete",
+      filters: [
+        { field: "staff_member_id", operator: "eq", value: staffMemberId },
+      ],
+    },
+  ];
+  if (payload.assignedServiceIds.length)
+    operations.push({
+      resource: "staff_member_services",
+      operation: "insert",
+      data: payload.assignedServiceIds.map((serviceId) => ({
         staff_member_id: staffMemberId,
-        service_category: category,
-        percentage: payload.categoryRates[category],
-        updated_at: timestamp,
+        service_id: serviceId,
       })),
-      { onConflict: "staff_member_id,service_category" },
-    );
-
-  if (categoryRatesError) {
-    return {
-      error:
-        categoryRatesError.code === "PGRST205"
-          ? "Falta aplicar la última versión de schema.sql en Supabase para guardar los porcentajes por categoría."
-          : "No se pudieron guardar los porcentajes por categoría del profesional.",
-    };
-  }
-
-  return { data: true as const, warning };
+    });
+  operations.push({
+    resource: "staff_member_category_rates",
+    operation: "upsert",
+    onConflict: "staff_member_id,service_category",
+    data: SERVICE_CATEGORIES.map((category) => ({
+      staff_member_id: staffMemberId,
+      service_category: category,
+      percentage: payload.categoryRates[category],
+    })),
+  });
+  const { error } = await context.backend.batch(operations);
+  return error
+    ? { error: error.message }
+    : { data: true as const, warning: null };
 }

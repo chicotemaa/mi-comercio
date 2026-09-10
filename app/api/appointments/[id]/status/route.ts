@@ -48,8 +48,8 @@ export async function PATCH(
     return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const { supabase, business } = businessResult.data;
-  const { error } = await supabase
+  const { backend, business } = businessResult.data;
+  const { error } = await backend
     .from("appointments")
     .update({
       status: parsed.data.status,

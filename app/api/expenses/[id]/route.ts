@@ -31,9 +31,9 @@ export async function PATCH(
     return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("expenses")
     .update({
       expense_date: parsed.data.expenseDate,
@@ -76,9 +76,9 @@ export async function DELETE(
   }
 
   const { id } = await context.params;
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { error } = await supabase
+  const { error } = await backend
     .from("expenses")
     .delete()
     .eq("id", id)

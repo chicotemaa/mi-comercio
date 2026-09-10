@@ -47,6 +47,7 @@ import type { ReportPeriod } from "./report-types";
 
 interface ReportsPageClientProps {
   appointments: AppointmentRecord[];
+  workRecords?: import("@/lib/business-shared").WorkRecord[];
   businessName: string;
   customers: CustomerRecord[];
   expenses: ExpenseRecord[];
@@ -118,6 +119,7 @@ function BarList({
 
 export function ReportsPageClient({
   appointments,
+  workRecords,
   businessName,
   customers,
   expenses,
@@ -136,6 +138,7 @@ export function ReportsPageClient({
       buildReportsSnapshot(
         {
           appointments,
+          workRecords,
           customers,
           expenses,
           payments,
@@ -148,6 +151,7 @@ export function ReportsPageClient({
         period,
       ),
     [
+      workRecords,
       appointments,
       customers,
       expenses,
@@ -179,17 +183,13 @@ export function ReportsPageClient({
           </Button>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Reportes en vivo" : "Reportes demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} consolida aquí ingresos, operación, clientes y servicios sobre datos reales.`}
+        description={`La evolución de ${businessName}, en números.`}
         eyebrow="Analytics"
         supporting={
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
@@ -227,9 +227,39 @@ export function ReportsPageClient({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Atenciones sin turno del período</CardTitle>
+          <CardDescription>
+            {snapshot.workSummary.count} trabajos · importe{" "}
+            {formatCurrency(snapshot.workSummary.amount)}. Los cobros de estas
+            atenciones están incluidos en los ingresos del período.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-h-64 overflow-auto">
+            {snapshot.workSummary.services.map((item) => (
+              <p
+                className="flex justify-between gap-3 border-b py-2 text-sm"
+                key={item.name}
+              >
+                <span>
+                  {item.name} · {item.count}
+                </span>
+                <strong>{formatCurrency(item.amount)}</strong>
+              </p>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-slate-600">
+            Las estadísticas de citas y clientes identificados se basan en
+            reservas y fichas del sistema. Consultá el detalle de los trabajos
+            en Atenciones.
+          </p>
+        </CardContent>
+      </Card>
       <Tabs defaultValue="overview" className="w-full">
         <div className="overflow-x-auto">
-          <TabsList className="min-w-max">
+          <TabsList className="w-full">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="revenue">Ingresos</TabsTrigger>
             <TabsTrigger value="services">Servicios</TabsTrigger>
@@ -561,7 +591,8 @@ export function ReportsPageClient({
                           {employee.name}
                         </h4>
                         <p className="text-sm text-slate-500">
-                          {employee.role ?? "Sin rol"} • {employee.appointments} citas
+                          {employee.role ?? "Sin rol"} • {employee.appointments}{" "}
+                          citas
                         </p>
                       </div>
                     </div>
@@ -607,7 +638,9 @@ export function ReportsPageClient({
                 <div className="text-2xl font-bold text-slate-900">
                   {snapshot.clientOverview.activeClients}
                 </div>
-                <p className="text-xs text-slate-500">Con actividad en el período</p>
+                <p className="text-xs text-slate-500">
+                  Con actividad en el período
+                </p>
               </CardContent>
             </Card>
 
@@ -621,7 +654,9 @@ export function ReportsPageClient({
                 <div className="text-2xl font-bold text-slate-900">
                   {snapshot.clientOverview.newCustomers}
                 </div>
-                <p className="text-xs text-slate-500">Ingresados en el período</p>
+                <p className="text-xs text-slate-500">
+                  Ingresados en el período
+                </p>
               </CardContent>
             </Card>
 
@@ -716,7 +751,9 @@ export function ReportsPageClient({
                 </CardHeader>
                 <CardContent>
                   <div className="rounded-2xl border border-slate-200 p-5">
-                    <p className="text-sm text-slate-500">Promedio por cliente</p>
+                    <p className="text-sm text-slate-500">
+                      Promedio por cliente
+                    </p>
                     <p className="mt-2 text-3xl font-bold text-slate-900">
                       {formatCurrency(snapshot.clientOverview.averageSpend)}
                     </p>

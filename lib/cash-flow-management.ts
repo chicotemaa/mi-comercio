@@ -158,7 +158,7 @@ function parsePaymentMethod(value: unknown) {
 function parsePaymentStatus(value: unknown) {
   if (
     typeof value !== "string" ||
-    !PAYMENT_STATUSES.includes(value as PaymentStatus)
+    !PAYMENT_STATUSES.some(status => status === value)
   ) {
     return { error: "El estado del cobro es inválido." };
   }
@@ -306,7 +306,7 @@ export async function validateBusinessCustomer(
     return { data: null };
   }
 
-  const { data, error } = await context.supabase
+  const { data, error } = await context.backend
     .from("customers")
     .select("id")
     .eq("business_id", context.business.id)
@@ -332,7 +332,7 @@ export async function validateBusinessStaffMember(
     return { data: null as { id: string; full_name: string } | null };
   }
 
-  const { data, error } = await context.supabase
+  const { data, error } = await context.backend
     .from("staff_members")
     .select("id, full_name")
     .eq("business_id", context.business.id)

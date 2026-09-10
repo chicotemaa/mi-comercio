@@ -60,8 +60,8 @@ export async function PATCH(
   }
 
   const timestamp = new Date().toISOString();
-  const { supabase, business } = businessResult.data;
-  const { error } = await supabase
+  const { backend, business } = businessResult.data;
+  const { error } = await backend
     .from("appointments")
     .update({
       customer_id: validation.data.customerId,

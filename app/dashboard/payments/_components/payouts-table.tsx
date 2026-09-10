@@ -35,7 +35,17 @@ export function PayoutsTable({
 }: PayoutsTableProps) {
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-[960px]">
+      <Table
+        mobileLabels={[
+          "Fecha",
+          "Destinatario",
+          "Categoría",
+          "Método",
+          "Importe",
+          "Acciones",
+        ]}
+        className="min-w-[960px]"
+      >
         <TableHeader>
           <TableRow>
             <TableHead>Fecha</TableHead>
@@ -72,6 +82,7 @@ export function PayoutsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Ver detalle"
                     onClick={() => onView(payout)}
                   >
                     <Eye className="h-4 w-4" />
@@ -79,14 +90,28 @@ export function PayoutsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Editar registro"
                     onClick={() => onEdit(payout)}
+                    disabled={payout.payrollManaged}
+                    title={
+                      payout.payrollManaged
+                        ? "Liquidación registrada"
+                        : "Editar"
+                    }
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
+                    aria-label="Eliminar registro"
                     onClick={() => onDelete(payout)}
+                    disabled={payout.payrollManaged}
+                    title={
+                      payout.payrollManaged
+                        ? "Liquidación registrada"
+                        : "Eliminar"
+                    }
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

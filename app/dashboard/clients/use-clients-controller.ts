@@ -124,7 +124,7 @@ export function useClientsController(clients: ClientSummary[]) {
           preferredServices: formState.preferredServices,
           notes: formState.notes,
           status: formState.status,
-          rating: Number(formState.rating),
+          rating: formState.rating === "" ? null : Number(formState.rating),
           marketingOptIn: formState.marketingOptIn,
         }),
       });

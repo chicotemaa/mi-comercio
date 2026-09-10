@@ -26,14 +26,12 @@ import {
   type ServiceCategory,
   type StaffCompensationType,
 } from "@/lib/business-shared";
-import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
 
 import type {
   EmployeeFormState,
   EmployeeServiceOption,
   EmployeeSummary,
 } from "../employee-types";
-import { categoryRatePillClassName } from "../employee-utils";
 
 interface EmployeeFormDialogProps {
   employeeBeingEdited: EmployeeSummary | null;
@@ -71,7 +69,6 @@ export function EmployeeFormDialog({
   onOpenChange,
   onSubmit,
   onToggleAssignedService,
-  onUpdateCategoryRate,
   onUpdateField,
   onUpdateWorkingHour,
   serviceOptions,
@@ -109,9 +106,22 @@ export function EmployeeFormDialog({
             </div>
 
             <div className="space-y-2">
+              <datalist id="employee-roles">
+                {[
+                  "Barbero/a",
+                  "Estilista",
+                  "Colorista",
+                  "Recepcionista",
+                  "Encargado/a",
+                  "Asistente",
+                ].map((role) => (
+                  <option key={role}>{role}</option>
+                ))}
+              </datalist>
               <Label htmlFor="employee-role">Rol</Label>
               <Input
                 id="employee-role"
+                list="employee-roles"
                 placeholder="Barbera principal"
                 value={formState.role}
                 onChange={(event) => onUpdateField("role", event.target.value)}
@@ -188,7 +198,7 @@ export function EmployeeFormDialog({
                     )
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Tipo de liquidación">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -203,52 +213,136 @@ export function EmployeeFormDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="employee-hourly-rate">Valor por hora</Label>
+                <Label htmlFor="employee-hourly-rate">
+                  {formState.compensationType === "hourly"
+                    ? "Valor por hora"
+                    : "Porcentaje sobre cobros"}
+                </Label>
                 <Input
                   id="employee-hourly-rate"
                   inputMode="decimal"
-                  value={formState.hourlyRate}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  max={
+                    formState.compensationType === "hourly" ? 10000000000 : 100
+                  }
+                  value={
+                    formState.compensationType === "hourly"
+                      ? formState.hourlyRate
+                      : formState.collectionCommissionRate
+                  }
                   onChange={(event) =>
-                    onUpdateField("hourlyRate", event.target.value)
+                    onUpdateField(
+                      formState.compensationType === "hourly"
+                        ? "hourlyRate"
+                        : "collectionCommissionRate",
+                      event.target.value,
+                    )
                   }
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm font-medium text-slate-900">
-                  Porcentaje por categoría
-                </p>
-                <p className="text-xs text-slate-500">
-                  Si eliges liquidación por porcentaje, se calcula sobre el
-                  valor del servicio según su categoría.
-                </p>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-3">
-                {SERVICE_CATEGORIES.map((category) => (
-                  <div className="space-y-2" key={category}>
-                    <Label htmlFor={`employee-rate-${category}`}>
-                      {getServiceCategoryLabel(category)}
-                    </Label>
+            <p className="text-sm text-slate-600">
+              La modalidad elegida se aplica a los nuevos registros. Los cobros
+              y jornadas anteriores conservan su tarifa. El porcentaje se
+              calcula sobre lo efectivamente cobrado por los servicios de este
+              profesional.
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="grid gap-1 text-sm">
+                Frecuencia de pago
+                <select
+                  className="rounded-md border p-2"
+                  value={formState.payrollCadence}
+                  onChange={(e) =>
+                    onUpdateField(
+                      "payrollCadence",
+                      e.target.value as "weekly" | "semimonthly" | "monthly",
+                    )
+                  }
+                >
+                  <option value="weekly">Semanal</option>
+                  <option value="semimonthly">Quincenal</option>
+                  <option value="monthly">Mensual</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm">
+                Días desde el corte hasta el pago
+                <Input
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={formState.payrollPayDelay}
+                  onChange={(e) =>
+                    onUpdateField("payrollPayDelay", e.target.value)
+                  }
+                />
+              </label>
+              {formState.payrollCadence === "weekly" ? (
+                <label className="grid gap-1 text-sm">
+                  Día de cierre semanal
+                  <select
+                    className="rounded-md border p-2"
+                    value={formState.payrollWeekday}
+                    onChange={(e) =>
+                      onUpdateField("payrollWeekday", e.target.value)
+                    }
+                  >
+                    {[
+                      "Domingo",
+                      "Lunes",
+                      "Martes",
+                      "Miércoles",
+                      "Jueves",
+                      "Viernes",
+                      "Sábado",
+                    ].map((d, i) => (
+                      <option key={d} value={i}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <>
+                  {formState.payrollCadence === "semimonthly" && (
+                    <label className="grid gap-1 text-sm">
+                      Primer corte del mes
+                      <Input
+                        type="number"
+                        min="1"
+                        max="27"
+                        value={formState.payrollCutoffFirst}
+                        onChange={(e) =>
+                          onUpdateField("payrollCutoffFirst", e.target.value)
+                        }
+                      />
+                    </label>
+                  )}
+                  <label className="grid gap-1 text-sm">
+                    {formState.payrollCadence === "monthly"
+                      ? "Corte mensual"
+                      : "Segundo corte del mes"}
                     <Input
-                      id={`employee-rate-${category}`}
-                      inputMode="decimal"
-                      value={formState.categoryRates[category]}
-                      onChange={(event) =>
-                        onUpdateCategoryRate(category, event.target.value)
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={formState.payrollCutoffSecond}
+                      onChange={(e) =>
+                        onUpdateField("payrollCutoffSecond", e.target.value)
                       }
                     />
-                    <div
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${categoryRatePillClassName(category)}`}
-                    >
-                      {formState.categoryRates[category]}%
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  </label>
+                </>
+              )}
             </div>
+            <p className="text-xs text-slate-500">
+              Las semanas se calculan según el día de cierre. El día 31 equivale
+              al último día del mes. Los plazos de pago se cuentan en días
+              corridos.
+            </p>
           </div>
 
           <div className="space-y-3 rounded-2xl border border-slate-200 p-4">

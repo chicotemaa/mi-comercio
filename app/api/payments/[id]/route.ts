@@ -51,9 +51,9 @@ export async function PATCH(
     return badRequest(staffValidation.error);
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("payments")
     .update({
       customer_id: parsed.data.customerId,
@@ -95,9 +95,9 @@ export async function DELETE(
   }
 
   const { id } = await context.params;
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { error } = await supabase
+  const { error } = await backend
     .from("payments")
     .delete()
     .eq("id", id)

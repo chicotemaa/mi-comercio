@@ -53,10 +53,10 @@ export async function PATCH(
     return badRequest(workingHoursValidation.error);
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
   if (parsed.data.employeeCode) {
-    const { data: duplicateEmployee, error: duplicateError } = await supabase
+    const { data: duplicateEmployee, error: duplicateError } = await backend
       .from("staff_members")
       .select("id")
       .eq("business_id", business.id)
@@ -76,7 +76,7 @@ export async function PATCH(
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("staff_members")
     .update({
       full_name: parsed.data.fullName,
@@ -87,6 +87,14 @@ export async function PATCH(
       join_date: parsed.data.joinDate,
       employee_code: parsed.data.employeeCode,
       compensation_type: parsed.data.compensationType,
+      payroll_mode:
+        parsed.data.compensationType === "hourly" ? "hourly" : "percentage",
+      collection_commission_rate: parsed.data.collectionCommissionRate,
+      payroll_cadence: parsed.data.payrollCadence,
+      payroll_weekday: parsed.data.payrollWeekday,
+      payroll_cutoff_first: parsed.data.payrollCutoffFirst,
+      payroll_cutoff_second: parsed.data.payrollCutoffSecond,
+      payroll_pay_delay: parsed.data.payrollPayDelay,
       hourly_rate: parsed.data.hourlyRate,
       is_active: parsed.data.isActive,
       updated_at: new Date().toISOString(),
@@ -101,7 +109,7 @@ export async function PATCH(
       {
         error:
           error?.code === "42703"
-            ? "Falta aplicar la última versión de schema.sql en Supabase para editar la forma de pago del profesional."
+            ? "Revisá la configuración de Strapi para editar la forma de pago del profesional."
             : "No se pudo actualizar el profesional.",
       },
       { status: 500 },

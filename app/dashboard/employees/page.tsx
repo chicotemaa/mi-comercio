@@ -2,7 +2,10 @@ import {
   createDefaultCategoryRateMap,
   formatCurrency,
 } from "@/lib/business-shared";
-import { getBusinessTeamBundle } from "@/lib/business-data";
+import {
+  getBusinessTeamBundle,
+  getBusinessOperationsBundle,
+} from "@/lib/business-data";
 
 import { createDefaultEmployeeWorkingHours } from "./employee-utils";
 import { EmployeesPageClient } from "./page-client";
@@ -26,7 +29,7 @@ export default async function EmployeesPage() {
     isLive,
   } = await getBusinessTeamBundle();
 
-  const serviceMap = new Map(services.map((service) => [service.id, service]));
+  const { payments } = await getBusinessOperationsBundle();
   const defaultWorkingHours = createDefaultEmployeeWorkingHours();
   const serviceOptions = services.map((service) => ({
     id: service.id,
@@ -81,18 +84,21 @@ export default async function EmployeesPage() {
       categoryRates[rate.category] = rate.percentage;
     }
 
+    const collectedCommission =
+      payments
+        .filter(
+          (p) => p.status === "completed" && p.staffMemberId === staffMember.id,
+        )
+        .reduce(
+          (sum, p) => sum + Math.round((p.commissionAmount || 0) * 100),
+          0,
+        ) / 100;
     const estimatedCompensation =
-      staffMember.compensationType === "category_percentage"
-        ? completedAppointments.reduce((total, appointment) => {
-            const appointmentCategory = appointment.serviceId
-              ? serviceMap.get(appointment.serviceId)?.category
-              : null;
-            const percentage = appointmentCategory
-              ? (categoryRates[appointmentCategory] ?? 0)
-              : 0;
-            return total + appointment.price * (percentage / 100);
-          }, 0)
-        : totalHoursWorked * (staffMember.hourlyRate ?? 0);
+      collectedCommission +
+      staffTimeLogs
+        .filter((h) => h.staffMemberId === staffMember.id)
+        .reduce((sum, h) => sum + Math.round((h.payableAmount || 0) * 100), 0) /
+        100;
 
     return {
       ...staffMember,

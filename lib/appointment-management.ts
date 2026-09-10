@@ -61,7 +61,7 @@ export interface ParsedAppointmentPayload {
   cancellationReason: string | null;
 }
 
-interface SupabaseAppointmentMutationRow {
+interface BackendAppointmentMutationRow {
   id: string;
   customer_id: string | null;
   customer_name: string;
@@ -76,6 +76,7 @@ interface SupabaseAppointmentMutationRow {
   staff_member_id: string | null;
   staff_name_snapshot: string | null;
   price_snapshot: number | string;
+  checkout_total?: number | string | null;
   duration_snapshot: number;
   notes: string | null;
   internal_notes: string | null;
@@ -114,7 +115,7 @@ function isValidDateKey(value: string) {
 }
 
 function mapAppointmentRow(
-  row: SupabaseAppointmentMutationRow,
+  row: BackendAppointmentMutationRow,
 ): AppointmentRecord {
   return {
     id: row.id,
@@ -130,7 +131,7 @@ function mapAppointmentRow(
     serviceName: row.service_name_snapshot,
     staffMemberId: row.staff_member_id,
     staffName: row.staff_name_snapshot,
-    price: Number(row.price_snapshot),
+    price: Number(row.checkout_total ?? row.price_snapshot),
     durationMinutes: row.duration_snapshot,
     notes: row.notes,
     internalNotes: row.internal_notes,
@@ -317,7 +318,7 @@ export async function findBusinessAppointment(
   context: ManagedBusinessContext,
   appointmentId: string,
 ) {
-  const { data, error } = await context.supabase
+  const { data, error } = await context.backend
     .from("appointments")
     .select(
       "id, customer_id, staff_member_id, status, appointment_date, appointment_time, duration_snapshot",
@@ -341,7 +342,7 @@ export async function getAppointmentRecord(
   context: ManagedBusinessContext,
   appointmentId: string,
 ) {
-  const { data, error } = await context.supabase
+  const { data, error } = await context.backend
     .from("appointments")
     .select(APPOINTMENT_SELECT_FIELDS)
     .eq("id", appointmentId)
@@ -357,7 +358,7 @@ export async function getAppointmentRecord(
   }
 
   return {
-    data: mapAppointmentRow(data as SupabaseAppointmentMutationRow),
+    data: mapAppointmentRow(data as BackendAppointmentMutationRow),
   };
 }
 
@@ -365,12 +366,12 @@ async function resolveAppointmentCustomer(
   context: ManagedBusinessContext,
   payload: ParsedAppointmentPayload,
 ) {
-  const { supabase, business } = context;
+  const { backend, business } = context;
   const timestamp = new Date().toISOString();
 
   if (payload.customerId) {
     const { data: existingCustomer, error: existingCustomerError } =
-      await supabase
+      await backend
         .from("customers")
         .select("id")
         .eq("id", payload.customerId)
@@ -385,7 +386,7 @@ async function resolveAppointmentCustomer(
       return { error: "El cliente seleccionado no pertenece al negocio." };
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await backend
       .from("customers")
       .update({
         full_name: payload.customerName,
@@ -410,7 +411,7 @@ async function resolveAppointmentCustomer(
     return { data };
   }
 
-  const { data: matchedByContact, error: matchedByContactError } = await supabase
+  const { data: matchedByContact, error: matchedByContactError } = await backend
     .from("customers")
     .select("id")
     .eq("business_id", business.id)
@@ -424,7 +425,7 @@ async function resolveAppointmentCustomer(
   let matchedCustomer = matchedByContact;
 
   if (!matchedCustomer && payload.customerEmail) {
-    const { data: matchedByEmail, error: matchedByEmailError } = await supabase
+    const { data: matchedByEmail, error: matchedByEmailError } = await backend
       .from("customers")
       .select("id")
       .eq("business_id", business.id)
@@ -439,7 +440,7 @@ async function resolveAppointmentCustomer(
   }
 
   if (matchedCustomer) {
-    const { data, error } = await supabase
+    const { data, error } = await backend
       .from("customers")
       .update({
         full_name: payload.customerName,
@@ -464,7 +465,7 @@ async function resolveAppointmentCustomer(
     return { data };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("customers")
     .insert({
       business_id: business.id,
@@ -498,8 +499,8 @@ export async function syncCustomerAppointmentStats(
     return;
   }
 
-  const { supabase, business } = context;
-  const { data: appointments, error: appointmentsError } = await supabase
+  const { backend, business } = context;
+  const { data: appointments, error: appointmentsError } = await backend
     .from("appointments")
     .select("appointment_date, status")
     .eq("business_id", business.id)
@@ -518,7 +519,7 @@ export async function syncCustomerAppointmentStats(
       left.appointment_date < right.appointment_date ? 1 : -1,
     )[0];
 
-  await supabase
+  await backend
     .from("customers")
     .update({
       total_appointments: nonCancelledAppointments.length,
@@ -534,7 +535,7 @@ export async function validateAppointmentPayload(
   payload: ParsedAppointmentPayload,
   options?: { appointmentIdToIgnore?: string | null },
 ) {
-  const { supabase, business } = context;
+  const { backend, business } = context;
 
   const [
     { data: service, error: serviceError },
@@ -545,32 +546,32 @@ export async function validateAppointmentPayload(
     { data: bookingSettings, error: bookingSettingsError },
     { data: appointments, error: appointmentsError },
   ] = await Promise.all([
-    supabase
+    backend
       .from("services")
       .select("id, name, duration_minutes, price, is_active")
       .eq("id", payload.serviceId)
       .eq("business_id", business.id)
       .maybeSingle(),
-    supabase
+    backend
       .from("staff_members")
       .select("id, full_name, is_active")
       .eq("id", payload.staffMemberId)
       .eq("business_id", business.id)
       .maybeSingle(),
-    supabase
+    backend
       .from("staff_member_services")
       .select("service_id")
       .eq("staff_member_id", payload.staffMemberId),
-    fetchBusinessHoursRows(supabase, business.id),
-    fetchStaffWorkingHoursRows(supabase),
-    supabase
+    fetchBusinessHoursRows(backend, business.id),
+    fetchStaffWorkingHoursRows(backend),
+    backend
       .from("booking_settings")
       .select(
         "id, slot_interval_minutes, lead_time_minutes, max_booking_days_in_advance, buffer_between_appointments_minutes",
       )
       .eq("business_id", business.id)
       .maybeSingle(),
-    supabase
+    backend
       .from("appointments")
       .select(APPOINTMENT_SELECT_FIELDS)
       .eq("business_id", business.id)
@@ -583,8 +584,7 @@ export async function validateAppointmentPayload(
 
   if (!service.is_active) {
     return {
-      error:
-        "El servicio seleccionado está inactivo. Reactívalo o elige otro.",
+      error: "El servicio seleccionado está inactivo. Reactívalo o elige otro.",
     };
   }
 
@@ -622,9 +622,7 @@ export async function validateAppointmentPayload(
     };
   }
 
-  const isBookingSettingsMissing = bookingSettingsError?.code === "PGRST205";
-
-  if (bookingSettingsError && !isBookingSettingsMissing) {
+  if (bookingSettingsError) {
     return { error: "No se pudieron cargar las reglas generales de turnos." };
   }
 
@@ -664,7 +662,12 @@ export async function validateAppointmentPayload(
     payload.staffMemberId,
   );
 
-  if (!staffDay || !staffDay.isActive || !staffDay.startTime || !staffDay.endTime) {
+  if (
+    !staffDay ||
+    !staffDay.isActive ||
+    !staffDay.startTime ||
+    !staffDay.endTime
+  ) {
     return { error: "El profesional no atiende en la fecha seleccionada." };
   }
 
@@ -672,7 +675,7 @@ export async function validateAppointmentPayload(
     appointmentDate: payload.appointmentDate,
     appointmentIdToIgnore: options?.appointmentIdToIgnore ?? null,
     appointments:
-      (appointments as SupabaseAppointmentMutationRow[] | null)?.map(
+      (appointments as BackendAppointmentMutationRow[] | null)?.map(
         mapAppointmentRow,
       ) ?? [],
     bookingSettings: parsedBookingSettings,

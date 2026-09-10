@@ -127,7 +127,8 @@ export function useServicesController(services: ServiceSummary[]) {
           description: formState.description,
           price: Number(formState.price),
           category: formState.category,
-          durationMinutes: Number(formState.durationMinutes),
+          durationMinutes: formState.durationMinutes ? Number(formState.durationMinutes) : null,
+          bookingEnabled: formState.bookingEnabled,
           isActive: editingService?.isActive ?? true,
         }),
       })

@@ -193,6 +193,12 @@ export function useEmployeesController(
           employeeCode: formState.employeeCode,
           hourlyRate: Number(formState.hourlyRate),
           compensationType: formState.compensationType,
+          collectionCommissionRate: Number(formState.collectionCommissionRate),
+          payrollCadence: formState.payrollCadence,
+          payrollWeekday: Number(formState.payrollWeekday),
+          payrollCutoffFirst: Number(formState.payrollCutoffFirst),
+          payrollCutoffSecond: Number(formState.payrollCutoffSecond),
+          payrollPayDelay: Number(formState.payrollPayDelay),
           assignedServiceIds: formState.assignedServiceIds,
           workingHours: formState.workingHours.map((day) => ({
             dayOfWeek: day.dayOfWeek,

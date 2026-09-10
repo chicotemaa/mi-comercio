@@ -1,8 +1,8 @@
 "use client";
 
+import { ClientHistory } from "./client-history";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -11,18 +11,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  formatCurrency,
   formatDisplayDate,
   getCustomerStatusBadgeClassName,
   getCustomerStatusLabel,
 } from "@/lib/business-shared";
 import {
-  Calendar,
   Mail,
   MapPin,
   Phone,
-  Star,
-  UserRoundCheck,
 } from "lucide-react";
 
 import type { ClientSummary } from "../client-types";
@@ -72,52 +68,8 @@ export function ClientDetailDialog({
               </Badge>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <UserRoundCheck className="h-4 w-4" />
-                    <span className="text-sm">Citas</span>
-                  </div>
-                  <div className="mt-2 text-2xl font-bold text-slate-900">
-                    {client.totalAppointments}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Star className="h-4 w-4" />
-                    <span className="text-sm">Valor</span>
-                  </div>
-                  <div className="mt-2 text-2xl font-bold text-slate-900">
-                    {formatCurrency(client.totalSpent)}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-sm">Última visita</span>
-                  </div>
-                  <div className="mt-2 text-sm font-medium text-slate-900">
-                    {formatDisplayDate(client.lastVisitAt, timeZone)}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Star className="h-4 w-4" />
-                    <span className="text-sm">Calificación</span>
-                  </div>
-                  <div className="mt-2 text-sm font-medium text-slate-900">
-                    {client.rating.toFixed(1)} / 5
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <ClientHistory key={client.id} customerId={client.id} timeZone={timeZone} />
+            <p className="text-sm">Calificación: {client.rating == null ? "Sin calificar" : `${client.rating.toFixed(1)} / 5`}</p>
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-4">

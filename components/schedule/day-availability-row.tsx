@@ -61,6 +61,7 @@ function TimeField({
         onChange={(event) =>
           onTimeChange(day.dayOfWeek, field, event.target.value)
         }
+        aria-label={`${day.label}: ${label}`}
         type="time"
         value={day[field]}
       />
@@ -77,9 +78,10 @@ export function DayAvailabilityRow({
   onToggleEnabled,
 }: DayAvailabilityRowProps) {
   return (
-    <div className="grid gap-4 rounded-2xl border border-slate-200 p-4 xl:grid-cols-[190px_repeat(4,minmax(120px,1fr))_auto] xl:items-center">
-      <div className="flex items-center gap-3">
+    <div className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 p-4 sm:grid-cols-2">
+      <div className="flex min-h-11 items-center gap-3 sm:col-span-2">
         <Switch
+          aria-label={`Disponibilidad del ${day.label}`}
           checked={day.isEnabled}
           onCheckedChange={(checked) => onToggleEnabled(day.dayOfWeek, checked)}
         />

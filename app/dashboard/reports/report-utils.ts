@@ -106,6 +106,10 @@ function getDatePartsInTimeZone(timeZone: string, value: string | Date | null) {
   if (!value) {
     return null;
   }
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return { year, month, day, key: value };
+  }
 
   const parsed =
     value instanceof Date
@@ -129,7 +133,11 @@ function getDatePartsInTimeZone(timeZone: string, value: string | Date | null) {
   const month = Number(parts.find((part) => part.type === "month")?.value);
   const day = Number(parts.find((part) => part.type === "day")?.value);
 
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+  if (
+    !Number.isFinite(year) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(day)
+  ) {
     return null;
   }
 
@@ -215,7 +223,10 @@ function getCurrentPeriodRange(period: ReportPeriod, timeZone: string) {
   }
 }
 
-function getPreviousPeriodRange(period: ReportPeriod, currentRange: PeriodRange) {
+function getPreviousPeriodRange(
+  period: ReportPeriod,
+  currentRange: PeriodRange,
+) {
   switch (period) {
     case "day": {
       const previousDay = addUtcDays(currentRange.start, -1);
@@ -245,7 +256,11 @@ function getPreviousPeriodRange(period: ReportPeriod, currentRange: PeriodRange)
   }
 }
 
-function isDateWithinRange(value: string | Date | null, timeZone: string, range: PeriodRange) {
+function isDateWithinRange(
+  value: string | Date | null,
+  timeZone: string,
+  range: PeriodRange,
+) {
   const parts = getDatePartsInTimeZone(timeZone, value);
   if (!parts) {
     return false;
@@ -380,8 +395,12 @@ function createTrendBuckets(period: ReportPeriod, range: PeriodRange) {
   }
 
   return Array.from({ length: 12 }, (_, monthIndex) => {
-    const monthStart = new Date(Date.UTC(range.start.getUTCFullYear(), monthIndex, 1));
-    const monthEnd = new Date(Date.UTC(range.start.getUTCFullYear(), monthIndex + 1, 0));
+    const monthStart = new Date(
+      Date.UTC(range.start.getUTCFullYear(), monthIndex, 1),
+    );
+    const monthEnd = new Date(
+      Date.UTC(range.start.getUTCFullYear(), monthIndex + 1, 0),
+    );
     return {
       label: formatUtcDate(monthStart, { month: "short" }),
       start: monthStart,
@@ -412,7 +431,7 @@ function buildBreakdownRows(entries: Map<string, number>, total: number) {
 }
 
 function getPaymentDate(payment: PaymentRecord) {
-  return payment.processedAt ?? payment.createdAt;
+  return payment.collectionDate ?? payment.processedAt ?? payment.createdAt;
 }
 
 function getCustomerEntryDate(customer: CustomerRecord) {
@@ -519,7 +538,10 @@ function buildServiceRows(
   );
 
   return Array.from(aggregates.values())
-    .sort((left, right) => right.revenue - left.revenue || right.bookings - left.bookings)
+    .sort(
+      (left, right) =>
+        right.revenue - left.revenue || right.bookings - left.bookings,
+    )
     .map((entry) => ({
       serviceName: entry.serviceName,
       category: entry.category,
@@ -556,7 +578,9 @@ function buildTrendPoints(
     label: bucket.label,
     revenue: sum(
       payments
-        .filter((payment) => valueInBucket(getPaymentDate(payment), timeZone, bucket))
+        .filter((payment) =>
+          valueInBucket(getPaymentDate(payment), timeZone, bucket),
+        )
         .map((payment) => payment.amount),
     ),
     appointments: appointments.filter((appointment) =>
@@ -572,7 +596,15 @@ function buildEmployeeRows(
 ) {
   const aggregates = new Map<
     string,
-    { staffId: string; name: string; role: string | null; appointments: number; revenue: number; hoursWorked: number; rating: number }
+    {
+      staffId: string;
+      name: string;
+      role: string | null;
+      appointments: number;
+      revenue: number;
+      hoursWorked: number;
+      rating: number;
+    }
   >();
 
   for (const staffMember of staffMembers) {
@@ -626,7 +658,10 @@ function buildEmployeeRows(
       (entry) =>
         entry.appointments > 0 || entry.revenue > 0 || entry.hoursWorked > 0,
     )
-    .sort((left, right) => right.revenue - left.revenue || right.appointments - left.appointments) satisfies ReportEmployeeRow[];
+    .sort(
+      (left, right) =>
+        right.revenue - left.revenue || right.appointments - left.appointments,
+    ) satisfies ReportEmployeeRow[];
 }
 
 function buildTopClientRows(
@@ -636,13 +671,21 @@ function buildTopClientRows(
 ) {
   const aggregates = new Map<
     string,
-    { customerId: string | null; name: string; visits: number; spent: number; lastVisitAt: string | null }
+    {
+      customerId: string | null;
+      name: string;
+      visits: number;
+      spent: number;
+      lastVisitAt: string | null;
+    }
   >();
 
   for (const payment of payments) {
     const key =
       payment.customerId ??
-      (payment.customerName ? `name:${normalizeTextKey(payment.customerName)}` : "");
+      (payment.customerName
+        ? `name:${normalizeTextKey(payment.customerName)}`
+        : "");
 
     if (!key) {
       continue;
@@ -669,8 +712,7 @@ function buildTopClientRows(
       `name:${normalizeTextKey(appointment.customerName)}`,
     );
     const key =
-      customer?.id ??
-      `name:${normalizeTextKey(appointment.customerName)}`;
+      customer?.id ?? `name:${normalizeTextKey(appointment.customerName)}`;
     const current = aggregates.get(key) ?? {
       customerId: customer?.id ?? null,
       name: customer?.fullName ?? appointment.customerName,
@@ -680,14 +722,19 @@ function buildTopClientRows(
     };
 
     current.visits += 1;
-    if (!current.lastVisitAt || appointment.appointmentDate > current.lastVisitAt) {
+    if (
+      !current.lastVisitAt ||
+      appointment.appointmentDate > current.lastVisitAt
+    ) {
       current.lastVisitAt = appointment.appointmentDate;
     }
     aggregates.set(key, current);
   }
 
   return Array.from(aggregates.values())
-    .sort((left, right) => right.spent - left.spent || right.visits - left.visits)
+    .sort(
+      (left, right) => right.spent - left.spent || right.visits - left.visits,
+    )
     .slice(0, 10) satisfies ReportClientRow[];
 }
 
@@ -695,7 +742,8 @@ function buildClientSegmentRows(customers: CustomerRecord[]) {
   const segments = [
     {
       label: "VIP (10+ visitas)",
-      count: customers.filter((customer) => customer.totalAppointments >= 10).length,
+      count: customers.filter((customer) => customer.totalAppointments >= 10)
+        .length,
     },
     {
       label: "Frecuentes (5-9 visitas)",
@@ -713,7 +761,8 @@ function buildClientSegmentRows(customers: CustomerRecord[]) {
     },
     {
       label: "Nuevos (1 visita)",
-      count: customers.filter((customer) => customer.totalAppointments === 1).length,
+      count: customers.filter((customer) => customer.totalAppointments === 1)
+        .length,
     },
   ];
 
@@ -752,22 +801,41 @@ export function getComparisonClassName(tone: ReportComparisonTone) {
   }
 }
 
-export function buildReportsSnapshot({
-  appointments,
-  customers,
-  expenses,
-  payments,
-  payouts,
-  services,
-  staffMembers,
-  staffTimeLogs,
-  timeZone,
-}: ReportsSourceData,
+export function buildReportsSnapshot(
+  {
+    appointments,
+    workRecords = [],
+    customers,
+    expenses,
+    payments,
+    payouts,
+    services,
+    staffMembers,
+    staffTimeLogs,
+    timeZone,
+  }: ReportsSourceData,
   period: ReportPeriod,
 ) {
   const currentRange = getCurrentPeriodRange(period, timeZone);
   const previousRange = getPreviousPeriodRange(period, currentRange);
 
+  const currentWorks = workRecords.filter((w) =>
+    isDateWithinRange(w.workDate, timeZone, currentRange),
+  );
+  const workServices = new Map<
+    string,
+    { name: string; count: number; amount: number }
+  >();
+  for (const w of currentWorks) {
+    const group = workServices.get(w.serviceName) || {
+      name: w.serviceName,
+      count: 0,
+      amount: 0,
+    };
+    group.count++;
+    group.amount = Math.round((group.amount + w.amount) * 100) / 100;
+    workServices.set(w.serviceName, group);
+  }
   const currentPayments = payments.filter((payment) =>
     isDateWithinRange(getPaymentDate(payment), timeZone, currentRange),
   );
@@ -822,25 +890,21 @@ export function buildReportsSnapshot({
   const currentActiveClientsCount = currentActiveClientKeys.size;
   const previousActiveClientsCount = previousActiveClientKeys.size;
 
-  const ticketAverage =
-    activeAppointments.length > 0
-      ? revenue / activeAppointments.length
-      : completedPayments.length > 0
-        ? revenue / completedPayments.length
-        : 0;
-  const previousTicketAverage =
-    previousActiveAppointments.length > 0
-      ? previousRevenue / previousActiveAppointments.length
-      : previousCompletedPayments.length > 0
-        ? previousRevenue / previousCompletedPayments.length
-        : 0;
+  const ticketAverage = completedPayments.length
+    ? revenue / completedPayments.length
+    : 0;
+  const previousTicketAverage = previousCompletedPayments.length
+    ? previousRevenue / previousCompletedPayments.length
+    : 0;
 
   const newCustomersCount = customers.filter((customer) =>
     isDateWithinRange(getCustomerEntryDate(customer), timeZone, currentRange),
   ).length;
 
   const customerLookup = buildCustomerLookup(customers);
-  const recurrentActiveClientsCount = Array.from(currentActiveClientKeys).filter(
+  const recurrentActiveClientsCount = Array.from(
+    currentActiveClientKeys,
+  ).filter(
     (key) => (customerLookup.get(key)?.totalAppointments ?? 0) > 1,
   ).length;
   const retentionRate =
@@ -849,9 +913,7 @@ export function buildReportsSnapshot({
       : 0;
 
   const averageSpend =
-    currentActiveClientsCount > 0
-      ? revenue / currentActiveClientsCount
-      : 0;
+    currentActiveClientsCount > 0 ? revenue / currentActiveClientsCount : 0;
 
   const paymentMethodEntries = new Map<string, number>();
   for (const payment of completedPayments) {
@@ -908,8 +970,8 @@ export function buildReportsSnapshot({
       "number",
     ),
     createMetric(
-      "Ticket promedio",
-      "Ingresos sobre citas activas del período",
+      "Cobro promedio",
+      "Ingresos sobre cantidad de cobros completados",
       ticketAverage,
       previousTicketAverage,
       "currency",
@@ -918,6 +980,11 @@ export function buildReportsSnapshot({
 
   return {
     period,
+    workSummary: {
+      count: currentWorks.length,
+      amount: sum(currentWorks.map((w) => w.amount)),
+      services: [...workServices.values()].sort((a, b) => b.count - a.count),
+    },
     periodLabel: getPeriodLabel(period),
     rangeLabel: formatRangeLabel(period, currentRange),
     revenue,
@@ -957,8 +1024,8 @@ export function buildReportsSnapshot({
 
 function escapeCsvValue(value: string | number) {
   const text = String(value);
-  if (text.includes(",") || text.includes("\"") || text.includes("\n")) {
-    return `"${text.replaceAll("\"", "\"\"")}"`;
+  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+    return `"${text.replaceAll('"', '""')}"`;
   }
 
   return text;

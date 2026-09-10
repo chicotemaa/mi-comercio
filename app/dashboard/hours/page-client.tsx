@@ -73,22 +73,18 @@ export function HoursPageClient({
           </>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Disponibilidad en vivo" : "Disponibilidad demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`Define la disponibilidad general de ${businessName} y las reglas base con las que se abren los turnos.`}
+        description={`Días y horarios de atención de ${businessName}.`}
         eyebrow="Disponibilidad"
         title="Horarios"
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="metric-grid grid gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Días abiertos</CardTitle>

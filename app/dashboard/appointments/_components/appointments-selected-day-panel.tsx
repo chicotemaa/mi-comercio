@@ -1,29 +1,20 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { isHistoricalEntry, type AgendaEntry } from "@/lib/agenda-history";
 import { Button } from "@/components/ui/button";
 import {
   formatAppointmentTime,
   formatCurrency,
-  getChannelLabel,
-  getStatusBadgeClassName,
   getStatusLabel,
 } from "@/lib/business-shared";
-import type { AppointmentRecord } from "@/lib/business-shared";
-import { Check, Pencil, Plus, Scissors, XCircle } from "lucide-react";
-
+import { ChevronRight, Plus } from "lucide-react";
 import { formatAgendaDayLabel } from "../appointment-utils";
 
 interface AppointmentsSelectedDayPanelProps {
-  appointments: AppointmentRecord[];
+  appointments: AgendaEntry[];
   dateKey: string;
   onCreate: () => void;
-  onEdit: (appointment: AppointmentRecord) => void;
   onSelectAppointment: (appointmentId: string) => void;
-  onStatusChange: (
-    appointment: AppointmentRecord,
-    nextStatus: AppointmentRecord["status"],
-  ) => void;
   selectedAppointmentId: string | null;
   timeZone: string;
 }
@@ -32,186 +23,70 @@ export function AppointmentsSelectedDayPanel({
   appointments,
   dateKey,
   onCreate,
-  onEdit,
   onSelectAppointment,
-  onStatusChange,
   selectedAppointmentId,
   timeZone,
 }: AppointmentsSelectedDayPanelProps) {
-  const estimatedRevenue = appointments
-    .filter(
-      (appointment) =>
-        appointment.status === "confirmed" ||
-        appointment.status === "completed",
-    )
-    .reduce((total, appointment) => total + appointment.price, 0);
-
   return (
-    <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold capitalize text-slate-900">
+    <section className="selected-day-panel" aria-label="Atenciones del día">
+      <div className="selected-day-heading">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold capitalize text-slate-900">
             {formatAgendaDayLabel(dateKey, timeZone)}
-          </p>
+          </h2>
           <p className="text-sm text-slate-500">
-            {appointments.length} turnos · {formatCurrency(estimatedRevenue)}
+            {appointments.length}{" "}
+            {appointments.length === 1 ? "atención" : "atenciones"} · Tocá una
+            tarjeta para ver el detalle
           </p>
         </div>
-
-        <Button onClick={onCreate} type="button">
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo
+        <Button onClick={onCreate} type="button" variant="outline" size="sm">
+          <Plus size={16} /> Nuevo
         </Button>
       </div>
-
       {appointments.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">
-          No hay turnos cargados para este día.
-        </div>
+        <p className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+          No hay turnos ni atenciones cargadas para este día.
+        </p>
       ) : (
-        <div className="space-y-3">
-          {appointments.map((appointment) => {
-            const isSelected = selectedAppointmentId === appointment.id;
-
+        <div className="agenda-day-list">
+          {appointments.map((entry) => {
+            const history = isHistoricalEntry(entry);
             return (
-              <div
-                className={`rounded-3xl border p-4 ${
-                  isSelected
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-slate-50"
-                }`}
-                key={appointment.id}
+              <button
+                key={entry.id}
+                type="button"
+                data-history-id={history ? entry.workRecord.id : undefined}
+                className={`agenda-day-card ${selectedAppointmentId === entry.id ? "is-selected" : ""}`}
+                aria-label={`Ver detalle de ${entry.customerName}, ${entry.serviceName}, ${formatAppointmentTime(entry.appointmentTime)}${history ? ", hora estimada" : ""}`}
+                aria-haspopup="dialog"
+                onClick={() => onSelectAppointment(entry.id)}
               >
-                <button
-                  className="w-full text-left"
-                  onClick={() => onSelectAppointment(appointment.id)}
-                  type="button"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold">
-                        {formatAppointmentTime(appointment.appointmentTime)} ·{" "}
-                        {appointment.customerName}
-                      </p>
-                      <p
-                        className={
-                          isSelected
-                            ? "text-sm text-slate-300"
-                            : "text-sm text-slate-600"
-                        }
-                      >
-                        {appointment.serviceName} ·{" "}
-                        {appointment.staffName ?? "Sin profesional"}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        isSelected
-                          ? "bg-white/15 text-white"
-                          : getStatusBadgeClassName(appointment.status)
-                      }
-                    >
-                      {getStatusLabel(appointment.status)}
-                    </Badge>
-                  </div>
-                </button>
-
-                <div
-                  className={`mt-3 grid gap-3 text-sm ${
-                    isSelected ? "text-slate-200" : "text-slate-600"
-                  }`}
-                >
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full border border-current/10 px-3 py-1">
-                      {getChannelLabel(appointment.channel)}
-                    </span>
-                    <span className="rounded-full border border-current/10 px-3 py-1">
-                      {formatCurrency(appointment.price)}
-                    </span>
-                    <span className="rounded-full border border-current/10 px-3 py-1">
-                      {appointment.customerContact}
-                    </span>
-                  </div>
-
-                  {appointment.notes ? <p>{appointment.notes}</p> : null}
-                  {appointment.internalNotes ? (
-                    <p
-                      className={
-                        isSelected
-                          ? "rounded-2xl bg-white/10 px-3 py-2 text-slate-100"
-                          : "rounded-2xl bg-white px-3 py-2 text-slate-700"
-                      }
-                    >
-                      Interna: {appointment.internalNotes}
-                    </p>
-                  ) : null}
-                  {appointment.cancellationReason ? (
-                    <p
-                      className={
-                        isSelected
-                          ? "rounded-2xl bg-rose-500/20 px-3 py-2 text-rose-100"
-                          : "rounded-2xl bg-rose-50 px-3 py-2 text-rose-900"
-                      }
-                    >
-                      Motivo: {appointment.cancellationReason}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    className={isSelected ? "border-white/15 bg-white/10 text-white hover:bg-white/15" : ""}
-                    onClick={() => onEdit(appointment)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </Button>
-
-                  {appointment.status === "pending" ? (
-                    <Button
-                      className={isSelected ? "bg-emerald-500 text-white hover:bg-emerald-400" : ""}
-                      onClick={() => onStatusChange(appointment, "confirmed")}
-                      size="sm"
-                      type="button"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Confirmar
-                    </Button>
-                  ) : null}
-
-                  {appointment.status === "confirmed" ? (
-                    <Button
-                      className={isSelected ? "bg-sky-500 text-white hover:bg-sky-400" : ""}
-                      onClick={() => onStatusChange(appointment, "completed")}
-                      size="sm"
-                      type="button"
-                    >
-                      <Scissors className="mr-2 h-4 w-4" />
-                      Completar
-                    </Button>
-                  ) : null}
-
-                  {appointment.status !== "cancelled" ? (
-                    <Button
-                      className={isSelected ? "border-rose-300/20 bg-rose-500/15 text-rose-100 hover:bg-rose-500/20" : ""}
-                      onClick={() => onStatusChange(appointment, "cancelled")}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Cancelar
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
+                <span className="agenda-day-card__top">
+                  <span className="font-semibold tabular-nums">
+                    {formatAppointmentTime(entry.appointmentTime)}
+                  </span>
+                  <span className="agenda-day-card__status">
+                    <i data-status={history ? "history" : entry.status} />
+                    {history ? "Hora estimada" : getStatusLabel(entry.status)}
+                  </span>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </span>
+                <span className="agenda-day-card__name">
+                  {entry.customerName}
+                </span>
+                <span className="agenda-day-card__service">
+                  {entry.serviceName}
+                </span>
+                <span className="agenda-day-card__footer">
+                  <span>{entry.staffName || "Sin profesional"}</span>
+                  <span>{formatCurrency(entry.price)}</span>
+                </span>
+              </button>
             );
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 }

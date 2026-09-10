@@ -89,8 +89,7 @@ export function AppointmentFormDialog({
             {appointmentBeingEdited ? "Editar turno" : "Nuevo turno"}
           </DialogTitle>
           <DialogDescription>
-            Carga, reprograma o corrige una reserva. La hora disponible se
-            recalcula según servicio, profesional y reglas de agenda.
+            Elegí el cliente, el servicio y un horario disponible.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,7 +107,7 @@ export function AppointmentFormDialog({
                   Datos del cliente
                 </p>
                 <p className="text-xs text-slate-500">
-                  Puedes seleccionar un cliente existente o cargar uno nuevo.
+                  Seleccioná un cliente o cargá sus datos.
                 </p>
               </div>
 
@@ -177,8 +176,7 @@ export function AppointmentFormDialog({
                   Configuración del turno
                 </p>
                 <p className="text-xs text-slate-500">
-                  El panel valida cruces con agenda, horario general y horario
-                  del profesional.
+                  Los horarios se ajustan al servicio y al profesional.
                 </p>
               </div>
 
@@ -275,7 +273,7 @@ export function AppointmentFormDialog({
               {availableTimeOptions.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Picker rápido
+                    Horarios disponibles
                   </p>
                   <div className="flex flex-wrap gap-2 overflow-hidden">
                     {availableTimeOptions.slice(0, 8).map((timeValue) => (
@@ -367,9 +365,7 @@ export function AppointmentFormDialog({
             </div>
 
             <div className="min-w-0 space-y-2">
-              <Label htmlFor="appointment-internal-notes">
-                Notas internas
-              </Label>
+              <Label htmlFor="appointment-internal-notes">Notas internas</Label>
               <Textarea
                 id="appointment-internal-notes"
                 rows={4}

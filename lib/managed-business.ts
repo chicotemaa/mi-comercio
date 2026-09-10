@@ -1,44 +1,50 @@
-import "server-only"
+import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js"
+import type { BackendClient } from "@/lib/backend/client";
 
-import { createSupabaseAdminClient, hasSupabaseAdminConfig } from "@/lib/supabase/admin"
+import {
+  createBackendAdminClient,
+  hasBackendAdminConfig,
+} from "@/lib/backend/client";
 
 export interface ManagedBusinessContext {
-  supabase: SupabaseClient
+  backend: BackendClient;
   business: {
-    id: string
-    slug: string
-  }
+    id: string;
+    slug: string;
+  };
 }
 
-export async function getManagedBusiness(): Promise<{ data?: ManagedBusinessContext; error?: string }> {
-  const businessSlug = process.env.BUSINESS_SLUG
+export async function getManagedBusiness(): Promise<{
+  data?: ManagedBusinessContext;
+  error?: string;
+}> {
+  const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return { error: "Falta la configuración de Supabase o BUSINESS_SLUG." }
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    return { error: "Falta la configuración de Backend o BUSINESS_SLUG." };
   }
 
-  const supabase = createSupabaseAdminClient()
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return { error: "No se pudo crear el cliente administrador de Supabase." }
+  if (!backend) {
+    return { error: "No se pudo crear el cliente administrador de Backend." };
   }
 
-  const { data: business, error } = await supabase
+  const { data: business, error } = await backend
     .from("businesses")
     .select("id, slug")
     .eq("slug", businessSlug)
-    .maybeSingle()
+    .maybeSingle();
 
   if (error || !business) {
-    return { error: "No se encontró el negocio configurado." }
+    return { error: "No se encontró el negocio configurado." };
   }
 
   return {
     data: {
-      supabase,
-      business,
+      backend,
+      business: { id: String(business.id), slug: String(business.slug) },
     },
-  }
+  };
 }

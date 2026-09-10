@@ -30,7 +30,7 @@ export interface ParsedCustomerPayload {
   preferredServices: string[];
   notes: string | null;
   status: CustomerStatus;
-  rating: number;
+  rating: number | null;
   marketingOptIn: boolean;
 }
 
@@ -90,7 +90,7 @@ export function parseCustomerPayload(payload: CustomerPayload): {
     payload.rating === undefined ||
     payload.rating === null ||
     payload.rating === ""
-      ? 5
+      ? null
       : Number(payload.rating);
 
   if (!fullName) {
@@ -101,7 +101,7 @@ export function parseCustomerPayload(payload: CustomerPayload): {
     return { error: "El contacto principal es obligatorio." };
   }
 
-  if (!Number.isFinite(rating) || rating < 0 || rating > 5) {
+  if (rating !== null && (!Number.isFinite(rating) || rating < 0 || rating > 5)) {
     return { error: "La calificación debe estar entre 0 y 5." };
   }
 

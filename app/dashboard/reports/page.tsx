@@ -1,4 +1,7 @@
-import { getBusinessDataBundle, getBusinessOperationsBundle } from "@/lib/business-data";
+import {
+  getBusinessDataBundle,
+  getBusinessOperationsBundle,
+} from "@/lib/business-data";
 
 import { ReportsPageClient } from "./page-client";
 
@@ -17,6 +20,7 @@ export default async function ReportsPage() {
   return (
     <ReportsPageClient
       appointments={businessData.appointments}
+      workRecords={businessOperations.workRecords}
       businessName={business.name}
       customers={businessOperations.customers}
       expenses={businessOperations.expenses}

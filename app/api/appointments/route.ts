@@ -42,8 +42,8 @@ export async function POST(request: Request) {
   }
 
   const timestamp = new Date().toISOString();
-  const { supabase, business } = businessResult.data;
-  const { data, error } = await supabase
+  const { backend, business } = businessResult.data;
+  const { data, error } = await backend
     .from("appointments")
     .insert({
       business_id: business.id,

@@ -1,12 +1,14 @@
+import { managementNotes } from "./management-notes";
 import "server-only";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { BackendClient } from "@/lib/backend/client";
 
 import {
-  createSupabaseAdminClient,
-  hasSupabaseAdminConfig,
-} from "@/lib/supabase/admin";
+  createBackendAdminClient,
+  hasBackendAdminConfig,
+} from "@/lib/backend/client";
 import type {
+  WorkRecord,
   AppointmentRecord,
   AppointmentStatus,
   BookingChannel,
@@ -47,6 +49,8 @@ export interface BusinessDataBundle {
 }
 
 export interface BusinessOperationsBundle {
+  workRecords?: WorkRecord[];
+  importReviewCount?: number;
   business: BusinessRecord;
   staffMembers: StaffRecord[];
   customers: CustomerRecord[];
@@ -66,6 +70,7 @@ export interface BusinessScheduleBundle {
 }
 
 export interface BusinessAgendaBundle {
+  workRecords: WorkRecord[];
   business: BusinessRecord;
   services: ServiceRecord[];
   staffMembers: StaffRecord[];
@@ -90,7 +95,8 @@ export interface BusinessTeamBundle {
   isLive: boolean;
 }
 
-interface SupabaseBusinessRow {
+interface BackendBusinessRow {
+  monthly_collection_target?: number | string;
   id: string;
   name: string;
   slug: string;
@@ -98,7 +104,8 @@ interface SupabaseBusinessRow {
   time_zone: string | null;
 }
 
-interface SupabaseServiceRow {
+interface BackendServiceRow {
+  booking_enabled?: boolean;
   id: string;
   name: string;
   description: string | null;
@@ -108,7 +115,14 @@ interface SupabaseServiceRow {
   category: ServiceRecord["category"];
 }
 
-interface SupabaseStaffRow {
+interface BackendStaffRow {
+  payroll_mode?: "hourly" | "percentage" | null;
+  payroll_cadence?: "weekly" | "semimonthly" | "monthly" | null;
+  payroll_weekday?: number | null;
+  payroll_cutoff_first?: number | null;
+  payroll_cutoff_second?: number | null;
+  payroll_pay_delay?: number | null;
+  collection_commission_rate?: number | string;
   id: string;
   full_name: string;
   role: string | null;
@@ -123,7 +137,10 @@ interface SupabaseStaffRow {
   compensation_type?: StaffCompensationType | null;
 }
 
-interface SupabaseAppointmentRow {
+interface BackendAppointmentRow {
+  arrived_at?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
   id: string;
   customer_id?: string | null;
   customer_name: string;
@@ -138,6 +155,7 @@ interface SupabaseAppointmentRow {
   staff_member_id: string | null;
   staff_name_snapshot: string | null;
   price_snapshot: number | string;
+  checkout_total?: number | string | null;
   duration_snapshot: number;
   notes: string | null;
   internal_notes?: string | null;
@@ -146,7 +164,7 @@ interface SupabaseAppointmentRow {
   updated_at?: string;
 }
 
-interface SupabaseCustomerRow {
+interface BackendCustomerRow {
   id: string;
   full_name: string;
   primary_contact: string;
@@ -157,7 +175,7 @@ interface SupabaseCustomerRow {
   status: CustomerRecord["status"];
   preferred_services: string[] | null;
   notes: string | null;
-  rating: number | string;
+  rating: number | string | null;
   marketing_opt_in: boolean;
   last_visit_at: string | null;
   total_appointments: number;
@@ -165,13 +183,20 @@ interface SupabaseCustomerRow {
   joined_at: string;
 }
 
-interface SupabasePaymentRelationRow {
+interface BackendPaymentRelationRow {
   full_name?: string | null;
+  customer_name?: string | null;
   name?: string | null;
   number?: string | null;
 }
 
-interface SupabasePaymentRow {
+interface BackendPaymentRow {
+  collection_date?: string | null;
+  work_record_id?: string | null;
+  import_ref?: string | null;
+  appointment_id?: string | null;
+  commission_rate?: number | string | null;
+  commission_amount?: number | string | null;
   id: string;
   description: string;
   amount: number | string;
@@ -184,15 +209,15 @@ interface SupabasePaymentRow {
   processed_at: string | null;
   created_at: string;
   notes: string | null;
-  customer: SupabasePaymentRelationRow | SupabasePaymentRelationRow[] | null;
-  staff_member:
-    | SupabasePaymentRelationRow
-    | SupabasePaymentRelationRow[]
-    | null;
-  invoice: SupabasePaymentRelationRow | SupabasePaymentRelationRow[] | null;
+  customer: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  work_record?: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  appointment?: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  staff_member: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  invoice: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
 }
 
-interface SupabaseExpenseRow {
+interface BackendExpenseRow {
+  import_ref?: string | null;
   id: string;
   expense_date: string;
   category: string;
@@ -205,7 +230,8 @@ interface SupabaseExpenseRow {
   notes: string | null;
 }
 
-interface SupabasePayoutRow {
+interface BackendPayoutRow {
+  period_start?: string | null;
   id: string;
   payout_date: string;
   recipient_name: string;
@@ -216,13 +242,11 @@ interface SupabasePayoutRow {
   source: string;
   notes: string | null;
   staff_member_id: string | null;
-  staff_member:
-    | SupabasePaymentRelationRow
-    | SupabasePaymentRelationRow[]
-    | null;
+  staff_member: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
 }
 
-interface SupabaseStaffTimeLogRow {
+interface BackendStaffTimeLogRow {
+  payable_amount?: number | string | null;
   id: string;
   staff_member_id: string;
   work_date: string;
@@ -232,13 +256,10 @@ interface SupabaseStaffTimeLogRow {
   entry_type: string;
   source: string;
   notes: string | null;
-  staff_member:
-    | SupabasePaymentRelationRow
-    | SupabasePaymentRelationRow[]
-    | null;
+  staff_member: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
 }
 
-interface SupabaseServicePriceVariantRow {
+interface BackendServicePriceVariantRow {
   id: string;
   service_id: string;
   variant_name: string;
@@ -249,10 +270,10 @@ interface SupabaseServicePriceVariantRow {
   is_active: boolean;
   display_order: number;
   notes: string | null;
-  service: SupabasePaymentRelationRow | SupabasePaymentRelationRow[] | null;
+  service: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
 }
 
-interface SupabaseBusinessHourRow {
+interface BackendBusinessHourRow {
   id: string;
   day_of_week: number;
   label: string;
@@ -263,7 +284,7 @@ interface SupabaseBusinessHourRow {
   is_open: boolean;
 }
 
-interface SupabaseBookingSettingsRow {
+interface BackendBookingSettingsRow {
   id: string;
   slot_interval_minutes: number;
   lead_time_minutes: number;
@@ -271,7 +292,7 @@ interface SupabaseBookingSettingsRow {
   buffer_between_appointments_minutes: number;
 }
 
-interface SupabaseStaffWorkingHourRow {
+interface BackendStaffWorkingHourRow {
   id: string;
   staff_member_id: string;
   day_of_week: number;
@@ -282,13 +303,13 @@ interface SupabaseStaffWorkingHourRow {
   is_active: boolean;
 }
 
-interface SupabaseStaffServiceAssignmentRow {
+interface BackendStaffServiceAssignmentRow {
   id: string;
   staff_member_id: string;
   service_id: string;
 }
 
-interface SupabaseStaffCategoryRateRow {
+interface BackendStaffCategoryRateRow {
   id: string;
   staff_member_id: string;
   service_category: ServiceRecord["category"];
@@ -297,8 +318,6 @@ interface SupabaseStaffCategoryRateRow {
 
 const STAFF_SELECT_FIELDS =
   "id, full_name, role, email, phone, is_active, bio, join_date, employee_code, hourly_rate, rating, compensation_type";
-const LEGACY_STAFF_SELECT_FIELDS =
-  "id, full_name, role, email, phone, is_active, bio, join_date, employee_code, hourly_rate, rating";
 
 function addDays(baseDate: Date, days: number) {
   const date = new Date(baseDate);
@@ -311,58 +330,15 @@ function formatDateForSql(date: Date) {
 }
 
 async function fetchStaffMembersForBusiness(
-  supabase: SupabaseClient,
+  backend: BackendClient,
   businessId: string,
 ) {
-  const primaryResponse = await supabase
+  const { data, error } = await backend
     .from("staff_members")
     .select(STAFF_SELECT_FIELDS)
     .eq("business_id", businessId)
-    .order("display_order", { ascending: true });
-
-  if (!primaryResponse.error) {
-    return {
-      data: primaryResponse.data as SupabaseStaffRow[] | null,
-      error: null,
-    };
-  }
-
-  if (primaryResponse.error.code !== "42703") {
-    return {
-      data: null,
-      error: primaryResponse.error,
-    };
-  }
-
-  const legacyResponse = await supabase
-    .from("staff_members")
-    .select(LEGACY_STAFF_SELECT_FIELDS)
-    .eq("business_id", businessId)
-    .order("display_order", { ascending: true });
-
-  if (legacyResponse.error) {
-    return {
-      data: null,
-      error: legacyResponse.error,
-    };
-  }
-
-  console.warn(
-    "Supabase staff_members table is missing compensation_type. Falling back to hourly defaults.",
-  );
-
-  return {
-    data:
-      (
-        legacyResponse.data as
-          | Omit<SupabaseStaffRow, "compensation_type">[]
-          | null
-      )?.map((row) => ({
-        ...row,
-        compensation_type: "hourly",
-      })) ?? [],
-    error: null,
-  };
+    .order("display_order");
+  return { data: data as BackendStaffRow[] | null, error };
 }
 
 function createDemoBundle(): BusinessDataBundle {
@@ -374,7 +350,7 @@ function createDemoBundle(): BusinessDataBundle {
     id: "demo-business",
     name: "Nerea Aylen Barber",
     slug: "nerea-aylen-barber",
-    description: "Barberia conectada en modo demo hasta configurar Supabase.",
+    description: "Barberia conectada en modo demo hasta configurar Backend.",
     timeZone: "America/Argentina/Cordoba",
   };
 
@@ -671,6 +647,7 @@ function createDemoAgendaBundle(): BusinessAgendaBundle {
   const operationsBundle = createDemoOperationsBundle();
 
   return {
+    workRecords: operationsBundle.workRecords ?? [],
     business: teamBundle.business,
     services: teamBundle.services,
     staffMembers: teamBundle.staffMembers,
@@ -753,8 +730,9 @@ function pickSingleRelation<T>(value: T | T[] | null) {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-function mapBusiness(row: SupabaseBusinessRow): BusinessRecord {
+function mapBusiness(row: BackendBusinessRow): BusinessRecord {
   return {
+    monthlyCollectionTarget: Number(row.monthly_collection_target || 0),
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -763,20 +741,27 @@ function mapBusiness(row: SupabaseBusinessRow): BusinessRecord {
   };
 }
 
-function mapService(row: SupabaseServiceRow): ServiceRecord {
+function mapService(row: BackendServiceRow): ServiceRecord {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
-    durationMinutes: row.duration_minutes,
+    durationMinutes: row.duration_minutes || 0,
+    bookingEnabled: row.booking_enabled !== false,
     price: Number(row.price),
     isActive: row.is_active,
     category: row.category,
   };
 }
 
-function mapStaff(row: SupabaseStaffRow): StaffRecord {
+function mapStaff(row: BackendStaffRow): StaffRecord {
   return {
+    collectionCommissionRate: Number(row.collection_commission_rate || 0),
+    payrollCadence: row.payroll_cadence || "semimonthly",
+    payrollWeekday: row.payroll_weekday ?? 0,
+    payrollCutoffFirst: row.payroll_cutoff_first ?? 15,
+    payrollCutoffSecond: row.payroll_cutoff_second ?? 31,
+    payrollPayDelay: row.payroll_pay_delay ?? 0,
     id: row.id,
     fullName: row.full_name,
     role: row.role,
@@ -787,13 +772,22 @@ function mapStaff(row: SupabaseStaffRow): StaffRecord {
     joinDate: row.join_date ?? null,
     employeeCode: row.employee_code ?? null,
     hourlyRate: Number(row.hourly_rate ?? 0),
-    rating: Number(row.rating ?? 5),
-    compensationType: row.compensation_type ?? "hourly",
+    rating: row.rating == null ? undefined : Number(row.rating),
+    compensationType: row.payroll_mode
+      ? row.payroll_mode === "hourly"
+        ? "hourly"
+        : "category_percentage"
+      : Number(row.collection_commission_rate || 0) > 0
+        ? "category_percentage"
+        : (row.compensation_type ?? "hourly"),
   };
 }
 
-function mapAppointment(row: SupabaseAppointmentRow): AppointmentRecord {
+function mapAppointment(row: BackendAppointmentRow): AppointmentRecord {
   return {
+    arrivedAt: row.arrived_at,
+    startedAt: row.started_at,
+    finishedAt: row.finished_at,
     id: row.id,
     customerId: row.customer_id ?? null,
     customerName: row.customer_name,
@@ -807,7 +801,7 @@ function mapAppointment(row: SupabaseAppointmentRow): AppointmentRecord {
     serviceName: row.service_name_snapshot,
     staffMemberId: row.staff_member_id,
     staffName: row.staff_name_snapshot,
-    price: Number(row.price_snapshot),
+    price: Number(row.checkout_total ?? row.price_snapshot),
     durationMinutes: row.duration_snapshot,
     notes: row.notes,
     internalNotes: row.internal_notes ?? null,
@@ -817,7 +811,7 @@ function mapAppointment(row: SupabaseAppointmentRow): AppointmentRecord {
   };
 }
 
-function mapCustomer(row: SupabaseCustomerRow): CustomerRecord {
+function mapCustomer(row: BackendCustomerRow): CustomerRecord {
   return {
     id: row.id,
     fullName: row.full_name,
@@ -829,7 +823,7 @@ function mapCustomer(row: SupabaseCustomerRow): CustomerRecord {
     status: row.status,
     preferredServices: row.preferred_services ?? [],
     notes: row.notes,
-    rating: Number(row.rating ?? 5),
+    rating: row.rating == null ? null : Number(row.rating),
     marketingOptIn: row.marketing_opt_in,
     lastVisitAt: row.last_visit_at,
     totalAppointments: row.total_appointments,
@@ -838,12 +832,41 @@ function mapCustomer(row: SupabaseCustomerRow): CustomerRecord {
   };
 }
 
-function mapPayment(row: SupabasePaymentRow): PaymentRecord {
-  const customer = pickSingleRelation(row.customer);
+function relatedPaymentCustomerName(row: BackendPaymentRow) {
+  return (
+    [
+      pickSingleRelation(row.customer)?.full_name,
+      pickSingleRelation(row.work_record)?.customer_name,
+      pickSingleRelation(row.appointment)?.customer_name,
+    ]
+      .find((name) => typeof name === "string" && name.trim())
+      ?.trim() ?? null
+  );
+}
+
+function legacyPaymentSourceKey(reference?: string | null) {
+  return reference &&
+    /^\d+:planilla-barberia:(BASE_DATOS|DIA):[1-9]\d*:payment$/.test(reference)
+    ? reference.slice(0, -":payment".length)
+    : null;
+}
+
+function mapPayment(
+  row: BackendPaymentRow,
+  legacyCustomerNames: Map<string, string>,
+): PaymentRecord {
   const staffMember = pickSingleRelation(row.staff_member);
   const invoice = pickSingleRelation(row.invoice);
 
   return {
+    collectionDate: row.collection_date ?? null,
+    workRecordId: row.work_record_id ?? null,
+    importRef: row.import_ref ? "registered" : null,
+    appointmentId: row.appointment_id ?? null,
+    commissionRate:
+      row.commission_rate == null ? null : Number(row.commission_rate),
+    commissionAmount:
+      row.commission_amount == null ? null : Number(row.commission_amount),
     id: row.id,
     description: row.description,
     amount: Number(row.amount),
@@ -851,7 +874,9 @@ function mapPayment(row: SupabasePaymentRow): PaymentRecord {
     status: row.status,
     customerId: row.customer_id,
     customerName:
-      typeof customer?.full_name === "string" ? customer.full_name : null,
+      relatedPaymentCustomerName(row) ??
+      legacyCustomerNames.get(legacyPaymentSourceKey(row.import_ref) ?? "") ??
+      null,
     staffMemberId: row.staff_member_id,
     staffName:
       typeof staffMember?.full_name === "string" ? staffMember.full_name : null,
@@ -860,29 +885,33 @@ function mapPayment(row: SupabasePaymentRow): PaymentRecord {
     transactionId: row.transaction_id,
     processedAt: row.processed_at,
     createdAt: row.created_at,
-    notes: row.notes,
+    notes: managementNotes(row.notes, row.import_ref),
   };
 }
 
-function mapExpense(row: SupabaseExpenseRow): ExpenseRecord {
+function mapExpense(row: BackendExpenseRow): ExpenseRecord {
   return {
+    importRef:
+      row.import_ref || row.source === "Gasto programado" ? "registered" : null,
     id: row.id,
     expenseDate: row.expense_date,
-    category: row.category,
+    category:
+      row.category === "Gastos de planilla" ? "Gastos generales" : row.category,
     subcategory: row.subcategory,
     description: row.description,
     vendorName: row.vendor_name,
     amount: Number(row.amount),
     method: row.method,
-    source: row.source,
-    notes: row.notes,
+    source: row.import_ref ? "Registro del negocio" : row.source,
+    notes: managementNotes(row.notes, row.import_ref),
   };
 }
 
-function mapPayout(row: SupabasePayoutRow): PayoutRecord {
+function mapPayout(row: BackendPayoutRow): PayoutRecord {
   const staffMember = pickSingleRelation(row.staff_member);
 
   return {
+    payrollManaged: Boolean(row.period_start),
     id: row.id,
     payoutDate: row.payout_date,
     recipientName: row.recipient_name,
@@ -898,7 +927,7 @@ function mapPayout(row: SupabasePayoutRow): PayoutRecord {
   };
 }
 
-function mapStaffTimeLog(row: SupabaseStaffTimeLogRow): StaffTimeLogRecord {
+function mapStaffTimeLog(row: BackendStaffTimeLogRow): StaffTimeLogRecord {
   const staffMember = pickSingleRelation(row.staff_member);
 
   return {
@@ -910,6 +939,8 @@ function mapStaffTimeLog(row: SupabaseStaffTimeLogRow): StaffTimeLogRecord {
     startTime: row.start_time,
     endTime: row.end_time,
     hoursWorked: Number(row.hours_worked),
+    payableAmount:
+      row.payable_amount == null ? null : Number(row.payable_amount),
     entryType: row.entry_type,
     source: row.source,
     notes: row.notes,
@@ -917,7 +948,7 @@ function mapStaffTimeLog(row: SupabaseStaffTimeLogRow): StaffTimeLogRecord {
 }
 
 function mapServicePriceVariant(
-  row: SupabaseServicePriceVariantRow,
+  row: BackendServicePriceVariantRow,
 ): ServicePriceVariantRecord {
   const service = pickSingleRelation(row.service);
 
@@ -936,7 +967,7 @@ function mapServicePriceVariant(
   };
 }
 
-function mapBusinessHour(row: SupabaseBusinessHourRow): BusinessHourRecord {
+function mapBusinessHour(row: BackendBusinessHourRow): BusinessHourRecord {
   return {
     id: row.id,
     dayOfWeek: row.day_of_week,
@@ -950,7 +981,7 @@ function mapBusinessHour(row: SupabaseBusinessHourRow): BusinessHourRecord {
 }
 
 function mapBookingSettings(
-  row: SupabaseBookingSettingsRow,
+  row: BackendBookingSettingsRow,
 ): BookingSettingsRecord {
   return {
     id: row.id,
@@ -962,7 +993,7 @@ function mapBookingSettings(
 }
 
 function mapStaffWorkingHour(
-  row: SupabaseStaffWorkingHourRow,
+  row: BackendStaffWorkingHourRow,
 ): StaffWorkingHourRecord {
   return {
     id: row.id,
@@ -977,7 +1008,7 @@ function mapStaffWorkingHour(
 }
 
 function mapStaffServiceAssignment(
-  row: SupabaseStaffServiceAssignmentRow,
+  row: BackendStaffServiceAssignmentRow,
 ): StaffServiceAssignmentRecord {
   return {
     id: row.id,
@@ -987,7 +1018,7 @@ function mapStaffServiceAssignment(
 }
 
 function mapStaffCategoryRate(
-  row: SupabaseStaffCategoryRateRow,
+  row: BackendStaffCategoryRateRow,
 ): StaffCategoryRateRecord {
   return {
     id: row.id,
@@ -1009,26 +1040,41 @@ function mergeBusinessHours(rows: BusinessHourRecord[]) {
 export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return createDemoBundle();
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return createDemoBundle();
+  if (!backend) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
   try {
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await backend
       .from("businesses")
       .select("id, name, slug, description, time_zone")
       .eq("slug", businessSlug)
       .maybeSingle();
 
     if (businessError || !business) {
-      console.error("Supabase business lookup failed", businessError);
-      return createDemoBundle();
+      console.error("Backend business lookup failed", businessError);
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const [
@@ -1036,15 +1082,15 @@ export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
       { data: staffMembers, error: staffError },
       { data: appointments, error: appointmentsError },
     ] = await Promise.all([
-      supabase
+      backend
         .from("services")
         .select(
           "id, name, description, duration_minutes, price, is_active, category",
         )
         .eq("business_id", business.id)
         .order("display_order", { ascending: true }),
-      fetchStaffMembersForBusiness(supabase, business.id),
-      supabase
+      fetchStaffMembersForBusiness(backend, business.id),
+      backend
         .from("appointments")
         .select(
           "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
@@ -1055,47 +1101,65 @@ export async function getBusinessDataBundle(): Promise<BusinessDataBundle> {
     ]);
 
     if (servicesError || staffError || appointmentsError) {
-      console.error("Supabase bundle lookup failed", {
+      console.error("Backend bundle lookup failed", {
         servicesError,
         staffError,
         appointmentsError,
       });
-      return createDemoBundle();
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     return {
-      business: mapBusiness(business as SupabaseBusinessRow),
-      services:
-        (services as SupabaseServiceRow[] | null)?.map(mapService) ?? [],
+      business: mapBusiness(business as BackendBusinessRow),
+      services: (services as BackendServiceRow[] | null)?.map(mapService) ?? [],
       staffMembers:
-        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+        (staffMembers as BackendStaffRow[] | null)?.map(mapStaff) ?? [],
       appointments:
-        (appointments as SupabaseAppointmentRow[] | null)?.map(
-          mapAppointment,
-        ) ?? [],
+        (appointments as BackendAppointmentRow[] | null)?.map(mapAppointment) ??
+        [],
       isLive: true,
     };
   } catch (error) {
-    console.error("Supabase bundle lookup crashed", error);
-    return createDemoBundle();
+    console.error("Backend bundle lookup crashed", error);
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 }
 
 export async function getBusinessOperationsBundle(): Promise<BusinessOperationsBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return createDemoOperationsBundle();
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoOperationsBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return createDemoOperationsBundle();
+  if (!backend) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoOperationsBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
   try {
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await backend
       .from("businesses")
       .select("id, name, slug, description, time_zone")
       .eq("slug", businessSlug)
@@ -1103,10 +1167,15 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
 
     if (businessError || !business) {
       console.error(
-        "Supabase business lookup for operations failed",
+        "Backend business lookup for operations failed",
         businessError,
       );
-      return createDemoOperationsBundle();
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoOperationsBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const [
@@ -1118,43 +1187,43 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
       { data: staffTimeLogs, error: staffTimeLogsError },
       { data: services, error: servicesError },
     ] = await Promise.all([
-      fetchStaffMembersForBusiness(supabase, business.id),
-      supabase
+      fetchStaffMembersForBusiness(backend, business.id),
+      backend
         .from("customers")
         .select(
           "id, full_name, primary_contact, email, phone, instagram_handle, address, status, preferred_services, notes, rating, marketing_opt_in, last_visit_at, total_appointments, total_spent, joined_at",
         )
         .eq("business_id", business.id)
         .order("total_spent", { ascending: false }),
-      supabase
+      backend
         .from("payments")
         .select(
           "id, description, amount, method, status, customer_id, invoice_id, staff_member_id, transaction_id, processed_at, created_at, notes, customer:customers(full_name), staff_member:staff_members(full_name), invoice:invoices(number)",
         )
         .eq("business_id", business.id)
         .order("created_at", { ascending: false }),
-      supabase
+      backend
         .from("expenses")
         .select(
           "id, expense_date, category, subcategory, description, vendor_name, amount, method, source, notes",
         )
         .eq("business_id", business.id)
         .order("expense_date", { ascending: false }),
-      supabase
+      backend
         .from("payouts")
         .select(
           "id, payout_date, recipient_name, recipient_type, category, amount, method, source, notes, staff_member_id, staff_member:staff_members(full_name)",
         )
         .eq("business_id", business.id)
         .order("payout_date", { ascending: false }),
-      supabase
+      backend
         .from("staff_time_logs")
         .select(
           "id, staff_member_id, work_date, start_time, end_time, hours_worked, entry_type, source, notes, staff_member:staff_members(full_name)",
         )
         .eq("business_id", business.id)
         .order("work_date", { ascending: false }),
-      supabase
+      backend
         .from("services")
         .select("id, name")
         .eq("business_id", business.id)
@@ -1170,7 +1239,7 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
       staffTimeLogsError ||
       servicesError
     ) {
-      console.error("Supabase operations lookup failed", {
+      console.error("Backend operations lookup failed", {
         staffMembersError,
         customersError,
         paymentsError,
@@ -1179,14 +1248,19 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
         staffTimeLogsError,
         servicesError,
       });
-      return createDemoOperationsBundle();
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoOperationsBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const serviceIds = (services ?? []).map((service) => service.id);
-    let servicePriceVariants: SupabaseServicePriceVariantRow[] | null = [];
+    let servicePriceVariants: BackendServicePriceVariantRow[] | null = [];
 
     if (serviceIds.length > 0) {
-      const { data: variants, error: variantsError } = await supabase
+      const { data: variants, error: variantsError } = await backend
         .from("service_price_variants")
         .select(
           "id, service_id, variant_name, variant_code, price, duration_minutes, is_default, is_active, display_order, notes, service:services(name)",
@@ -1196,30 +1270,77 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
 
       if (variantsError) {
         console.error(
-          "Supabase service price variants lookup failed",
+          "Backend service price variants lookup failed",
           variantsError,
         );
-        return createDemoOperationsBundle();
+        if (
+          process.env.DEMO_MODE === "true" &&
+          process.env.NODE_ENV !== "production"
+        )
+          return createDemoOperationsBundle();
+        throw new Error("No se pudo cargar el negocio desde Strapi.");
       }
 
-      servicePriceVariants = variants as
-        | SupabaseServicePriceVariantRow[]
-        | null;
+      servicePriceVariants = variants as BackendServicePriceVariantRow[] | null;
     }
 
+    const workResult = await backend.from("work_records").select();
+    if (workResult.error)
+      throw new Error("No se pudo cargar la planilla histórica.");
+    const paymentRows = (payments ?? []) as BackendPaymentRow[];
+    // Some historical collections have no work record (the service was blank).
+    // Resolve those customers from the exact source row, never from free-text
+    // descriptions or a guessed customer association. Keep source data server-side.
+    const legacySourceKeys = [
+      ...new Set(
+        paymentRows
+          .filter((row) => !relatedPaymentCustomerName(row))
+          .map((row) => legacyPaymentSourceKey(row.import_ref))
+          .filter((key): key is string => key !== null),
+      ),
+    ];
+    const legacyCustomerNames = new Map<string, string>();
+    for (let offset = 0; offset < legacySourceKeys.length; offset += 1000) {
+      const { data: sourceRows, error } = await backend
+        .from("import_rows")
+        .select("source_key, source_data")
+        .eq("business_id", business.id)
+        .in("source_key", legacySourceKeys.slice(offset, offset + 1000));
+      if (error)
+        throw new Error(
+          "No se pudieron cargar los clientes de los cobros históricos.",
+        );
+      for (const source of sourceRows ?? []) {
+        const name = source.source_data?.B;
+        if (typeof name === "string" && name.trim())
+          legacyCustomerNames.set(source.source_key, name.trim());
+      }
+    }
     return {
-      business: mapBusiness(business as SupabaseBusinessRow),
+      workRecords: (workResult.data || []).map((r) => ({
+        id: r.id,
+        workDate: r.work_date,
+        customerId: r.customer_id,
+        customerName: r.customer_name,
+        serviceId: r.service_id,
+        serviceName: r.service_name,
+        staffMemberId: r.staff_member_id,
+        staffName: r.staff_name,
+        amount: Number(r.amount),
+        notes: r.notes,
+        sourceRef: null,
+        collectionVerified: !!r.collection_verified,
+      })),
+      business: mapBusiness(business as BackendBusinessRow),
       staffMembers:
-        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+        (staffMembers as BackendStaffRow[] | null)?.map(mapStaff) ?? [],
       customers:
-        (customers as SupabaseCustomerRow[] | null)?.map(mapCustomer) ?? [],
-      payments:
-        (payments as SupabasePaymentRow[] | null)?.map(mapPayment) ?? [],
-      expenses:
-        (expenses as SupabaseExpenseRow[] | null)?.map(mapExpense) ?? [],
-      payouts: (payouts as SupabasePayoutRow[] | null)?.map(mapPayout) ?? [],
+        (customers as BackendCustomerRow[] | null)?.map(mapCustomer) ?? [],
+      payments: paymentRows.map((row) => mapPayment(row, legacyCustomerNames)),
+      expenses: (expenses as BackendExpenseRow[] | null)?.map(mapExpense) ?? [],
+      payouts: (payouts as BackendPayoutRow[] | null)?.map(mapPayout) ?? [],
       staffTimeLogs:
-        (staffTimeLogs as SupabaseStaffTimeLogRow[] | null)?.map(
+        (staffTimeLogs as BackendStaffTimeLogRow[] | null)?.map(
           mapStaffTimeLog,
         ) ?? [],
       servicePriceVariants: (servicePriceVariants ?? []).map(
@@ -1228,26 +1349,41 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
       isLive: true,
     };
   } catch (error) {
-    console.error("Supabase operations lookup crashed", error);
-    return createDemoOperationsBundle();
+    console.error("Backend operations lookup crashed", error);
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoOperationsBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 }
 
 export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return createDemoScheduleBundle();
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoScheduleBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return createDemoScheduleBundle();
+  if (!backend) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoScheduleBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
   try {
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await backend
       .from("businesses")
       .select("id, name, slug, description, time_zone")
       .eq("slug", businessSlug)
@@ -1255,18 +1391,23 @@ export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundl
 
     if (businessError || !business) {
       console.error(
-        "Supabase business lookup for schedule failed",
+        "Backend business lookup for schedule failed",
         businessError,
       );
-      return createDemoScheduleBundle();
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoScheduleBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const [
       businessHoursResult,
       { data: bookingSettings, error: bookingSettingsError },
     ] = await Promise.all([
-      fetchBusinessHoursRows(supabase, business.id),
-      supabase
+      fetchBusinessHoursRows(backend, business.id),
+      backend
         .from("booking_settings")
         .select(
           "id, slot_interval_minutes, lead_time_minutes, max_booking_days_in_advance, buffer_between_appointments_minutes",
@@ -1274,73 +1415,86 @@ export async function getBusinessScheduleBundle(): Promise<BusinessScheduleBundl
         .eq("business_id", business.id)
         .maybeSingle(),
     ]);
-
-    const isBookingSettingsMissing = bookingSettingsError?.code === "PGRST205";
     const businessHoursError = businessHoursResult.error;
 
-    if (
-      businessHoursError ||
-      (bookingSettingsError && !isBookingSettingsMissing)
-    ) {
-      console.error("Supabase schedule lookup failed", {
+    if (businessHoursError || bookingSettingsError) {
+      console.error("Backend schedule lookup failed", {
         businessHoursError,
         bookingSettingsError,
       });
-      return createDemoScheduleBundle();
-    }
-
-    if (isBookingSettingsMissing) {
-      console.warn(
-        "Supabase booking settings table is missing. Falling back to default booking settings.",
-      );
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoScheduleBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     if (!businessHoursResult.hasBreakColumns) {
       console.warn(
-        "Supabase business_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+        "Backend business_hours table is missing lunch break columns. Falling back to schedules without breaks.",
       );
     }
 
     return {
-      business: mapBusiness(business as SupabaseBusinessRow),
+      business: mapBusiness(business as BackendBusinessRow),
       businessHours: mergeBusinessHours(
         (businessHoursResult.data ?? []).map(mapBusinessHour),
       ),
-      bookingSettings:
-        bookingSettings && !isBookingSettingsMissing
-          ? mapBookingSettings(bookingSettings as SupabaseBookingSettingsRow)
-          : createDefaultBookingSettings(),
+      bookingSettings: bookingSettings
+        ? mapBookingSettings(bookingSettings as BackendBookingSettingsRow)
+        : createDefaultBookingSettings(),
       isLive: true,
     };
   } catch (error) {
-    console.error("Supabase schedule lookup crashed", error);
-    return createDemoScheduleBundle();
+    console.error("Backend schedule lookup crashed", error);
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoScheduleBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 }
 
 export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return createDemoAgendaBundle();
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoAgendaBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return createDemoAgendaBundle();
+  if (!backend) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoAgendaBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
   try {
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await backend
       .from("businesses")
       .select("id, name, slug, description, time_zone")
       .eq("slug", businessSlug)
       .maybeSingle();
 
     if (businessError || !business) {
-      console.error("Supabase business lookup for agenda failed", businessError);
-      return createDemoAgendaBundle();
+      console.error("Backend business lookup for agenda failed", businessError);
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoAgendaBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const [
@@ -1352,16 +1506,17 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       { data: bookingSettings, error: bookingSettingsError },
       staffWorkingHoursResult,
       { data: staffServiceAssignments, error: staffServiceAssignmentsError },
+      { data: workRecords, error: workRecordsError },
     ] = await Promise.all([
-      supabase
+      backend
         .from("services")
         .select(
           "id, name, description, duration_minutes, price, is_active, category",
         )
         .eq("business_id", business.id)
         .order("display_order", { ascending: true }),
-      fetchStaffMembersForBusiness(supabase, business.id),
-      supabase
+      fetchStaffMembersForBusiness(backend, business.id),
+      backend
         .from("appointments")
         .select(
           "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
@@ -1369,28 +1524,32 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
         .eq("business_id", business.id)
         .order("appointment_date", { ascending: true })
         .order("appointment_time", { ascending: true }),
-      supabase
+      backend
         .from("customers")
         .select(
           "id, full_name, primary_contact, email, phone, instagram_handle, address, status, preferred_services, notes, rating, marketing_opt_in, last_visit_at, total_appointments, total_spent, joined_at",
         )
         .eq("business_id", business.id)
         .order("full_name", { ascending: true }),
-      fetchBusinessHoursRows(supabase, business.id),
-      supabase
+      fetchBusinessHoursRows(backend, business.id),
+      backend
         .from("booking_settings")
         .select(
           "id, slot_interval_minutes, lead_time_minutes, max_booking_days_in_advance, buffer_between_appointments_minutes",
         )
         .eq("business_id", business.id)
         .maybeSingle(),
-      fetchStaffWorkingHoursRows(supabase),
-      supabase
+      fetchStaffWorkingHoursRows(backend),
+      backend
         .from("staff_member_services")
         .select("id, staff_member_id, service_id"),
+      backend
+        .from("work_records")
+        .select()
+        .eq("business_id", business.id)
+        .order("work_date", { ascending: true })
+        .order("id", { ascending: true }),
     ]);
-
-    const isBookingSettingsMissing = bookingSettingsError?.code === "PGRST205";
     const businessHoursError = businessHoursResult.error;
     const staffWorkingHoursError = staffWorkingHoursResult.error;
 
@@ -1402,9 +1561,10 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       businessHoursError ||
       staffWorkingHoursError ||
       staffServiceAssignmentsError ||
-      (bookingSettingsError && !isBookingSettingsMissing)
+      workRecordsError ||
+      bookingSettingsError
     ) {
-      console.error("Supabase agenda lookup failed", {
+      console.error("Backend agenda lookup failed", {
         servicesError,
         staffError,
         appointmentsError,
@@ -1412,67 +1572,80 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
         businessHoursError,
         staffWorkingHoursError,
         staffServiceAssignmentsError,
+        workRecordsError,
         bookingSettingsError,
       });
-      return createDemoAgendaBundle();
-    }
-
-    if (isBookingSettingsMissing) {
-      console.warn(
-        "Supabase booking settings table is missing. Falling back to default booking settings.",
-      );
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoAgendaBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     if (!businessHoursResult.hasBreakColumns) {
       console.warn(
-        "Supabase business_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+        "Backend business_hours table is missing lunch break columns. Falling back to schedules without breaks.",
       );
     }
 
     if (!staffWorkingHoursResult.hasBreakColumns) {
       console.warn(
-        "Supabase staff_member_working_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+        "Backend staff_member_working_hours table is missing lunch break columns. Falling back to schedules without breaks.",
       );
     }
 
     const staffIds = new Set(
-      (staffMembers as SupabaseStaffRow[] | null)?.map(
+      (staffMembers as BackendStaffRow[] | null)?.map(
         (staffMember) => staffMember.id,
       ) ?? [],
     );
 
     return {
-      business: mapBusiness(business as SupabaseBusinessRow),
-      services:
-        (services as SupabaseServiceRow[] | null)?.map(mapService) ?? [],
+      workRecords: (workRecords ?? []).map((row) => ({
+        id: row.id,
+        workDate: row.work_date,
+        customerId: row.customer_id,
+        customerName: row.customer_name,
+        serviceId: row.service_id,
+        serviceName: row.service_name,
+        staffMemberId: row.staff_member_id,
+        staffName: row.staff_name,
+        amount: Number(row.amount),
+        notes: row.notes,
+        sourceRef: null,
+        collectionVerified: Boolean(row.collection_verified),
+      })),
+      business: mapBusiness(business as BackendBusinessRow),
+      services: (services as BackendServiceRow[] | null)?.map(mapService) ?? [],
       staffMembers:
-        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+        (staffMembers as BackendStaffRow[] | null)?.map(mapStaff) ?? [],
       appointments:
-        (appointments as SupabaseAppointmentRow[] | null)?.map(
-          mapAppointment,
-        ) ?? [],
+        (appointments as BackendAppointmentRow[] | null)?.map(mapAppointment) ??
+        [],
       customers:
-        (customers as SupabaseCustomerRow[] | null)?.map(mapCustomer) ?? [],
+        (customers as BackendCustomerRow[] | null)?.map(mapCustomer) ?? [],
       businessHours: mergeBusinessHours(
         (businessHoursResult.data ?? []).map(mapBusinessHour),
       ),
-      bookingSettings:
-        bookingSettings && !isBookingSettingsMissing
-          ? mapBookingSettings(bookingSettings as SupabaseBookingSettingsRow)
-          : createDefaultBookingSettings(),
+      bookingSettings: bookingSettings
+        ? mapBookingSettings(bookingSettings as BackendBookingSettingsRow)
+        : createDefaultBookingSettings(),
       staffWorkingHours:
         (staffWorkingHoursResult.data ?? [])
           .filter((workingHour) => staffIds.has(workingHour.staff_member_id))
           .map(mapStaffWorkingHour) ?? [],
       staffServiceAssignments:
-        (staffServiceAssignments as
-          | {
-              id: string;
-              staff_member_id: string;
-              service_id: string;
-            }[]
-          | null
-        )?.filter((assignment) => staffIds.has(assignment.staff_member_id))
+        (
+          staffServiceAssignments as
+            | {
+                id: string;
+                staff_member_id: string;
+                service_id: string;
+              }[]
+            | null
+        )
+          ?.filter((assignment) => staffIds.has(assignment.staff_member_id))
           .map((assignment) => ({
             id: assignment.id,
             staffMemberId: assignment.staff_member_id,
@@ -1481,34 +1654,54 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       isLive: true,
     };
   } catch (error) {
-    console.error("Supabase agenda lookup crashed", error);
-    return createDemoAgendaBundle();
+    console.error("Backend agenda lookup crashed", error);
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoAgendaBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 }
 
 export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
   const businessSlug = process.env.BUSINESS_SLUG;
 
-  if (!businessSlug || !hasSupabaseAdminConfig()) {
-    return createDemoTeamBundle();
+  if (!businessSlug || !hasBackendAdminConfig()) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoTeamBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
-  const supabase = createSupabaseAdminClient();
+  const backend = createBackendAdminClient();
 
-  if (!supabase) {
-    return createDemoTeamBundle();
+  if (!backend) {
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoTeamBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 
   try {
-    const { data: business, error: businessError } = await supabase
+    const { data: business, error: businessError } = await backend
       .from("businesses")
       .select("id, name, slug, description, time_zone")
       .eq("slug", businessSlug)
       .maybeSingle();
 
     if (businessError || !business) {
-      console.error("Supabase business lookup for team failed", businessError);
-      return createDemoTeamBundle();
+      console.error("Backend business lookup for team failed", businessError);
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoTeamBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     const [
@@ -1520,15 +1713,15 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
       { data: staffServiceAssignments, error: staffServiceAssignmentsError },
       { data: staffCategoryRates, error: staffCategoryRatesError },
     ] = await Promise.all([
-      supabase
+      backend
         .from("services")
         .select(
           "id, name, description, duration_minutes, price, is_active, category",
         )
         .eq("business_id", business.id)
         .order("display_order", { ascending: true }),
-      fetchStaffMembersForBusiness(supabase, business.id),
-      supabase
+      fetchStaffMembersForBusiness(backend, business.id),
+      backend
         .from("appointments")
         .select(
           "id, customer_id, customer_name, customer_contact, customer_email, appointment_date, appointment_time, status, channel, service_id, service_name_snapshot, staff_member_id, staff_name_snapshot, price_snapshot, duration_snapshot, notes, internal_notes, cancellation_reason, created_at, updated_at",
@@ -1536,24 +1729,23 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
         .eq("business_id", business.id)
         .order("appointment_date", { ascending: true })
         .order("appointment_time", { ascending: true }),
-      supabase
+      backend
         .from("staff_time_logs")
         .select(
           "id, staff_member_id, work_date, start_time, end_time, hours_worked, entry_type, source, notes, staff_member:staff_members(full_name)",
         )
         .eq("business_id", business.id)
         .order("work_date", { ascending: false }),
-      fetchStaffWorkingHoursRows(supabase),
-      supabase
+      fetchStaffWorkingHoursRows(backend),
+      backend
         .from("staff_member_services")
         .select("id, staff_member_id, service_id"),
-      supabase
+      backend
         .from("staff_member_category_rates")
         .select("id, staff_member_id, service_category, percentage"),
     ]);
 
     const staffWorkingHoursError = staffWorkingHoursResult.error;
-    const isCategoryRatesMissing = staffCategoryRatesError?.code === "PGRST205";
 
     if (
       servicesError ||
@@ -1562,9 +1754,9 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
       staffTimeLogsError ||
       staffWorkingHoursError ||
       staffServiceAssignmentsError ||
-      (staffCategoryRatesError && !isCategoryRatesMissing)
+      staffCategoryRatesError
     ) {
-      console.error("Supabase team lookup failed", {
+      console.error("Backend team lookup failed", {
         servicesError,
         staffError,
         appointmentsError,
@@ -1573,39 +1765,36 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
         staffServiceAssignmentsError,
         staffCategoryRatesError,
       });
-      return createDemoTeamBundle();
-    }
-
-    if (isCategoryRatesMissing) {
-      console.warn(
-        "Supabase staff category rates table is missing. Falling back to default rate values.",
-      );
+      if (
+        process.env.DEMO_MODE === "true" &&
+        process.env.NODE_ENV !== "production"
+      )
+        return createDemoTeamBundle();
+      throw new Error("No se pudo cargar el negocio desde Strapi.");
     }
 
     if (!staffWorkingHoursResult.hasBreakColumns) {
       console.warn(
-        "Supabase staff_member_working_hours table is missing lunch break columns. Falling back to schedules without breaks.",
+        "Backend staff_member_working_hours table is missing lunch break columns. Falling back to schedules without breaks.",
       );
     }
 
     const staffIds = new Set(
-      (staffMembers as SupabaseStaffRow[] | null)?.map(
+      (staffMembers as BackendStaffRow[] | null)?.map(
         (staffMember) => staffMember.id,
       ) ?? [],
     );
 
     return {
-      business: mapBusiness(business as SupabaseBusinessRow),
-      services:
-        (services as SupabaseServiceRow[] | null)?.map(mapService) ?? [],
+      business: mapBusiness(business as BackendBusinessRow),
+      services: (services as BackendServiceRow[] | null)?.map(mapService) ?? [],
       staffMembers:
-        (staffMembers as SupabaseStaffRow[] | null)?.map(mapStaff) ?? [],
+        (staffMembers as BackendStaffRow[] | null)?.map(mapStaff) ?? [],
       appointments:
-        (appointments as SupabaseAppointmentRow[] | null)?.map(
-          mapAppointment,
-        ) ?? [],
+        (appointments as BackendAppointmentRow[] | null)?.map(mapAppointment) ??
+        [],
       staffTimeLogs:
-        (staffTimeLogs as SupabaseStaffTimeLogRow[] | null)?.map(
+        (staffTimeLogs as BackendStaffTimeLogRow[] | null)?.map(
           mapStaffTimeLog,
         ) ?? [],
       staffWorkingHours:
@@ -1613,18 +1802,22 @@ export async function getBusinessTeamBundle(): Promise<BusinessTeamBundle> {
           ?.filter((workingHour) => staffIds.has(workingHour.staff_member_id))
           .map(mapStaffWorkingHour) ?? [],
       staffServiceAssignments:
-        (staffServiceAssignments as SupabaseStaffServiceAssignmentRow[] | null)
+        (staffServiceAssignments as BackendStaffServiceAssignmentRow[] | null)
           ?.filter((assignment) => staffIds.has(assignment.staff_member_id))
           .map(mapStaffServiceAssignment) ?? [],
-      staffCategoryRates: isCategoryRatesMissing
-        ? []
-        : ((staffCategoryRates as SupabaseStaffCategoryRateRow[] | null)
-            ?.filter((rate) => staffIds.has(rate.staff_member_id))
-            .map(mapStaffCategoryRate) ?? []),
+      staffCategoryRates:
+        (staffCategoryRates as BackendStaffCategoryRateRow[] | null)
+          ?.filter((rate) => staffIds.has(rate.staff_member_id))
+          .map(mapStaffCategoryRate) ?? [],
       isLive: true,
     };
   } catch (error) {
-    console.error("Supabase team lookup crashed", error);
-    return createDemoTeamBundle();
+    console.error("Backend team lookup crashed", error);
+    if (
+      process.env.DEMO_MODE === "true" &&
+      process.env.NODE_ENV !== "production"
+    )
+      return createDemoTeamBundle();
+    throw new Error("No se pudo cargar el negocio desde Strapi.");
   }
 }
