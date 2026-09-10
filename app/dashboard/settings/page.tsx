@@ -22,6 +22,8 @@ export default async function SettingsPage() {
     "email",
     "website",
     "cuit",
+    "instagram_handle",
+    "whatsapp_phone",
   ] as const;
   const initial = Object.fromEntries(
     fields.map((field) => [field, String(data[field] ?? "")]),
