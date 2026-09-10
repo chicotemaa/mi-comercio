@@ -185,6 +185,7 @@ interface BackendCustomerRow {
 
 interface BackendPaymentRelationRow {
   full_name?: string | null;
+  customer_name?: string | null;
   name?: string | null;
   number?: string | null;
 }
@@ -209,6 +210,8 @@ interface BackendPaymentRow {
   created_at: string;
   notes: string | null;
   customer: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  work_record?: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
+  appointment?: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
   staff_member: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
   invoice: BackendPaymentRelationRow | BackendPaymentRelationRow[] | null;
 }
@@ -829,8 +832,29 @@ function mapCustomer(row: BackendCustomerRow): CustomerRecord {
   };
 }
 
-function mapPayment(row: BackendPaymentRow): PaymentRecord {
-  const customer = pickSingleRelation(row.customer);
+function relatedPaymentCustomerName(row: BackendPaymentRow) {
+  return (
+    [
+      pickSingleRelation(row.customer)?.full_name,
+      pickSingleRelation(row.work_record)?.customer_name,
+      pickSingleRelation(row.appointment)?.customer_name,
+    ]
+      .find((name) => typeof name === "string" && name.trim())
+      ?.trim() ?? null
+  );
+}
+
+function legacyPaymentSourceKey(reference?: string | null) {
+  return reference &&
+    /^\d+:planilla-barberia:(BASE_DATOS|DIA):[1-9]\d*:payment$/.test(reference)
+    ? reference.slice(0, -":payment".length)
+    : null;
+}
+
+function mapPayment(
+  row: BackendPaymentRow,
+  legacyCustomerNames: Map<string, string>,
+): PaymentRecord {
   const staffMember = pickSingleRelation(row.staff_member);
   const invoice = pickSingleRelation(row.invoice);
 
@@ -850,7 +874,9 @@ function mapPayment(row: BackendPaymentRow): PaymentRecord {
     status: row.status,
     customerId: row.customer_id,
     customerName:
-      typeof customer?.full_name === "string" ? customer.full_name : null,
+      relatedPaymentCustomerName(row) ??
+      legacyCustomerNames.get(legacyPaymentSourceKey(row.import_ref) ?? "") ??
+      null,
     staffMemberId: row.staff_member_id,
     staffName:
       typeof staffMember?.full_name === "string" ? staffMember.full_name : null,
@@ -1261,6 +1287,35 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
     const workResult = await backend.from("work_records").select();
     if (workResult.error)
       throw new Error("No se pudo cargar la planilla histórica.");
+    const paymentRows = (payments ?? []) as BackendPaymentRow[];
+    // Some historical collections have no work record (the service was blank).
+    // Resolve those customers from the exact source row, never from free-text
+    // descriptions or a guessed customer association. Keep source data server-side.
+    const legacySourceKeys = [
+      ...new Set(
+        paymentRows
+          .filter((row) => !relatedPaymentCustomerName(row))
+          .map((row) => legacyPaymentSourceKey(row.import_ref))
+          .filter((key): key is string => key !== null),
+      ),
+    ];
+    const legacyCustomerNames = new Map<string, string>();
+    for (let offset = 0; offset < legacySourceKeys.length; offset += 1000) {
+      const { data: sourceRows, error } = await backend
+        .from("import_rows")
+        .select("source_key, source_data")
+        .eq("business_id", business.id)
+        .in("source_key", legacySourceKeys.slice(offset, offset + 1000));
+      if (error)
+        throw new Error(
+          "No se pudieron cargar los clientes de los cobros históricos.",
+        );
+      for (const source of sourceRows ?? []) {
+        const name = source.source_data?.B;
+        if (typeof name === "string" && name.trim())
+          legacyCustomerNames.set(source.source_key, name.trim());
+      }
+    }
     return {
       workRecords: (workResult.data || []).map((r) => ({
         id: r.id,
@@ -1281,7 +1336,7 @@ export async function getBusinessOperationsBundle(): Promise<BusinessOperationsB
         (staffMembers as BackendStaffRow[] | null)?.map(mapStaff) ?? [],
       customers:
         (customers as BackendCustomerRow[] | null)?.map(mapCustomer) ?? [],
-      payments: (payments as BackendPaymentRow[] | null)?.map(mapPayment) ?? [],
+      payments: paymentRows.map((row) => mapPayment(row, legacyCustomerNames)),
       expenses: (expenses as BackendExpenseRow[] | null)?.map(mapExpense) ?? [],
       payouts: (payouts as BackendPayoutRow[] | null)?.map(mapPayout) ?? [],
       staffTimeLogs:
