@@ -49,14 +49,16 @@ export function AppointmentsSelectedDayPanel({
     .reduce((total, appointment) => total + appointment.price, 0);
 
   return (
-    <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+    <div className="selected-day-panel space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold capitalize text-slate-900">
             {formatAgendaDayLabel(dateKey, timeZone)}
           </p>
           <p className="text-sm text-slate-500">
-            {appointments.length} turnos · {formatCurrency(estimatedRevenue)}
+            {appointments.length}{" "}
+            {appointments.length === 1 ? "turno" : "turnos"} ·{" "}
+            {formatCurrency(estimatedRevenue)}
           </p>
         </div>
 
@@ -77,15 +79,16 @@ export function AppointmentsSelectedDayPanel({
 
             return (
               <div
-                className={`rounded-3xl border p-4 ${
+                className={`appointment-list-card rounded-2xl border p-4 ${
                   isSelected
-                    ? "border-slate-900 bg-slate-900 text-white"
+                    ? "appointment-list-card-selected border-slate-300 bg-white text-slate-900"
                     : "border-slate-200 bg-slate-50"
                 }`}
                 key={appointment.id}
               >
                 <button
                   className="w-full text-left"
+                  aria-pressed={isSelected}
                   onClick={() => onSelectAppointment(appointment.id)}
                   type="button"
                 >
@@ -95,34 +98,20 @@ export function AppointmentsSelectedDayPanel({
                         {formatAppointmentTime(appointment.appointmentTime)} ·{" "}
                         {appointment.customerName}
                       </p>
-                      <p
-                        className={
-                          isSelected
-                            ? "text-sm text-slate-300"
-                            : "text-sm text-slate-600"
-                        }
-                      >
+                      <p className="text-sm text-slate-600">
                         {appointment.serviceName} ·{" "}
                         {appointment.staffName ?? "Sin profesional"}
                       </p>
                     </div>
                     <Badge
-                      className={
-                        isSelected
-                          ? "bg-white/15 text-white"
-                          : getStatusBadgeClassName(appointment.status)
-                      }
+                      className={getStatusBadgeClassName(appointment.status)}
                     >
                       {getStatusLabel(appointment.status)}
                     </Badge>
                   </div>
                 </button>
 
-                <div
-                  className={`mt-3 grid gap-3 text-sm ${
-                    isSelected ? "text-slate-200" : "text-slate-600"
-                  }`}
-                >
+                <div className="mt-3 grid gap-3 text-sm text-slate-600">
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full border border-current/10 px-3 py-1">
                       {getChannelLabel(appointment.channel)}
@@ -140,7 +129,7 @@ export function AppointmentsSelectedDayPanel({
                     <p
                       className={
                         isSelected
-                          ? "rounded-2xl bg-white/10 px-3 py-2 text-slate-100"
+                          ? "rounded-xl bg-slate-50 px-3 py-2 text-slate-700"
                           : "rounded-2xl bg-white px-3 py-2 text-slate-700"
                       }
                     >
@@ -151,7 +140,7 @@ export function AppointmentsSelectedDayPanel({
                     <p
                       className={
                         isSelected
-                          ? "rounded-2xl bg-rose-500/20 px-3 py-2 text-rose-100"
+                          ? "rounded-xl bg-rose-50 px-3 py-2 text-rose-900"
                           : "rounded-2xl bg-rose-50 px-3 py-2 text-rose-900"
                       }
                     >
@@ -160,11 +149,13 @@ export function AppointmentsSelectedDayPanel({
                   ) : null}
                 </div>
 
-                <AppointmentProgress appointment={appointment} timeZone={timeZone} />
+                <AppointmentProgress
+                  appointment={appointment}
+                  timeZone={timeZone}
+                />
                 <div className="mt-4 flex flex-wrap gap-2">
                   <CheckoutButton appointment={appointment} />
                   <Button
-                    className={isSelected ? "border-white/15 bg-white/10 text-white hover:bg-white/15" : ""}
                     onClick={() => onEdit(appointment)}
                     size="sm"
                     type="button"
@@ -176,7 +167,6 @@ export function AppointmentsSelectedDayPanel({
 
                   {appointment.status === "pending" ? (
                     <Button
-                      className={isSelected ? "bg-emerald-500 text-white hover:bg-emerald-400" : ""}
                       onClick={() => onStatusChange(appointment, "confirmed")}
                       size="sm"
                       type="button"
@@ -188,7 +178,6 @@ export function AppointmentsSelectedDayPanel({
 
                   {appointment.status === "confirmed" ? (
                     <Button
-                      className={isSelected ? "bg-sky-500 text-white hover:bg-sky-400" : ""}
                       onClick={() => onStatusChange(appointment, "completed")}
                       size="sm"
                       type="button"
@@ -200,7 +189,7 @@ export function AppointmentsSelectedDayPanel({
 
                   {appointment.status !== "cancelled" ? (
                     <Button
-                      className={isSelected ? "border-rose-300/20 bg-rose-500/15 text-rose-100 hover:bg-rose-500/20" : ""}
+                      className={"text-rose-700"}
                       onClick={() => onStatusChange(appointment, "cancelled")}
                       size="sm"
                       type="button"

@@ -62,17 +62,13 @@ export function EmployeesPageClient({
           </Button>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Equipo en vivo" : "Equipo demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} usa este módulo para definir quién atiende, qué servicios toma y cómo se liquida cada profesional.`}
+        description={`Profesionales, servicios y formas de pago de ${businessName}.`}
         eyebrow="Equipo"
         title="Equipo y remuneraciones"
       />

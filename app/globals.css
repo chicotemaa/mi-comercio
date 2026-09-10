@@ -59,8 +59,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #faf9f6;
+  --foreground: #252d26;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -70,7 +70,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #70776b;
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -129,6 +129,17 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
   }
   body {
     @apply bg-background text-foreground;
@@ -179,7 +190,7 @@
   [data-sidebar="sidebar"] .sidebar-brand p {
     color: #b6c0b5;
   }
-  [data-sidebar="sidebar"] .sidebar-brand > div:last-child {
+  [data-sidebar="sidebar"] .sidebar-connection {
     background: #2c382f;
     color: #c4cdc1;
     font-size: 0.65rem;
@@ -200,9 +211,9 @@
     background: var(--brand);
   }
   .page-title {
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
     line-height: 1.15;
-    letter-spacing: -0.055em;
+    letter-spacing: -0.04em;
     font-weight: 600;
   }
   .section-kicker {
@@ -290,7 +301,7 @@
   }
   .checkout-appointment-card:hover {
     border-color: var(--brand);
-    transform: translateY(-2px);
+    background: #faf9f6;
   }
   .checkout-steps {
     display: grid;
@@ -372,7 +383,7 @@
     --fc-event-border-color: transparent;
     --fc-neutral-bg-color: color-mix(in srgb, var(--muted) 82%, white 18%);
     --fc-page-bg-color: transparent;
-    --fc-today-bg-color: color-mix(in srgb, #dbeafe 55%, white 45%);
+    --fc-today-bg-color: color-mix(in srgb, var(--brand-soft) 55%, white);
     font-size: 0.92rem;
   }
 
@@ -423,14 +434,14 @@
 
   .appointments-calendar .fc-event {
     border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    box-shadow: none;
     cursor: pointer;
     padding: 0.15rem;
   }
 
   .appointments-calendar .fc-event.is-selected-event {
     box-shadow: 0 0 0 2px #0f172a;
-    transform: translateY(-1px);
+    outline-offset: 1px;
   }
 
   .appointments-calendar .fc-appointment-event {
@@ -522,7 +533,7 @@
 [data-sidebar="sidebar"] .sidebar-brand p {
   color: #b6c0b5;
 }
-[data-sidebar="sidebar"] .sidebar-brand > div:last-child {
+[data-sidebar="sidebar"] .sidebar-connection {
   background: #2c382f;
   color: #c4cdc1;
 }
@@ -865,6 +876,188 @@
   overflow-wrap: anywhere;
   font-size: clamp(1.35rem, 3cqi, 1.875rem);
   font-variant-numeric: tabular-nums;
+}
+
+/* Shared, quiet surfaces across every administrative route and dialog. */
+.admin-topbar {
+  background: #faf9f6f2;
+  border-bottom: 1px solid #e9e7e0;
+  backdrop-filter: blur(12px);
+}
+.dashboard-page-header {
+  min-width: 0;
+  padding: 0.25rem 0 1.1rem;
+  border-bottom: 1px solid #e3e2db;
+}
+.page-supporting > div {
+  max-width: 100%;
+  flex-wrap: wrap;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.25rem 0 0;
+  font-size: 0.75rem;
+}
+.page-status {
+  flex-basis: 100%;
+  font-size: 0.7rem;
+}
+.page-status [class*="emerald"] {
+  color: #70776b;
+  background: transparent;
+  border: 0;
+  padding-inline: 0;
+  font-weight: 400;
+}
+.admin-content h1 {
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+.admin-shell [data-slot="card"] {
+  box-shadow: none;
+  border-color: #e6e4dd;
+  border-radius: 1rem;
+}
+.admin-shell [data-slot="card-title"] {
+  line-height: 1.4;
+}
+.admin-shell [data-slot="tabs-list"] {
+  border: 0;
+  border-radius: 0.85rem;
+  background: #eeede7;
+  padding: 0.25rem;
+}
+.admin-shell [data-slot="tabs-trigger"] {
+  border: 0;
+  border-radius: 0.6rem;
+  box-shadow: none;
+}
+.admin-shell [data-slot="tabs-trigger"][data-state="active"] {
+  background: white;
+  color: var(--brand);
+  box-shadow: 0 1px 3px #252d2608;
+}
+.admin-shell
+  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select),
+[data-slot="dialog-surface"]
+  :where(input:not([type="checkbox"]):not([type="radio"]), textarea, select) {
+  border-radius: 0.7rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+[data-slot="dialog-surface"] {
+  background: #fffefa;
+  box-shadow: 0 16px 70px #202a2324;
+  overscroll-behavior: contain;
+}
+.admin-shell [data-sidebar="content"],
+.appointments-calendar,
+.appointments-calendar .fc-scroller,
+[data-slot="dialog-surface"] {
+  scroll-behavior: smooth;
+}
+.checkout-toolbar {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid #e3e2db;
+}
+.checkout-card {
+  border-radius: 1rem;
+  box-shadow: none;
+}
+.checkout-payment {
+  border-top-width: 2px;
+}
+.metric-grid [data-slot="card"] {
+  gap: 0.35rem;
+  padding-block: 1rem;
+}
+.agenda-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding-block: 0.25rem;
+}
+.agenda-summary dt {
+  font-size: 0.72rem;
+  color: #70776b;
+}
+.agenda-summary dd {
+  margin-top: 0.2rem;
+  font-size: clamp(1.1rem, 2.5cqi, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+.filter-disclosure summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding-block: 0.35rem;
+  color: #535b50;
+  cursor: pointer;
+  font-size: 0.8rem;
+  list-style: none;
+}
+.filter-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+.filter-disclosure summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 1.2rem;
+}
+.filter-disclosure[open] summary::after {
+  content: "−";
+}
+.filter-active {
+  color: var(--brand);
+  font-size: 0.7rem;
+}
+.filter-disclosure summary:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}
+.appointment-list-card-selected {
+  border-color: var(--brand);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+.appointment-list-card > .grid span {
+  border: 0;
+  padding: 0;
+}
+.responsive-table tbody > tr {
+  transition: background-color 140ms ease;
+}
+.responsive-table thead th {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #70776b;
+}
+@media (max-width: 639px) {
+  .agenda-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem 1.2rem;
+  }
+  .dashboard-page-header .page-actions > [data-slot="button"] {
+    flex: 1 1 auto;
+  }
+  .page-supporting svg {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html,
+  .admin-shell [data-sidebar="content"],
+  .appointments-calendar,
+  .appointments-calendar .fc-scroller,
+  [data-slot="dialog-surface"] {
+    scroll-behavior: auto;
+  }
 }
 
 @media (max-width: 1023px) {

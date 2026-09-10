@@ -44,7 +44,6 @@ import {
 } from "lucide-react";
 import { MobileNavigation, SidebarRouteLink } from "./mobile-navigation";
 import { NotificationBell } from "./notification-bell";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const menuItems = [
@@ -71,73 +70,59 @@ const menuItems = [
 const routeMeta = [
   {
     match: "/dashboard/checkout",
-    title: "Recepción y caja",
-    subtitle: "Cliente, atención y cobros en un mismo lugar.",
+    title: "Checkout",
   },
   {
     match: "/dashboard/gastos",
-    title: "Gastos y vencimientos",
-    subtitle: "Compromisos, pagos y planificación mensual.",
+    title: "Gastos",
   },
   {
     match: "/dashboard/liquidaciones",
-    title: "Liquidaciones del equipo",
-    subtitle: "Jornadas, comisiones y pagos por período.",
+    title: "Liquidaciones",
   },
   {
     match: "/dashboard/atenciones",
     title: "Atenciones",
-    subtitle: "Trabajos realizados, cobros y saldos.",
   },
   {
     match: "/dashboard/services",
-    title: "Catálogo compartido",
-    subtitle: "Servicios visibles en web y en backoffice.",
+    title: "Servicios",
   },
   {
     match: "/dashboard/employees",
-    title: "Equipo y liquidaciones",
-    subtitle: "Disponibilidad, esquemas de pago y asignaciones.",
+    title: "Equipo",
   },
   {
     match: "/dashboard/appointments",
-    title: "Agenda operativa",
-    subtitle: "Reservas centralizadas desde todos los canales.",
+    title: "Turnos",
   },
   {
     match: "/dashboard/hours",
-    title: "Disponibilidad general",
-    subtitle: "Reglas base para apertura de turnos.",
+    title: "Horarios",
   },
   {
     match: "/dashboard/clients",
-    title: "Relación con clientes",
-    subtitle: "Historial, valor acumulado y seguimiento.",
+    title: "Clientes",
   },
   {
     match: "/dashboard/payments",
-    title: "Caja y movimientos",
-    subtitle: "Cobros, gastos y distribuciones en un mismo flujo.",
+    title: "Caja",
   },
   {
     match: "/dashboard/reports",
-    title: "Inteligencia del negocio",
-    subtitle: "Lectura consolidada de operación, ingresos y crecimiento.",
+    title: "Reportes",
   },
   {
     match: "/dashboard/campaigns",
     title: "Campañas y comunicación",
-    subtitle: "Mensajes, audiencias y resultados del canal.",
   },
   {
     match: "/dashboard/settings",
     title: "Configuración del negocio",
-    subtitle: "Datos base, usuarios e integraciones.",
   },
   {
     match: "/dashboard/notifications",
-    title: "Actividad del sistema",
-    subtitle: "Eventos recientes, avisos y seguimiento interno.",
+    title: "Avisos",
   },
 ];
 
@@ -145,7 +130,6 @@ function getRouteMeta(pathname: string) {
   if (pathname === "/dashboard") {
     return {
       title: "Panel general",
-      subtitle: "Vista rápida de agenda, caja y operación diaria.",
     };
   }
 
@@ -179,8 +163,8 @@ export default function DashboardLayout({
         Ir al contenido
       </a>
       <Sidebar variant="inset" className="brand-sidebar border-none">
-        <SidebarHeader className="px-4 pb-4 pt-5">
-          <div className="sidebar-brand p-3">
+        <SidebarHeader className="px-4 pb-2 pt-4">
+          <div className="sidebar-brand px-3 py-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 shadow-sm">
                 <span className="font-serif text-xl text-white">
@@ -193,10 +177,6 @@ export default function DashboardLayout({
                 </h2>
                 <p className="text-xs text-slate-500">Gestión del negocio</p>
               </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              Tu negocio, conectado
             </div>
           </div>
         </SidebarHeader>
@@ -249,10 +229,10 @@ export default function DashboardLayout({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">
+                    <SidebarRouteLink href="/dashboard/settings">
                       <Settings className="w-4 h-4 mr-2" />
                       Configuración
-                    </Link>
+                    </SidebarRouteLink>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-red-600"
@@ -274,17 +254,14 @@ export default function DashboardLayout({
       </Sidebar>
 
       <SidebarInset className="bg-transparent">
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur sm:px-6">
-          <SidebarTrigger className="rounded-xl border border-slate-200 bg-white shadow-sm" />
+        <header className="admin-topbar sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 px-4 sm:px-6">
+          <SidebarTrigger className="rounded-xl" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-900">
               {currentRoute.title}
             </p>
-            <p className="hidden truncate text-xs text-slate-500 md:block">
-              {currentRoute.subtitle}
-            </p>
           </div>
-          <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 shadow-sm lg:flex">
+          <div className="hidden items-center gap-2 text-xs text-slate-500 lg:flex">
             <CalendarDays className="h-3.5 w-3.5" />
             <span className="capitalize">{todayLabel}</span>
           </div>

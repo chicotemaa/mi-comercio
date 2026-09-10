@@ -110,7 +110,9 @@ export default async function DashboardPage() {
       <DashboardPageHeader
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link className="brand-button" href="/dashboard/checkout">Abrir checkout</Link>
+            <Link className="brand-button" href="/dashboard/checkout">
+              Abrir checkout
+            </Link>
             <Link
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white"
               href="/dashboard/appointments?new=1"
@@ -132,15 +134,11 @@ export default async function DashboardPage() {
           </div>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Datos actualizados" : "Modo demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
         description={
           isLive

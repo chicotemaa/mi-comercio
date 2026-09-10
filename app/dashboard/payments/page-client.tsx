@@ -182,17 +182,13 @@ export function PaymentsPageClient({
           </>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Caja en vivo" : "Caja demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} centraliza aquí cobros, gastos y distribuciones sobre la misma base operativa.`}
+        description={`Ingresos, gastos y pagos de ${businessName}.`}
         eyebrow="Caja"
         supporting={
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">

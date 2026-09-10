@@ -71,17 +71,13 @@ export function ClientsPageClient({
           </Button>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Clientes en vivo" : "Clientes demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} consolida aquí contactos, preferencias y valor acumulado de cada cliente.`}
+        description={`Contactos e historial de clientes de ${businessName}.`}
         eyebrow="CRM"
         title="Clientes"
       />

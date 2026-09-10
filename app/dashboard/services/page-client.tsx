@@ -55,17 +55,13 @@ export function ServicesPageClient({
           </Button>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Catálogo en vivo" : "Catálogo demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} mantiene este catálogo compartido entre el sitio público y el panel.`}
+        description={`Servicios y precios de ${businessName}.`}
         eyebrow="Catálogo"
         title="Servicios"
       />

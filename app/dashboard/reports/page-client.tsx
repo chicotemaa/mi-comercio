@@ -183,17 +183,13 @@ export function ReportsPageClient({
           </Button>
         }
         badge={
-          <Badge
-            className={
-              isLive
-                ? "bg-emerald-100 text-emerald-900"
-                : "bg-amber-100 text-amber-900"
-            }
-          >
-            {isLive ? "Reportes en vivo" : "Reportes demo"}
-          </Badge>
+          !isLive ? (
+            <Badge className="bg-amber-100 text-amber-900">
+              Modo demostración
+            </Badge>
+          ) : null
         }
-        description={`${businessName} consolida aquí ingresos, operación, clientes y servicios sobre datos reales.`}
+        description={`La evolución de ${businessName}, en números.`}
         eyebrow="Analytics"
         supporting={
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">

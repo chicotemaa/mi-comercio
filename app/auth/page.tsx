@@ -55,7 +55,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="auth-page flex min-h-dvh items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 p-4">
+    <main className="auth-page flex min-h-dvh items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
@@ -65,13 +65,13 @@ export default function AuthPage() {
             <div className="min-w-0 text-left">
               <h1 className="text-2xl font-bold text-slate-900">Mi Comercio</h1>
               <p className="text-sm text-slate-600">
-                Backoffice de Nerea Aylen Barber
+                Administración de Nerea Aylen Barber
               </p>
             </div>
           </div>
         </div>
 
-        <Card className="border-0 shadow-xl">
+        <Card className="border-slate-200 bg-white">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Acceso interno</CardTitle>
             <CardDescription>
@@ -147,6 +147,6 @@ export default function AuthPage() {
           Acceso exclusivo para las personas autorizadas por el negocio.
         </p>
       </div>
-    </div>
+    </main>
   );
 }
