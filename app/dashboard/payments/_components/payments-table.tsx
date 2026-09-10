@@ -55,7 +55,7 @@ export function PaymentsTable({
             <TableRow key={payment.id}>
               <TableCell>
                 {formatDisplayDate(
-                  payment.processedAt ?? payment.createdAt,
+                  payment.collectionDate ?? payment.processedAt ?? payment.createdAt,
                   timeZone,
                 )}
               </TableCell>
@@ -95,6 +95,8 @@ export function PaymentsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!!(payment.appointmentId || payment.workRecordId || payment.importRef)}
+                    title={(payment.appointmentId || payment.workRecordId || payment.importRef) ? "Cobro vinculado: conserva su registro original" : "Editar cobro"}
                     onClick={() => onEdit(payment)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -102,6 +104,8 @@ export function PaymentsTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!!(payment.appointmentId || payment.workRecordId || payment.importRef)}
+                    title={(payment.appointmentId || payment.workRecordId || payment.importRef) ? "Cobro vinculado: conserva su registro original" : "Eliminar cobro"}
                     onClick={() => onDelete(payment)}
                   >
                     <Trash2 className="h-4 w-4" />

@@ -1,25 +1,39 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import type { EmployeeSummary } from "../employee-types"
+import type { EmployeeSummary } from "../employee-types";
 
 interface EmployeeStatusDialogProps {
-  employee: EmployeeSummary | null
-  isSubmitting: boolean
-  onConfirm: () => void
-  onOpenChange: (open: boolean) => void
+  employee: EmployeeSummary | null;
+  isSubmitting: boolean;
+  onConfirm: () => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function EmployeeStatusDialog({ employee, isSubmitting, onConfirm, onOpenChange }: EmployeeStatusDialogProps) {
-  const nextIsActive = employee ? !employee.isActive : false
+export function EmployeeStatusDialog({
+  employee,
+  isSubmitting,
+  onConfirm,
+  onOpenChange,
+}: EmployeeStatusDialogProps) {
+  const nextIsActive = employee ? !employee.isActive : false;
 
   return (
     <Dialog open={employee !== null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{nextIsActive ? "Activar profesional" : "Desactivar profesional"}</DialogTitle>
+          <DialogTitle>
+            {nextIsActive ? "Activar profesional" : "Desactivar profesional"}
+          </DialogTitle>
           <DialogDescription>
             {nextIsActive
               ? "El profesional volverá a quedar disponible para agenda interna y, si corresponde, para reservas públicas."
@@ -28,7 +42,9 @@ export function EmployeeStatusDialog({ employee, isSubmitting, onConfirm, onOpen
         </DialogHeader>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-          {employee ? `Profesional: ${employee.fullName}` : "Selecciona un profesional para continuar."}
+          {employee
+            ? `Profesional: ${employee.fullName}`
+            : "Selecciona un profesional para continuar."}
         </div>
 
         <DialogFooter>
@@ -41,5 +57,5 @@ export function EmployeeStatusDialog({ employee, isSubmitting, onConfirm, onOpen
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

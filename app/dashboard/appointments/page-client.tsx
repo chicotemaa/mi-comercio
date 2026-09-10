@@ -50,6 +50,9 @@ import type { AgendaViewMode } from "./appointment-types";
 import { useAppointmentsController } from "./use-appointments-controller";
 
 interface AppointmentsPageClientProps {
+  initialDateKey?: string;
+  initialAppointmentId?: string | null;
+  initialCreate?: boolean;
   appointments: AppointmentRecord[];
   bookingSettings: BookingSettingsRecord;
   businessHours: BusinessHourRecord[];
@@ -72,6 +75,9 @@ const AGENDA_VIEW_OPTIONS: Array<{ label: string; value: AgendaViewMode }> = [
 ];
 
 export function AppointmentsPageClient({
+  initialDateKey,
+  initialAppointmentId,
+  initialCreate,
   appointments,
   bookingSettings,
   businessHours,
@@ -86,6 +92,9 @@ export function AppointmentsPageClient({
   todayKey,
 }: AppointmentsPageClientProps) {
   const controller = useAppointmentsController({
+    initialDateKey,
+    initialAppointmentId,
+    initialCreate,
     appointments,
     bookingSettings,
     businessHours,
@@ -140,7 +149,7 @@ export function AppointmentsPageClient({
         title="Calendario operativo"
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="hidden gap-4 md:grid md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
@@ -173,9 +182,7 @@ export function AppointmentsPageClient({
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Completados
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Completados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-slate-900">
@@ -265,7 +272,9 @@ export function AppointmentsPageClient({
                 className="pl-9"
                 placeholder="Buscar por cliente, contacto, servicio o notas"
                 value={controller.searchTerm}
-                onChange={(event) => controller.setSearchTerm(event.target.value)}
+                onChange={(event) =>
+                  controller.setSearchTerm(event.target.value)
+                }
               />
             </div>
 
@@ -291,7 +300,9 @@ export function AppointmentsPageClient({
             <Select
               value={controller.statusFilter}
               onValueChange={(value) =>
-                controller.setStatusFilter(value as "all" | AppointmentRecord["status"])
+                controller.setStatusFilter(
+                  value as "all" | AppointmentRecord["status"],
+                )
               }
             >
               <SelectTrigger>

@@ -47,9 +47,9 @@ export async function POST(request: Request) {
     return badRequest(staffValidation.error);
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("payments")
     .insert({
       business_id: business.id,

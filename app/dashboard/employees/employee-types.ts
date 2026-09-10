@@ -21,6 +21,13 @@ export interface EmployeeWorkingHourFormState {
 }
 
 export interface EmployeeSummary {
+  payrollCadence?: "weekly" | "semimonthly" | "monthly";
+  payrollWeekday?: number;
+  payrollCutoffFirst?: number;
+  payrollCutoffSecond?: number;
+  payrollPayDelay?: number;
+
+  collectionCommissionRate?: number;
   id: string;
   fullName: string;
   role: string | null;
@@ -51,6 +58,12 @@ export interface EmployeeSummary {
 }
 
 export interface EmployeeFormState {
+  collectionCommissionRate: string;
+  payrollCadence: "weekly" | "semimonthly" | "monthly";
+  payrollWeekday: string;
+  payrollCutoffFirst: string;
+  payrollCutoffSecond: string;
+  payrollPayDelay: string;
   fullName: string;
   role: string;
   email: string;

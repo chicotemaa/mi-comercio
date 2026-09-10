@@ -81,6 +81,8 @@ export function ExpensesTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!!expense.importRef}
+                    title={expense.importRef ? "Movimiento registrado" : "Editar"}
                     onClick={() => onEdit(expense)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -88,6 +90,7 @@ export function ExpensesTable({
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!!expense.importRef}
                     onClick={() => onDelete(expense)}
                   >
                     <Trash2 className="h-4 w-4" />

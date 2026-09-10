@@ -50,7 +50,7 @@ export function ServicesTable({ onDelete, onEdit, onToggleStatus, services }: Se
             <TableCell>
               <div className="flex items-center gap-2 text-slate-700">
                 <Clock3 className="h-4 w-4 text-slate-400" />
-                {service.durationMinutes} min
+                {service.durationMinutes ? `${service.durationMinutes} min` : "Por definir"}
               </div>
             </TableCell>
             <TableCell className="font-medium">{formatCurrency(service.price)}</TableCell>

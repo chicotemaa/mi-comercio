@@ -27,10 +27,10 @@ export async function POST(request: Request) {
     return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
   const { data: existingCustomer, error: existingCustomerError } =
-    await supabase
+    await backend
       .from("customers")
       .select("id")
       .eq("business_id", business.id)
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     return badRequest("Ya existe un cliente con ese contacto principal.");
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("customers")
     .insert({
       business_id: business.id,

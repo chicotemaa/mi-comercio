@@ -39,7 +39,7 @@ export function ServiceFormDialog({
         <DialogHeader>
           <DialogTitle>{serviceBeingEdited ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
           <DialogDescription>
-            El catálogo usa nombre, descripción, costo, categoría y duración editable para el sitio y el backoffice.
+            El catálogo usa nombre, descripción, precio, categoría y duración editable para el sitio y el backoffice.
           </DialogDescription>
         </DialogHeader>
 
@@ -69,9 +69,11 @@ export function ServiceFormDialog({
             />
           </div>
 
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={formState.bookingEnabled} onChange={event => onUpdateField("bookingEnabled", event.target.checked)} />Habilitar reservas online (requiere duración)</label>
+          <p className="text-sm text-slate-500">Podés dejar la duración vacía mientras confirmás el tiempo del servicio. Los precios por largo se editan en Precios y variantes.</p>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="service-price">Costo</Label>
+              <Label htmlFor="service-price">Precio</Label>
               <Input
                 id="service-price"
                 inputMode="decimal"

@@ -10,7 +10,7 @@ export const INITIAL_CLIENT_FORM: ClientFormState = {
   preferredServices: "",
   notes: "",
   status: "active",
-  rating: "5",
+  rating: "",
   marketingOptIn: false,
 };
 
@@ -31,7 +31,7 @@ export function createClientFormState(
     preferredServices: client.preferredServices.join(", "),
     notes: client.notes ?? "",
     status: client.status,
-    rating: String(client.rating ?? 5),
+    rating: client.rating == null ? "" : String(client.rating),
     marketingOptIn: client.marketingOptIn,
   };
 }

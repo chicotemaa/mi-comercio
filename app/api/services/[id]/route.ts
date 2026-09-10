@@ -21,9 +21,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return badRequest(parsed.error ?? "Solicitud inválida.")
   }
 
-  const { supabase, business } = businessResult.data
+  const { backend, business } = businessResult.data
 
-  const { data: duplicateService, error: duplicateError } = await supabase
+  const { data: duplicateService, error: duplicateError } = await backend
     .from("services")
     .select("id")
     .eq("business_id", business.id)
@@ -39,12 +39,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return badRequest("Ya existe otro servicio con ese nombre.")
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("services")
     .update({
       name: parsed.data.name,
       description: parsed.data.description,
       duration_minutes: parsed.data.durationMinutes,
+      booking_enabled: parsed.data.bookingEnabled,
       price: parsed.data.price,
       category: parsed.data.category,
       is_active: parsed.data.isActive,
@@ -59,7 +60,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return NextResponse.json({ error: "No se pudo actualizar el servicio." }, { status: 500 })
   }
 
-  const { data: baseVariant } = await supabase
+  const { data: baseVariant } = await backend
     .from("service_price_variants")
     .select("id")
     .eq("service_id", id)
@@ -67,11 +68,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     .maybeSingle()
 
   if (baseVariant) {
-    await supabase
+    await backend
       .from("service_price_variants")
       .update({
-        variant_name: "Base",
-        variant_code: "base",
         price: parsed.data.price,
         duration_minutes: parsed.data.durationMinutes,
         is_active: true,
@@ -91,9 +90,9 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   }
 
   const { id } = await context.params
-  const { supabase, business } = businessResult.data
+  const { backend, business } = businessResult.data
 
-  const { error } = await supabase.from("services").delete().eq("id", id).eq("business_id", business.id)
+  const { error } = await backend.from("services").delete().eq("id", id).eq("business_id", business.id)
 
   if (error) {
     return NextResponse.json({ error: "No se pudo eliminar el servicio." }, { status: 500 })

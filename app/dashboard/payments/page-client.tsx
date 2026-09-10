@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -145,6 +146,7 @@ export function PaymentsPageClient({
       <DashboardPageHeader
         actions={
           <>
+            <Button asChild><Link href="/dashboard/checkout"><Wallet className="mr-2 h-4 w-4"/>Abrir checkout</Link></Button>
             <Button
               variant={
                 controller.activeTab === "payments" ? "default" : "outline"
@@ -152,7 +154,7 @@ export function PaymentsPageClient({
               onClick={() => controller.openCreateDialog("payment")}
             >
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo cobro
+              Cobro sin turno
             </Button>
             <Button
               variant={

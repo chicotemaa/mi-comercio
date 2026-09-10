@@ -31,10 +31,10 @@ export async function PATCH(
     return badRequest(parsed.error ?? "Solicitud inválida.");
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
   const { data: duplicateCustomer, error: duplicateCustomerError } =
-    await supabase
+    await backend
       .from("customers")
       .select("id")
       .eq("business_id", business.id)
@@ -53,7 +53,7 @@ export async function PATCH(
     return badRequest("Ya existe otro cliente con ese contacto principal.");
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("customers")
     .update({
       full_name: parsed.data.fullName,

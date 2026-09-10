@@ -11,11 +11,12 @@ export type PaymentMethod =
   | "transfer"
   | "mercado_pago"
   | "other";
-export type PaymentStatus = "pending" | "completed" | "failed" | "refunded";
+export type PaymentStatus = "pending" | "completed" | "failed" | "refunded" | "voided";
 export type ServiceCategory = "corte" | "coloraciones" | "tratamiento";
 export type StaffCompensationType = "hourly" | "category_percentage";
 
 export interface BusinessRecord {
+  monthlyCollectionTarget?: number;
   id: string;
   name: string;
   slug: string;
@@ -43,6 +44,7 @@ export interface BookingSettingsRecord {
 }
 
 export interface ServiceRecord {
+  bookingEnabled?: boolean;
   id: string;
   name: string;
   description: string | null;
@@ -53,6 +55,13 @@ export interface ServiceRecord {
 }
 
 export interface StaffRecord {
+  payrollCadence?: "weekly" | "semimonthly" | "monthly";
+  payrollWeekday?: number;
+  payrollCutoffFirst?: number;
+  payrollCutoffSecond?: number;
+  payrollPayDelay?: number;
+
+  collectionCommissionRate?: number;
   id: string;
   fullName: string;
   role: string | null;
@@ -92,6 +101,9 @@ export interface StaffCategoryRateRecord {
 }
 
 export interface AppointmentRecord {
+  arrivedAt?: string | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
   id: string;
   customerId?: string | null;
   customerName: string;
@@ -125,7 +137,7 @@ export interface CustomerRecord {
   status: CustomerStatus;
   preferredServices: string[];
   notes: string | null;
-  rating: number;
+  rating: number | null;
   marketingOptIn: boolean;
   lastVisitAt: string | null;
   totalAppointments: number;
@@ -134,6 +146,12 @@ export interface CustomerRecord {
 }
 
 export interface PaymentRecord {
+  collectionDate?: string | null;
+  workRecordId?: string | null;
+  importRef?: string | null;
+  appointmentId?: string | null;
+  commissionRate?: number | null;
+  commissionAmount?: number | null;
   id: string;
   description: string;
   amount: number;
@@ -152,6 +170,7 @@ export interface PaymentRecord {
 }
 
 export interface ExpenseRecord {
+  importRef?: string | null;
   id: string;
   expenseDate: string;
   category: string;
@@ -165,6 +184,7 @@ export interface ExpenseRecord {
 }
 
 export interface PayoutRecord {
+  payrollManaged?: boolean;
   id: string;
   payoutDate: string;
   recipientName: string;
@@ -178,7 +198,23 @@ export interface PayoutRecord {
   notes: string | null;
 }
 
+export interface WorkRecord {
+  id: string;
+  workDate: string;
+  customerName: string;
+  customerId: string | null;
+  serviceName: string;
+  serviceId: string | null;
+  staffName: string | null;
+  staffMemberId: string | null;
+  amount: number;
+  sourceRef: string | null;
+  notes: string | null;
+  collectionVerified: boolean;
+}
+
 export interface StaffTimeLogRecord {
+  payableAmount?: number | null;
   id: string;
   staffMemberId: string;
   staffName: string | null;
@@ -310,7 +346,8 @@ export function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
     currency: "ARS",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -407,6 +444,8 @@ export function getPaymentStatusLabel(status: PaymentStatus) {
       return "Completado";
     case "failed":
       return "Fallido";
+    case "voided":
+      return "Anulado";
     case "refunded":
       return "Reintegrado";
     default:
@@ -470,8 +509,8 @@ export function formatDisplayDate(value: string | null, timeZone: string) {
 
   return new Intl.DateTimeFormat("es-AR", {
     dateStyle: "medium",
-    timeZone,
-  }).format(date);
+    timeZone: value.includes("T") ? timeZone : "UTC",
+  }).format(value.includes("T") ? date : new Date(`${value}T12:00:00Z`));
 }
 
 export function getServiceCategoryLabel(category: ServiceCategory | null) {
@@ -492,7 +531,7 @@ export function getStaffCompensationTypeLabel(type: StaffCompensationType) {
     case "hourly":
       return "Por hora";
     case "category_percentage":
-      return "% por categoría";
+      return "% sobre cobros";
     default:
       return type;
   }

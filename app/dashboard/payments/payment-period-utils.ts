@@ -60,6 +60,10 @@ function getDatePartsFromValue(value: string | null, timeZone: string) {
   if (!value) {
     return null;
   }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return { year, month, day, key: value };
+  }
 
   const parsedDate = value.includes("T")
     ? new Date(value)
@@ -197,7 +201,7 @@ export function getMovementPeriodMeta(
 }
 
 export function getPaymentDateValue(payment: PaymentRecord) {
-  return payment.processedAt ?? payment.createdAt;
+  return payment.collectionDate ?? payment.processedAt ?? payment.createdAt;
 }
 
 export function getExpenseDateValue(expense: ExpenseRecord) {

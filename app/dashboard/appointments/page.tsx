@@ -5,7 +5,12 @@ import { AppointmentsPageClient } from "./page-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function AppointmentsPage() {
+export default async function AppointmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
   const {
     appointments,
     bookingSettings,
@@ -18,9 +23,17 @@ export default async function AppointmentsPage() {
     staffServiceAssignments,
     staffWorkingHours,
   } = await getBusinessAgendaBundle();
+  const selected = appointments.find((a) => a.id === query.appointment);
+  const todayKey = getDateKeyInTimeZone(business.timeZone);
+  const initialDateKey = selected?.appointmentDate || todayKey;
+  const initialCreate = query.new === "1";
 
   return (
     <AppointmentsPageClient
+      key={`${selected?.id || ""}:${initialDateKey}:${initialCreate}`}
+      initialDateKey={initialDateKey}
+      initialAppointmentId={selected?.id || null}
+      initialCreate={initialCreate}
       appointments={appointments}
       bookingSettings={bookingSettings}
       businessHours={businessHours}
@@ -32,7 +45,7 @@ export default async function AppointmentsPage() {
       staffServiceAssignments={staffServiceAssignments}
       staffWorkingHours={staffWorkingHours}
       timeZone={business.timeZone}
-      todayKey={getDateKeyInTimeZone(business.timeZone)}
+      todayKey={todayKey}
     />
   );
 }

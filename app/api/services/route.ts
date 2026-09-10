@@ -20,9 +20,9 @@ export async function POST(request: Request) {
     return badRequest(parsed.error ?? "Solicitud inválida.")
   }
 
-  const { supabase, business } = businessResult.data
+  const { backend, business } = businessResult.data
 
-  const { data: existingService, error: existingError } = await supabase
+  const { data: existingService, error: existingError } = await backend
     .from("services")
     .select("id")
     .eq("business_id", business.id)
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     return badRequest("Ya existe un servicio con ese nombre.")
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("services")
     .insert({
       business_id: business.id,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       price: parsed.data.price,
       category: parsed.data.category,
       is_active: parsed.data.isActive,
-      booking_enabled: true,
+      booking_enabled: parsed.data.bookingEnabled,
       updated_at: new Date().toISOString(),
     })
     .select("id, name, description, duration_minutes, price, is_active, category")
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No se pudo crear el servicio." }, { status: 500 })
   }
 
-  await supabase.from("service_price_variants").insert({
+  await backend.from("service_price_variants").insert({
     service_id: data.id,
     variant_name: "Base",
     variant_code: "base",

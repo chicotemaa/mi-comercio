@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -48,7 +49,8 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Link className="inline-flex rounded-lg border bg-white px-4 py-2 text-sm font-medium" href="/dashboard/services/prices">Editar precios y variantes</Link>
+      <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Servicios activos</CardTitle>
           </CardHeader>
@@ -115,7 +117,7 @@ export function ServicesPageClient({ businessName, isLive, services }: ServicesP
       <Card>
         <CardHeader>
           <CardTitle>Catálogo</CardTitle>
-          <CardDescription>Estos servicios son los que ve `ns-barber` al momento de reservar</CardDescription>
+          <CardDescription>Activá las reservas online de cada servicio cuando su duración esté definida</CardDescription>
         </CardHeader>
         <CardContent>
           {controller.filteredServices.length === 0 ? (

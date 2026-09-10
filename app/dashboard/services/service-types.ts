@@ -7,6 +7,7 @@ export interface ServiceSummary {
   durationMinutes: number
   price: number
   isActive: boolean
+  bookingEnabled?: boolean
   bookings: number
   bookingRevenue: number
   category: ServiceCategory | null
@@ -18,6 +19,7 @@ export interface ServiceFormState {
   price: string
   category: ServiceCategory
   durationMinutes: string
+  bookingEnabled: boolean
 }
 
 export interface ServiceFeedbackState {

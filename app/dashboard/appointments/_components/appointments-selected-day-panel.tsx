@@ -1,6 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { CheckoutButton } from "@/components/dashboard/checkout-button";
+import { AppointmentProgress } from "@/components/dashboard/appointment-progress";
 import { Button } from "@/components/ui/button";
 import {
   formatAppointmentTime,
@@ -158,7 +160,9 @@ export function AppointmentsSelectedDayPanel({
                   ) : null}
                 </div>
 
+                <AppointmentProgress appointment={appointment} timeZone={timeZone} />
                 <div className="mt-4 flex flex-wrap gap-2">
+                  <CheckoutButton appointment={appointment} />
                   <Button
                     className={isSelected ? "border-white/15 bg-white/10 text-white hover:bg-white/15" : ""}
                     onClick={() => onEdit(appointment)}
@@ -190,7 +194,7 @@ export function AppointmentsSelectedDayPanel({
                       type="button"
                     >
                       <Scissors className="mr-2 h-4 w-4" />
-                      Completar
+                      Completar sin cobro
                     </Button>
                   ) : null}
 

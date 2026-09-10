@@ -1,5 +1,6 @@
 import type {
   AppointmentRecord,
+  WorkRecord,
   CustomerRecord,
   ExpenseRecord,
   PaymentRecord,
@@ -67,6 +68,11 @@ export interface ReportClientRow {
 
 export interface ReportsSnapshot {
   period: ReportPeriod;
+  workSummary: {
+    count: number;
+    amount: number;
+    services: { name: string; count: number; amount: number }[];
+  };
   periodLabel: string;
   rangeLabel: string;
   revenue: number;
@@ -96,6 +102,7 @@ export interface ReportsSnapshot {
 
 export interface ReportsSourceData {
   appointments: AppointmentRecord[];
+  workRecords?: WorkRecord[];
   customers: CustomerRecord[];
   expenses: ExpenseRecord[];
   payments: PaymentRecord[];

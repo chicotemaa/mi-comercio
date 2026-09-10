@@ -80,6 +80,8 @@ export function PayoutsTable({
                     size="sm"
                     variant="ghost"
                     onClick={() => onEdit(payout)}
+                    disabled={payout.payrollManaged}
+                    title={payout.payrollManaged ? "Liquidación registrada" : "Editar"}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -87,6 +89,8 @@ export function PayoutsTable({
                     size="sm"
                     variant="ghost"
                     onClick={() => onDelete(payout)}
+                    disabled={payout.payrollManaged}
+                    title={payout.payrollManaged ? "Liquidación registrada" : "Eliminar"}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

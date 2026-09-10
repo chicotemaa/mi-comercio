@@ -41,11 +41,11 @@ export async function PATCH(
     return badRequest(staffValidation.error);
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
   const recipientName =
     staffValidation.data?.full_name ?? parsed.data.recipientName;
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("payouts")
     .update({
       payout_date: parsed.data.payoutDate,
@@ -88,9 +88,9 @@ export async function DELETE(
   }
 
   const { id } = await context.params;
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
-  const { error } = await supabase
+  const { error } = await backend
     .from("payouts")
     .delete()
     .eq("id", id)

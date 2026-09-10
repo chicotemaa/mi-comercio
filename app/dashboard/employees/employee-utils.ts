@@ -13,6 +13,12 @@ import type {
 } from "./employee-types";
 
 export const INITIAL_EMPLOYEE_FORM: EmployeeFormState = {
+  collectionCommissionRate: "0",
+  payrollCadence: "semimonthly",
+  payrollWeekday: "0",
+  payrollCutoffFirst: "15",
+  payrollCutoffSecond: "31",
+  payrollPayDelay: "0",
   fullName: "",
   role: "",
   email: "",
@@ -75,6 +81,12 @@ export function createEmployeeFormState(
 
   return {
     fullName: employee.fullName,
+    collectionCommissionRate: String(employee.collectionCommissionRate ?? 0),
+    payrollCadence: employee.payrollCadence || "semimonthly",
+    payrollWeekday: String(employee.payrollWeekday ?? 0),
+    payrollCutoffFirst: String(employee.payrollCutoffFirst ?? 15),
+    payrollCutoffSecond: String(employee.payrollCutoffSecond ?? 31),
+    payrollPayDelay: String(employee.payrollPayDelay ?? 0),
     role: employee.role ?? "",
     email: employee.email ?? "",
     phone: employee.phone ?? "",

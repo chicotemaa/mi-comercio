@@ -49,10 +49,10 @@ export async function POST(request: Request) {
     return badRequest(workingHoursValidation.error);
   }
 
-  const { supabase, business } = businessResult.data;
+  const { backend, business } = businessResult.data;
 
   if (parsed.data.employeeCode) {
-    const { data: duplicateEmployee, error: duplicateError } = await supabase
+    const { data: duplicateEmployee, error: duplicateError } = await backend
       .from("staff_members")
       .select("id")
       .eq("business_id", business.id)
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await backend
     .from("staff_members")
     .insert({
       business_id: business.id,
@@ -83,6 +83,14 @@ export async function POST(request: Request) {
       join_date: parsed.data.joinDate,
       employee_code: parsed.data.employeeCode,
       compensation_type: parsed.data.compensationType,
+      payroll_mode:
+        parsed.data.compensationType === "hourly" ? "hourly" : "percentage",
+      collection_commission_rate: parsed.data.collectionCommissionRate,
+      payroll_cadence: parsed.data.payrollCadence,
+      payroll_weekday: parsed.data.payrollWeekday,
+      payroll_cutoff_first: parsed.data.payrollCutoffFirst,
+      payroll_cutoff_second: parsed.data.payrollCutoffSecond,
+      payroll_pay_delay: parsed.data.payrollPayDelay,
       hourly_rate: parsed.data.hourlyRate,
       is_active: parsed.data.isActive,
       updated_at: new Date().toISOString(),
@@ -95,7 +103,7 @@ export async function POST(request: Request) {
       {
         error:
           error?.code === "42703"
-            ? "Falta aplicar la última versión de schema.sql en Supabase para guardar empleados con forma de pago."
+            ? "Revisá la configuración de Strapi para guardar empleados con forma de pago."
             : "No se pudo crear el profesional.",
       },
       { status: 500 },
