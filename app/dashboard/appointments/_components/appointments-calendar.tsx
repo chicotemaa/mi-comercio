@@ -15,7 +15,6 @@ import type { EventInput } from "@fullcalendar/core";
 import {
   formatAppointmentTime,
   getStatusLabel,
-  type AppointmentRecord,
   type BookingSettingsRecord,
   type BusinessHourRecord,
   type StaffWorkingHourRecord,
@@ -30,6 +29,11 @@ import {
 
 import type { AgendaViewMode } from "../appointment-types";
 import { getWeekDateKeys } from "../appointment-utils";
+import {
+  isHistoricalEntry,
+  getAgendaEventTiming,
+  type AgendaEntry,
+} from "@/lib/agenda-history";
 
 function mapViewModeToFullCalendarView(viewMode: AgendaViewMode) {
   switch (viewMode) {
@@ -53,7 +57,7 @@ function formatDateTimeLocal(date: Date) {
 }
 
 function buildCalendarEvents(
-  appointments: AppointmentRecord[],
+  appointments: AgendaEntry[],
   bookingSettings: BookingSettingsRecord,
 ) {
   return [...appointments]
@@ -69,15 +73,14 @@ function buildCalendarEvents(
       return left.customerName.localeCompare(right.customerName);
     })
     .map((appointment) => {
+      const timing = getAgendaEventTiming(
+        appointment,
+        bookingSettings.bufferBetweenAppointmentsMinutes,
+      );
       const start = `${appointment.appointmentDate}T${appointment.appointmentTime}`;
       const startDate = new Date(start);
       const endDate = new Date(
-        startDate.getTime() +
-          getAppointmentDurationWithBuffer(
-            appointment.durationMinutes,
-            bookingSettings,
-          ) *
-            60000,
+        startDate.getTime() + timing.durationMinutes * 60000,
       );
 
       const palette =
@@ -106,6 +109,8 @@ function buildCalendarEvents(
                 };
 
       return {
+        startEditable: timing.startEditable,
+        durationEditable: timing.durationEditable,
         id: appointment.id,
         title: appointment.customerName,
         start,
@@ -229,7 +234,7 @@ function getTimeValueFromDate(date: Date) {
 }
 
 interface AppointmentsCalendarProps {
-  appointments: AppointmentRecord[];
+  appointments: AgendaEntry[];
   bookingSettings: BookingSettingsRecord;
   businessHours: BusinessHourRecord[];
   focusDateKey: string;
@@ -313,6 +318,29 @@ export function AppointmentsCalendar({
     () => buildCalendarEvents(appointments, bookingSettings),
     [appointments, bookingSettings],
   );
+  // Past work can predate today's opening hours or fall on a now-closed day.
+  // Include every visible event in the time axis instead of clipping it.
+  const displayBounds = useMemo(
+    () =>
+      appointments.reduce(
+        (bounds, entry) => {
+          const start = timeStringToMinutes(entry.appointmentTime);
+          if (start === null) return bounds;
+          const end =
+            start +
+            getAgendaEventTiming(
+              entry,
+              bookingSettings.bufferBetweenAppointmentsMinutes,
+            ).durationMinutes;
+          return {
+            earliest: Math.min(bounds.earliest, start),
+            latest: Math.max(bounds.latest, end),
+          };
+        },
+        { earliest: calendarBounds.earliest, latest: calendarBounds.latest },
+      ),
+    [appointments, bookingSettings, calendarBounds],
+  );
   const breakBackgroundEvents = useMemo(
     () =>
       viewMode === "day" || viewMode === "week"
@@ -379,7 +407,10 @@ export function AppointmentsCalendar({
   }
 
   function handleEventDrop(info: EventDropArg) {
-    if (!info.event.start) {
+    const entry = info.event.extendedProps.appointment as
+      | AgendaEntry
+      | undefined;
+    if (!info.event.start || !entry || isHistoricalEntry(entry)) {
       info.revert();
       return;
     }
@@ -395,12 +426,12 @@ export function AppointmentsCalendar({
   function handleEventAllow(
     dropInfo: { start: Date | null },
     draggedEvent: {
-      extendedProps?: { appointment?: AppointmentRecord };
+      extendedProps?: { appointment?: AgendaEntry };
     } | null,
   ) {
     const appointment = draggedEvent?.extendedProps?.appointment;
 
-    if (!appointment || !dropInfo.start) {
+    if (!appointment || isHistoricalEntry(appointment) || !dropInfo.start) {
       return false;
     }
 
@@ -468,8 +499,8 @@ export function AppointmentsCalendar({
         eventStartEditable={true}
         weekends
         slotDuration={`${String(Math.floor(bookingSettings.slotIntervalMinutes / 60)).padStart(2, "0")}:${String(bookingSettings.slotIntervalMinutes % 60).padStart(2, "0")}:00`}
-        slotMinTime={`${String(Math.floor(calendarBounds.earliest / 60)).padStart(2, "0")}:${String(calendarBounds.earliest % 60).padStart(2, "0")}:00`}
-        slotMaxTime={`${String(Math.floor(calendarBounds.latest / 60)).padStart(2, "0")}:${String(calendarBounds.latest % 60).padStart(2, "0")}:00`}
+        slotMinTime={`${String(Math.floor(displayBounds.earliest / 60)).padStart(2, "0")}:${String(displayBounds.earliest % 60).padStart(2, "0")}:00`}
+        slotMaxTime={`${String(Math.floor(displayBounds.latest / 60)).padStart(2, "0")}:${String(displayBounds.latest % 60).padStart(2, "0")}:00`}
         nowIndicator
         allDaySlot={false}
         expandRows
@@ -486,13 +517,18 @@ export function AppointmentsCalendar({
         eventAllow={handleEventAllow}
         eventOverlap={(stillEvent, movingEvent) => {
           const stillAppointment = stillEvent.extendedProps.appointment as
-            | AppointmentRecord
+            | AgendaEntry
             | undefined;
           const movingAppointment = movingEvent?.extendedProps.appointment as
-            | AppointmentRecord
+            | AgendaEntry
             | undefined;
 
-          if (!stillAppointment || !movingAppointment) {
+          if (
+            !stillAppointment ||
+            !movingAppointment ||
+            isHistoricalEntry(stillAppointment) ||
+            isHistoricalEntry(movingAppointment)
+          ) {
             return true;
           }
 
@@ -519,7 +555,7 @@ export function AppointmentsCalendar({
         }
         eventContent={(contentArg) => {
           const appointment = contentArg.event.extendedProps.appointment as
-            | AppointmentRecord
+            | AgendaEntry
             | undefined;
 
           if (!appointment) {
@@ -527,15 +563,26 @@ export function AppointmentsCalendar({
           }
 
           return (
-            <div className="fc-appointment-event">
+            <div
+              className="fc-appointment-event"
+              title={
+                isHistoricalEntry(appointment)
+                  ? "Atención realizada · Hora y duración estimadas"
+                  : undefined
+              }
+            >
               <div className="fc-appointment-event__time">
                 {formatAppointmentTime(appointment.appointmentTime)}
+                {isHistoricalEntry(appointment) && " · Estimada"}
               </div>
               <div className="fc-appointment-event__title">
                 {appointment.customerName}
               </div>
               <div className="fc-appointment-event__meta">
-                {appointment.serviceName} · {getStatusLabel(appointment.status)}
+                {appointment.serviceName} ·{" "}
+                {isHistoricalEntry(appointment)
+                  ? "Historial"
+                  : getStatusLabel(appointment.status)}
               </div>
             </div>
           );

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { isHistoricalEntry, type AgendaEntry } from "@/lib/agenda-history";
 import { Badge } from "@/components/ui/badge";
 import { CheckoutButton } from "@/components/dashboard/checkout-button";
 import { AppointmentProgress } from "@/components/dashboard/appointment-progress";
@@ -17,7 +19,7 @@ import { Check, Pencil, Plus, Scissors, XCircle } from "lucide-react";
 import { formatAgendaDayLabel } from "../appointment-utils";
 
 interface AppointmentsSelectedDayPanelProps {
-  appointments: AppointmentRecord[];
+  appointments: AgendaEntry[];
   dateKey: string;
   onCreate: () => void;
   onEdit: (appointment: AppointmentRecord) => void;
@@ -57,7 +59,7 @@ export function AppointmentsSelectedDayPanel({
           </p>
           <p className="text-sm text-slate-500">
             {appointments.length}{" "}
-            {appointments.length === 1 ? "turno" : "turnos"} ·{" "}
+            {appointments.length === 1 ? "registro" : "registros"} ·{" "}
             {formatCurrency(estimatedRevenue)}
           </p>
         </div>
@@ -70,12 +72,60 @@ export function AppointmentsSelectedDayPanel({
 
       {appointments.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500">
-          No hay turnos cargados para este día.
+          No hay turnos ni atenciones cargadas para este día.
         </div>
       ) : (
         <div className="space-y-3">
           {appointments.map((appointment) => {
             const isSelected = selectedAppointmentId === appointment.id;
+            if (isHistoricalEntry(appointment)) {
+              return (
+                <div
+                  key={appointment.id}
+                  data-history-id={appointment.workRecord.id}
+                  className={`appointment-list-card rounded-2xl border p-4 ${isSelected ? "appointment-list-card-selected border-slate-300 bg-white" : "border-slate-200 bg-slate-50"}`}
+                >
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    aria-pressed={isSelected}
+                    onClick={() => onSelectAppointment(appointment.id)}
+                  >
+                    <p className="text-xs text-slate-500">
+                      {formatAppointmentTime(appointment.appointmentTime)} ·
+                      Hora estimada
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {appointment.customerName}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {appointment.serviceName} ·{" "}
+                      {appointment.staffName || "Sin profesional"}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                      <Badge className={getStatusBadgeClassName("completed")}>
+                        Realizado · Historial
+                      </Badge>
+                      <span>{formatCurrency(appointment.price)}</span>
+                    </div>
+                  </button>
+                  {isSelected && (
+                    <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                      Hora y duración estimadas para visualizar esta atención.
+                      El importe corresponde al servicio realizado; sus cobros
+                      se consultan en Atenciones.
+                    </p>
+                  )}
+                  <Button asChild variant="ghost" size="sm" className="mt-2">
+                    <Link
+                      href={`/dashboard/atenciones?${new URLSearchParams({ month: appointment.appointmentDate.slice(0, 7), q: appointment.customerName })}`}
+                    >
+                      Ver en atenciones
+                    </Link>
+                  </Button>
+                </div>
+              );
+            }
 
             return (
               <div

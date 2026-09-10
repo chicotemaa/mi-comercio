@@ -70,6 +70,7 @@ export interface BusinessScheduleBundle {
 }
 
 export interface BusinessAgendaBundle {
+  workRecords: WorkRecord[];
   business: BusinessRecord;
   services: ServiceRecord[];
   staffMembers: StaffRecord[];
@@ -643,6 +644,7 @@ function createDemoAgendaBundle(): BusinessAgendaBundle {
   const operationsBundle = createDemoOperationsBundle();
 
   return {
+    workRecords: operationsBundle.workRecords ?? [],
     business: teamBundle.business,
     services: teamBundle.services,
     staffMembers: teamBundle.staffMembers,
@@ -863,7 +865,8 @@ function mapPayment(row: BackendPaymentRow): PaymentRecord {
 
 function mapExpense(row: BackendExpenseRow): ExpenseRecord {
   return {
-    importRef: row.import_ref || row.source === "Gasto programado" ? "registered" : null,
+    importRef:
+      row.import_ref || row.source === "Gasto programado" ? "registered" : null,
     id: row.id,
     expenseDate: row.expense_date,
     category:
@@ -1448,6 +1451,7 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       { data: bookingSettings, error: bookingSettingsError },
       staffWorkingHoursResult,
       { data: staffServiceAssignments, error: staffServiceAssignmentsError },
+      { data: workRecords, error: workRecordsError },
     ] = await Promise.all([
       backend
         .from("services")
@@ -1484,6 +1488,12 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       backend
         .from("staff_member_services")
         .select("id, staff_member_id, service_id"),
+      backend
+        .from("work_records")
+        .select()
+        .eq("business_id", business.id)
+        .order("work_date", { ascending: true })
+        .order("id", { ascending: true }),
     ]);
     const businessHoursError = businessHoursResult.error;
     const staffWorkingHoursError = staffWorkingHoursResult.error;
@@ -1496,6 +1506,7 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
       businessHoursError ||
       staffWorkingHoursError ||
       staffServiceAssignmentsError ||
+      workRecordsError ||
       bookingSettingsError
     ) {
       console.error("Backend agenda lookup failed", {
@@ -1506,6 +1517,7 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
         businessHoursError,
         staffWorkingHoursError,
         staffServiceAssignmentsError,
+        workRecordsError,
         bookingSettingsError,
       });
       if (
@@ -1535,6 +1547,20 @@ export async function getBusinessAgendaBundle(): Promise<BusinessAgendaBundle> {
     );
 
     return {
+      workRecords: (workRecords ?? []).map((row) => ({
+        id: row.id,
+        workDate: row.work_date,
+        customerId: row.customer_id,
+        customerName: row.customer_name,
+        serviceId: row.service_id,
+        serviceName: row.service_name,
+        staffMemberId: row.staff_member_id,
+        staffName: row.staff_name,
+        amount: Number(row.amount),
+        notes: row.notes,
+        sourceRef: null,
+        collectionVerified: Boolean(row.collection_verified),
+      })),
       business: mapBusiness(business as BackendBusinessRow),
       services: (services as BackendServiceRow[] | null)?.map(mapService) ?? [],
       staffMembers:

@@ -5,8 +5,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { getAvailableAppointmentTimes } from "@/lib/appointment-scheduling";
+import {
+  buildHistoricalAgendaEntries,
+  matchesAgendaSource,
+  type AgendaSourceFilter,
+} from "@/lib/agenda-history";
 import type {
   AppointmentRecord,
+  WorkRecord,
   AppointmentStatus,
   BookingSettingsRecord,
   BusinessHourRecord,
@@ -105,6 +111,7 @@ export function useAppointmentsController({
   initialAppointmentId = null,
   initialCreate = false,
   appointments,
+  workRecords,
   bookingSettings,
   businessHours,
   customers,
@@ -119,6 +126,7 @@ export function useAppointmentsController({
   initialAppointmentId?: string | null;
   initialCreate?: boolean;
   appointments: AppointmentRecord[];
+  workRecords: WorkRecord[];
   bookingSettings: BookingSettingsRecord;
   businessHours: BusinessHourRecord[];
   customers: CustomerRecord[];
@@ -173,6 +181,7 @@ export function useAppointmentsController({
     "all",
   );
   const [staffFilter, setStaffFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState<AgendaSourceFilter>("all");
   const [editingAppointment, setEditingAppointment] =
     useState<AppointmentRecord | null>(null);
   const [formState, setFormState] = useState<AppointmentFormState>(() => ({
@@ -277,15 +286,32 @@ export function useAppointmentsController({
     }));
   }, [compatibleStaffMembers, formState.staffMemberId, isFormOpen]);
 
+  const historicalEntries = useMemo(
+    () =>
+      buildHistoricalAgendaEntries(
+        workRecords,
+        appointmentsState,
+        businessHours,
+      ),
+    [workRecords, appointmentsState, businessHours],
+  );
+  const agendaEntries = useMemo(
+    () =>
+      [...appointmentsState, ...historicalEntries].filter((entry) =>
+        matchesAgendaSource(entry, sourceFilter),
+      ),
+    [appointmentsState, historicalEntries, sourceFilter],
+  );
+  const latestHistoryDate = historicalEntries.at(-1)?.appointmentDate ?? null;
   const visibleAppointments = useMemo(
     () =>
-      filterAppointmentsForAgenda(appointmentsState, viewMode, focusDateKey, {
+      filterAppointmentsForAgenda(agendaEntries, viewMode, focusDateKey, {
         searchTerm,
         staffFilter,
         statusFilter,
       }),
     [
-      appointmentsState,
+      agendaEntries,
       focusDateKey,
       searchTerm,
       staffFilter,
@@ -296,12 +322,12 @@ export function useAppointmentsController({
 
   const selectedDateAppointments = useMemo(
     () =>
-      getAppointmentsForDate(appointmentsState, selectedDateKey, {
+      getAppointmentsForDate(agendaEntries, selectedDateKey, {
         searchTerm,
         staffFilter,
         statusFilter,
       }),
-    [appointmentsState, searchTerm, selectedDateKey, staffFilter, statusFilter],
+    [agendaEntries, searchTerm, selectedDateKey, staffFilter, statusFilter],
   );
 
   useEffect(() => {
@@ -713,10 +739,9 @@ export function useAppointmentsController({
 
   function changeViewMode(nextViewMode: AgendaViewMode) {
     setViewMode(nextViewMode);
-
-    if (nextViewMode === "day") {
-      setFocusDateKey(selectedDateKey);
-    }
+    // Switching from a month back to a week keeps the selected attention in
+    // view, instead of jumping to the week containing the first of the month.
+    setFocusDateKey(selectedDateKey);
   }
 
   function navigate(direction: -1 | 1) {
@@ -755,6 +780,9 @@ export function useAppointmentsController({
   }
 
   return {
+    latestHistoryDate,
+    sourceFilter,
+    setSourceFilter,
     agendaMetrics,
     availableTimeOptions,
     closeFeedbackDialog,

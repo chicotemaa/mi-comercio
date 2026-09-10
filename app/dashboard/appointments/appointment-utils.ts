@@ -2,6 +2,7 @@ import type {
   AppointmentRecord,
   AppointmentStatus,
 } from "@/lib/business-shared";
+import type { AgendaEntry } from "@/lib/agenda-history";
 
 import type {
   AgendaMetricSummary,
@@ -108,10 +109,7 @@ export function navigateAgendaDate(
   return formatDateKey(date);
 }
 
-export function getAgendaRange(
-  viewMode: AgendaViewMode,
-  focusDateKey: string,
-) {
+export function getAgendaRange(viewMode: AgendaViewMode, focusDateKey: string) {
   if (viewMode === "day") {
     return {
       startDateKey: focusDateKey,
@@ -199,7 +197,7 @@ export function getAgendaRangeMeta(
 }
 
 export function matchesAppointmentFilters(
-  appointment: AppointmentRecord,
+  appointment: AgendaEntry,
   {
     searchTerm,
     staffFilter,
@@ -224,14 +222,19 @@ export function matchesAppointmentFilters(
 
   const matchesSearch = haystack.includes(searchTerm.toLowerCase());
   const matchesStaff =
-    staffFilter === "all" || appointment.staffMemberId === staffFilter;
+    staffFilter === "all" ||
+    (staffFilter === "unassigned"
+      ? !appointment.staffMemberId
+      : appointment.staffMemberId === staffFilter);
   const matchesStatus =
     statusFilter === "all" || appointment.status === statusFilter;
 
   return matchesSearch && matchesStaff && matchesStatus;
 }
 
-export function sortAppointments(appointments: AppointmentRecord[]) {
+export function sortAppointments<T extends AgendaEntry>(
+  appointments: T[],
+): T[] {
   return [...appointments].sort((left, right) => {
     if (left.appointmentDate !== right.appointmentDate) {
       return left.appointmentDate.localeCompare(right.appointmentDate);
@@ -246,7 +249,7 @@ export function sortAppointments(appointments: AppointmentRecord[]) {
 }
 
 export function filterAppointmentsForAgenda(
-  appointments: AppointmentRecord[],
+  appointments: AgendaEntry[],
   viewMode: AgendaViewMode,
   focusDateKey: string,
   filters: {
@@ -272,7 +275,7 @@ export function filterAppointmentsForAgenda(
 }
 
 export function getAppointmentsForDate(
-  appointments: AppointmentRecord[],
+  appointments: AgendaEntry[],
   dateKey: string,
   filters: {
     searchTerm: string;
@@ -332,14 +335,17 @@ export function createAppointmentFormState(options?: {
 }
 
 export function getAgendaMetrics(
-  appointments: AppointmentRecord[],
+  appointments: AgendaEntry[],
 ): AgendaMetricSummary {
   return appointments.reduce<AgendaMetricSummary>(
     (summary, appointment) => {
       summary.total += 1;
       summary[appointment.status] += 1;
 
-      if (appointment.status === "confirmed" || appointment.status === "completed") {
+      if (
+        appointment.status === "confirmed" ||
+        appointment.status === "completed"
+      ) {
         summary.revenue += appointment.price;
       }
 

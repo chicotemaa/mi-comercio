@@ -322,6 +322,13 @@ export function WorkbookClient({
                   ))}
                   <TableCell className="p-3 align-top">
                     <CollectWork row={row} today={today} />
+                    <Button asChild variant="ghost" size="sm" className="mt-2">
+                      <Link
+                        href={`/dashboard/appointments?work=${encodeURIComponent(String(row.id))}`}
+                      >
+                        Ver en agenda
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

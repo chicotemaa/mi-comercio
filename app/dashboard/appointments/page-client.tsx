@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   formatCurrency,
   type AppointmentRecord,
+  type WorkRecord,
   type BookingSettingsRecord,
   type BusinessHourRecord,
   type CustomerRecord,
@@ -48,6 +49,7 @@ import { AppointmentFormDialog } from "./_components/appointment-form-dialog";
 import { AppointmentStatusDialog } from "./_components/appointment-status-dialog";
 import { AppointmentsSelectedDayPanel } from "./_components/appointments-selected-day-panel";
 import type { AgendaViewMode } from "./appointment-types";
+import type { AgendaSourceFilter } from "@/lib/agenda-history";
 import { useAppointmentsController } from "./use-appointments-controller";
 
 interface AppointmentsPageClientProps {
@@ -55,6 +57,7 @@ interface AppointmentsPageClientProps {
   initialAppointmentId?: string | null;
   initialCreate?: boolean;
   appointments: AppointmentRecord[];
+  workRecords: WorkRecord[];
   bookingSettings: BookingSettingsRecord;
   businessHours: BusinessHourRecord[];
   businessName: string;
@@ -80,6 +83,7 @@ export function AppointmentsPageClient({
   initialAppointmentId,
   initialCreate,
   appointments,
+  workRecords,
   bookingSettings,
   businessHours,
   businessName,
@@ -98,6 +102,7 @@ export function AppointmentsPageClient({
     initialAppointmentId,
     initialCreate,
     appointments,
+    workRecords,
     bookingSettings,
     businessHours,
     customers,
@@ -149,7 +154,7 @@ export function AppointmentsPageClient({
 
       <dl className="agenda-summary" aria-label="Resumen de la vista">
         <div>
-          <dt>Turnos</dt>
+          <dt>Registros</dt>
           <dd>{controller.agendaMetrics.total}</dd>
         </div>
         <div>
@@ -212,16 +217,44 @@ export function AppointmentsPageClient({
             </div>
           </div>
 
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="grid min-w-0 gap-1 text-sm text-slate-600">
+              Ir a una fecha
+              <Input
+                type="date"
+                value={controller.selectedDateKey}
+                onChange={(event) => {
+                  if (event.target.value)
+                    controller.openDay(event.target.value);
+                }}
+              />
+            </label>
+            {controller.latestHistoryDate && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  controller.setSourceFilter("all");
+                  controller.setStatusFilter("all");
+                  controller.setStaffFilter("all");
+                  controller.setSearchTerm("");
+                  controller.openDay(controller.latestHistoryDate!);
+                }}
+              >
+                Últimas atenciones
+              </Button>
+            )}
+          </div>
           <details className="filter-disclosure">
             <summary>
               <ListFilter size={16} aria-hidden="true" /> Buscar y filtrar
               {controller.searchTerm ||
               controller.staffFilter !== "all" ||
-              controller.statusFilter !== "all" ? (
+              controller.statusFilter !== "all" ||
+              controller.sourceFilter !== "all" ? (
                 <span className="filter-active">Filtros activos</span>
               ) : null}
             </summary>
-            <div className="grid gap-3 pt-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="grid gap-3 pt-3 sm:grid-cols-2">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
@@ -244,13 +277,12 @@ export function AppointmentsPageClient({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todo el equipo</SelectItem>
-                  {staffMembers
-                    .filter((staffMember) => staffMember.isActive)
-                    .map((staffMember) => (
-                      <SelectItem key={staffMember.id} value={staffMember.id}>
-                        {staffMember.fullName}
-                      </SelectItem>
-                    ))}
+                  <SelectItem value="unassigned">Sin profesional</SelectItem>
+                  {staffMembers.map((staffMember) => (
+                    <SelectItem key={staffMember.id} value={staffMember.id}>
+                      {staffMember.fullName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -273,21 +305,26 @@ export function AppointmentsPageClient({
                   <SelectItem value="cancelled">Cancelados</SelectItem>
                 </SelectContent>
               </Select>
+              <Select
+                value={controller.sourceFilter}
+                onValueChange={(value) =>
+                  controller.setSourceFilter(value as AgendaSourceFilter)
+                }
+              >
+                <SelectTrigger aria-label="Filtrar por origen">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Turnos e historial</SelectItem>
+                  <SelectItem value="appointments">Solo turnos</SelectItem>
+                  <SelectItem value="history">Solo historial</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </details>
         </CardContent>
       </Card>
 
-      <label className="grid gap-2 text-sm font-medium lg:hidden">
-        Día de atención
-        <Input
-          type="date"
-          value={controller.selectedDateKey}
-          onChange={(event) => {
-            if (event.target.value) controller.openDay(event.target.value);
-          }}
-        />
-      </label>
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)]">
         <Card
           className={
@@ -299,7 +336,11 @@ export function AppointmentsPageClient({
               {controller.rangeMeta.title}
             </CardTitle>
             <CardDescription>
-              Seleccioná un turno para ver sus detalles.
+              {controller.visibleAppointments.some(
+                (entry) => entry.channel === "history",
+              )
+                ? "El historial usa horas estimadas para ordenar las atenciones."
+                : "Seleccioná un turno para ver sus detalles."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -324,7 +365,10 @@ export function AppointmentsPageClient({
               onVisibleDateChange={controller.syncVisibleRangeStart}
               selectedAppointmentId={controller.selectedAppointmentId}
               selectedStaffId={
-                controller.staffFilter === "all" ? null : controller.staffFilter
+                controller.staffFilter === "all" ||
+                controller.staffFilter === "unassigned"
+                  ? null
+                  : controller.staffFilter
               }
               staffWorkingHours={staffWorkingHours}
               viewMode={controller.viewMode}

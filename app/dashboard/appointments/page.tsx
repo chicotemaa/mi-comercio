@@ -13,6 +13,7 @@ export default async function AppointmentsPage({
   const query = await searchParams;
   const {
     appointments,
+    workRecords,
     bookingSettings,
     business,
     businessHours,
@@ -24,17 +25,33 @@ export default async function AppointmentsPage({
     staffWorkingHours,
   } = await getBusinessAgendaBundle();
   const selected = appointments.find((a) => a.id === query.appointment);
+  const selectedWork = workRecords.find((work) => work.id === query.work);
+  const requestedDate =
+    typeof query.date === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(query.date) &&
+    Number.isFinite(Date.parse(`${query.date}T12:00:00Z`)) &&
+    new Date(`${query.date}T12:00:00Z`).toISOString().slice(0, 10) ===
+      query.date
+      ? query.date
+      : null;
   const todayKey = getDateKeyInTimeZone(business.timeZone);
-  const initialDateKey = selected?.appointmentDate || todayKey;
+  const initialDateKey =
+    selected?.appointmentDate ||
+    selectedWork?.workDate ||
+    requestedDate ||
+    todayKey;
+  const initialEntryId =
+    selected?.id || (selectedWork ? `history:${selectedWork.id}` : null);
   const initialCreate = query.new === "1";
 
   return (
     <AppointmentsPageClient
-      key={`${selected?.id || ""}:${initialDateKey}:${initialCreate}`}
+      key={`${initialEntryId || ""}:${initialDateKey}:${initialCreate}`}
       initialDateKey={initialDateKey}
-      initialAppointmentId={selected?.id || null}
+      initialAppointmentId={initialEntryId}
       initialCreate={initialCreate}
       appointments={appointments}
+      workRecords={workRecords}
       bookingSettings={bookingSettings}
       businessHours={businessHours}
       businessName={business.name}
