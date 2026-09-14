@@ -125,7 +125,7 @@ export async function NotificationsPage({
       <ul className="space-y-3">
         {visible.map((alert) => (
           <li
-            className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-white p-4"
+            className="flex flex-col items-stretch justify-between gap-4 rounded-xl border bg-white p-4 sm:flex-row sm:items-center"
             key={alert.id}
           >
             <div className="min-w-0 flex-1 break-words">
@@ -205,7 +205,7 @@ export async function NotificationsPage({
           )}
         </nav>
       )}
-      <section className="rounded-2xl border bg-white p-5 text-sm">
+      <section className="break-words rounded-2xl border bg-white p-5 text-sm">
         <h2 className="font-semibold">Resumen por correo</h2>
         <p className="mt-2 text-slate-600">
           {email.enabled

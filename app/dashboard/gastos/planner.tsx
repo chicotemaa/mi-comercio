@@ -71,7 +71,7 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
     "stop-plan": "Dejar de repetir el gasto",
   };
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Administración</p>
@@ -150,7 +150,7 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
                   key={item.name}
                   className="flex min-w-0 flex-wrap justify-between gap-2 text-sm"
                 >
-                  <span className="break-words">{item.name}</span>
+                  <span className="min-w-0 max-w-full break-words">{item.name}</span>
                   <span>
                     {money(item.plannedCents)}{" "}
                     <span className="text-slate-500">
