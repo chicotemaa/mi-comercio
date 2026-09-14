@@ -25,7 +25,7 @@ export function NotificationBell() {
         });
         if (!response.ok) return;
         const data = await response.json();
-        if (!stopped) setCount(data.attentionCount);
+        if (!stopped) setCount(data.unreadCount);
       } catch {
         /* Navigation remains available while the connection recovers. */
       } finally {
@@ -34,6 +34,11 @@ export function NotificationBell() {
     }
     void refresh();
     const timer = window.setInterval(refresh, 60000);
+    const changed = () => {
+      last = 0;
+      void refresh();
+    };
+    window.addEventListener("notifications:changed", changed);
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => {
@@ -41,6 +46,7 @@ export function NotificationBell() {
       controller.abort();
       clearInterval(timer);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("notifications:changed", changed);
       document.removeEventListener("visibilitychange", refresh);
     };
   }, []);
@@ -48,7 +54,7 @@ export function NotificationBell() {
     <Link
       href="/dashboard/notifications"
       className="relative rounded-xl p-2 hover:bg-slate-100"
-      aria-label={count ? `Avisos, ${count} acciones pendientes` : "Ver avisos"}
+      aria-label={count ? `Avisos, ${count} sin ver` : "Ver avisos"}
     >
       <Bell className="h-5 w-5" />
       {count != null && count > 0 && (

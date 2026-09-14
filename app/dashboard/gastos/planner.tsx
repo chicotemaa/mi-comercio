@@ -26,12 +26,25 @@ import {
   useFinanceWrite,
 } from "@/components/dashboard/finance-ui";
 import type { ExpensePlanRow, ExpensePlanningData } from "@/lib/finance-types";
+import {
+  expensePlanningSummary,
+  filterExpenses,
+  type ExpenseFilter,
+} from "@/lib/expense-planning";
 export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
   const [dialog, setDialog] = useState<{
       action: string;
       row?: ExpensePlanRow;
     } | null>(null),
     write = useFinanceWrite();
+  const [search, setSearch] = useState(""),
+    [status, setStatus] = useState<ExpenseFilter>("all"),
+    [category, setCategory] = useState("");
+  const summary = expensePlanningSummary(data.rows, data.today);
+  const filtered = filterExpenses(data.rows, search, status, category);
+  const categories = [
+    ...new Set(data.rows.map((r) => r.category || "Sin categoría")),
+  ].sort();
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!dialog) return;
@@ -111,6 +124,96 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
         />
       </div>
       {!dialog && write.feedback}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border bg-white p-5">
+          <h2 className="font-semibold">Previsión de pagos</h2>
+          <p className="mt-3 text-2xl font-semibold">
+            {money(summary.upcomingCents)}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {summary.upcomingCount} vencimientos en los próximos 7 días, dentro
+            del mes seleccionado.
+          </p>
+          <Link
+            href="/dashboard/notifications?tipo=expense"
+            className="mt-3 inline-flex min-h-11 items-center text-sm underline"
+          >
+            Ver avisos de gastos y vencidos de otros meses
+          </Link>
+        </section>
+        <section className="rounded-2xl border bg-white p-5">
+          <h2 className="font-semibold">Distribución de lo programado</h2>
+          {summary.categories.length ? (
+            <ul className="mt-3 space-y-2">
+              {summary.categories.map((item) => (
+                <li
+                  key={item.name}
+                  className="flex min-w-0 flex-wrap justify-between gap-2 text-sm"
+                >
+                  <span className="break-words">{item.name}</span>
+                  <span>
+                    {money(item.plannedCents)}{" "}
+                    <span className="text-slate-500">
+                      · {money(item.pendingCents)} pendiente
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-slate-500">
+              La distribución aparece al programar gastos.
+            </p>
+          )}
+          <p className="mt-3 text-xs text-slate-500">
+            Excluye vencimientos anulados. Los gastos directos ya pagados se
+            consultan en Caja.
+          </p>
+        </section>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <label className="grid gap-1 text-sm">
+          Buscar gasto
+          <input
+            type="search"
+            className={fieldClass}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Concepto, proveedor o nota"
+          />
+        </label>
+        <label className="grid gap-1 text-sm">
+          Estado
+          <select
+            className={fieldClass}
+            value={status}
+            onChange={(e) => setStatus(e.target.value as ExpenseFilter)}
+          >
+            <option value="all">Todos</option>
+            <option value="pending">Pendientes</option>
+            <option value="overdue">Vencidos</option>
+            <option value="paid">Pagados</option>
+            <option value="cancelled">Anulados</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm">
+          Categoría
+          <select
+            className={fieldClass}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">Todas</option>
+            {categories.map((name) => (
+              <option key={name}>{name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="text-sm text-slate-500">
+        {filtered.length} de {data.rows.length} gastos. Los totales superiores
+        corresponden al mes completo.
+      </p>
       <div className="overflow-x-auto rounded-2xl border bg-white">
         <Table
           mobileLabels={[
@@ -134,7 +237,7 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.rows.map((row) => (
+            {filtered.map((row) => (
               <TableRow key={row.id} className="border-b last:border-0">
                 <TableCell className="p-4">
                   <p className="font-medium">{row.title}</p>
@@ -242,6 +345,22 @@ export function ExpensesPlanner({ data }: { data: ExpensePlanningData }) {
               Podés cargar alquiler, expensas o cualquier otro compromiso, con
               su importe y vencimiento.
             </p>
+          </div>
+        )}
+        {!!data.rows.length && !filtered.length && (
+          <div className="p-8 text-center">
+            <p>No hay gastos con esos filtros.</p>
+            <Button
+              className="mt-3"
+              variant="outline"
+              onClick={() => {
+                setSearch("");
+                setStatus("all");
+                setCategory("");
+              }}
+            >
+              Limpiar filtros
+            </Button>
           </div>
         )}
       </div>
