@@ -96,6 +96,7 @@ export interface BusinessTeamBundle {
 }
 
 interface BackendBusinessRow {
+  website_content?: { identity?: { name?: string } };
   monthly_collection_target?: number | string;
   id: string;
   name: string;
@@ -734,7 +735,7 @@ function mapBusiness(row: BackendBusinessRow): BusinessRecord {
   return {
     monthlyCollectionTarget: Number(row.monthly_collection_target || 0),
     id: row.id,
-    name: row.name,
+    name: row.website_content?.identity?.name || row.name,
     slug: row.slug,
     description: row.description,
     timeZone: row.time_zone ?? "America/Argentina/Cordoba",

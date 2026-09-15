@@ -146,7 +146,7 @@ export default async function DashboardPage() {
             : "Estás viendo datos de ejemplo para explorar el panel."
         }
         eyebrow="Panel del negocio"
-        title={brandFromRecord(business).name}
+        title={business.name}
       />
 
       <DailyCash
@@ -389,4 +389,3 @@ export default async function DashboardPage() {
     </DashboardPageShell>
   );
 }
-import { brandFromRecord } from "@/lib/brand";
