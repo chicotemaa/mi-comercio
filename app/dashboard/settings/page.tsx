@@ -35,6 +35,19 @@ export default async function SettingsPage() {
       <h1 className="text-3xl font-semibold">Configuración del negocio</h1>
       <BusinessForm initial={initial} />
       <div className="rounded-2xl border bg-white p-6 space-y-3">
+        <h2 className="text-xl font-semibold">Reservas online y señas</h2>
+        <p>
+          Revisá el acceso de clientes, Mercado Pago, las confirmaciones por
+          correo y los pagos que necesitan atención.
+        </p>
+        <Link
+          className="brand-button"
+          href="/dashboard/settings/online-booking"
+        >
+          Ver reservas online
+        </Link>
+      </div>
+      <div className="rounded-2xl border bg-white p-6 space-y-3">
         <h2 className="text-xl font-semibold">
           Identidad y contenido de tu web
         </h2>
