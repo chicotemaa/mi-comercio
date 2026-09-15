@@ -401,7 +401,7 @@ export default function SettingsForm({
           </p>
         </section>
       </fieldset>
-      <div className="sticky bottom-3 z-10 rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 rounded-2xl border bg-card p-4 shadow-sm lg:bottom-3">
         {error && (
           <p role="alert" className="mb-3 text-sm leading-6">
             {error}
