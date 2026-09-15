@@ -61,11 +61,14 @@ export function buildHistoricalAgendaEntries(
         end = 18 * 60;
       }
       let ranges: Range[] = [{ start, end }];
+      let fullDay: Range[] = [{ start: 0, end: 24 * 60 }];
       if (hours?.breakStartTime && hours.breakEndTime) {
-        ranges = subtract(ranges, {
+        const middayBreak = {
           start: minutes(hours.breakStartTime),
           end: minutes(hours.breakEndTime),
-        });
+        };
+        ranges = subtract(ranges, middayBreak);
+        fullDay = subtract(fullDay, middayBreak);
       }
       const baseRanges = ranges;
       for (const appointment of appointments) {
@@ -75,25 +78,42 @@ export function buildHistoricalAgendaEntries(
         )
           continue;
         const occupiedStart = minutes(appointment.appointmentTime);
-        ranges = subtract(ranges, {
+        const occupied = {
           start: occupiedStart,
           end: occupiedStart + appointment.durationMinutes,
-        });
+        };
+        ranges = subtract(ranges, occupied);
+        fullDay = subtract(fullDay, occupied);
       }
-      // Prefer free visual space. Even a closed or fully booked day retains all
-      // historical work: these estimated blocks never consume booking availability.
+      // One reference hour per service. Prefer opening hours, then extend the
+      // visual day when necessary rather than stacking entries in those hours.
+      // These blocks never consume availability or cross the source date.
+      const allSlots = Array.from({ length: 24 }, (_, hour) => ({
+        start: hour * 60,
+        end: (hour + 1) * 60,
+      }));
+      const fits = (slot: Range, available: Range[]) =>
+        available.some(
+          (range) => slot.start >= range.start && slot.end <= range.end,
+        );
+      const preferred = allSlots.filter((slot) => fits(slot, ranges));
+      const extra = allSlots
+        .filter((slot) => !fits(slot, ranges) && fits(slot, fullDay))
+        .sort((a, b) => {
+          // Extend towards the evening first, then earlier in the morning.
+          const rank = (slot: Range) =>
+            slot.start >= start ? slot.start - start : 24 * 60 - slot.start;
+          return rank(a) - rank(b);
+        });
+      const available = [...preferred, ...extra];
+      // Fully occupied days and unusually large imports still retain every
+      // service, even when reference hours must be shared.
+      const fallback = allSlots.filter((slot) => fits(slot, baseRanges));
       const slots = (
-        ranges.some((range) => range.end - range.start >= 15)
-          ? ranges
-          : baseRanges
-      ).flatMap((range) => {
-        const result: Range[] = [];
-        for (let value = range.start; value + 15 <= range.end; value += 30) {
-          result.push({ start: value, end: Math.min(value + 30, range.end) });
-        }
-        return result;
-      });
-      if (!slots.length) slots.push({ start, end: Math.min(start + 30, end) });
+        available.length ? available : fallback.length ? fallback : allSlots
+      )
+        .slice(0, rows.length)
+        .sort((a, b) => a.start - b.start);
       return [...rows]
         .sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: true }))
         .map((work, index) => {

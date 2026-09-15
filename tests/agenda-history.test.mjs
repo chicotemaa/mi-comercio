@@ -51,7 +51,7 @@ test("every database service keeps its date, amount and identity, including unli
   assert.deepEqual(works, snapshot);
   assert.ok(
     entries.every(
-      (e) => /^\d{2}:\d{2}$/.test(e.appointmentTime) && e.durationMinutes > 0,
+      (e) => /^(?:[01]\d|2[0-3]):00$/.test(e.appointmentTime) && e.durationMinutes === 60,
     ),
   );
 });
@@ -65,7 +65,7 @@ test("visual times are stable by database ID, do not depend on query order, and 
   );
   assert.deepEqual(
     first.map((e) => e.appointmentTime),
-    ["09:00", "09:30", "10:00"],
+    ["09:00", "10:00", "11:00"],
   );
   assert.equal(
     buildHistoricalAgendaEntries([...works, works[0]], [], hours).length,
@@ -86,12 +86,12 @@ test("placements avoid real reservations and breaks, without shifting a real res
   };
   const snapshot = structuredClone(appointment);
   const entries = buildHistoricalAgendaEntries(
-    Array.from({ length: 14 }, (_, i) => work(i)),
+    Array.from({ length: 4 }, (_, i) => work(i)),
     [appointment],
     hours,
   );
   assert.equal(entries[0].appointmentTime, "10:00");
-  assert.equal(new Set(entries.map((e) => e.appointmentTime)).size, 14);
+  assert.deepEqual(entries.map((e) => e.appointmentTime), ["10:00", "11:00", "12:00", "14:00"]);
   assert.ok(
     entries.every(
       (e) => e.appointmentTime < "13:00" || e.appointmentTime >= "14:00",
@@ -131,13 +131,13 @@ test("history cannot be dragged/resized or gain booking buffer; source filters n
   const [entry] = buildHistoricalAgendaEntries([work(1)], [], hours);
   assert.equal(isHistoricalEntry(entry), true);
   assert.deepEqual(getAgendaEventTiming(entry, 15), {
-    durationMinutes: 30,
+    durationMinutes: 60,
     startEditable: false,
     durationEditable: false,
   });
   const appointment = { ...entry, channel: "manual" };
   assert.deepEqual(getAgendaEventTiming(appointment, 15), {
-    durationMinutes: 45,
+    durationMinutes: 75,
     startEditable: true,
     durationEditable: false,
   });
@@ -153,4 +153,14 @@ test("history cannot be dragged/resized or gain booking buffer; source filters n
     [appointment, entry].filter((e) => matchesAgendaSource(e, "all")).length,
     2,
   );
+});
+
+test("busy historical days extend the reference hours without stacking or changing the date", () => {
+  const entries = buildHistoricalAgendaEntries(
+    Array.from({ length: 14 }, (_, i) => work(i)),
+    [],
+    [{ ...hours[0], openTime: "11:00", closeTime: "22:00", breakStartTime: null, breakEndTime: null }],
+  );
+  assert.deepEqual(entries.map((e) => e.appointmentTime), Array.from({ length: 14 }, (_, i) => `${i + 10}:00`));
+  assert.ok(entries.every((e) => e.appointmentDate === "2026-01-05"));
 });

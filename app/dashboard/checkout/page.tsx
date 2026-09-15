@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { ArrowUpRight, Search } from "lucide-react";
-import { getBusinessDataBundle } from "@/lib/business-data";
+import { getBusinessAgendaBundle } from "@/lib/business-data";
+import {
+  buildHistoricalAgendaEntries,
+  isHistoricalEntry,
+} from "@/lib/agenda-history";
+import { filterCheckoutEntries } from "@/lib/checkout-list";
 import { getCheckout } from "@/lib/checkout-server";
 import {
   formatCurrency,
@@ -22,25 +27,18 @@ export default async function CheckoutPage({
         key={params.appointment}
       />
     );
-  const { appointments, business } = await getBusinessDataBundle(),
-    today = getDateKeyInTimeZone(business.timeZone),
-    q = (params.q || "").toLocaleLowerCase("es");
-  const rows = appointments
-    .filter(
-      (a) =>
-        (!q ||
-          `${a.customerName} ${a.serviceName}`
-            .toLocaleLowerCase("es")
-            .includes(q)) &&
-        (!params.date || a.appointmentDate === params.date),
-    )
-    .sort(
-      (a, b) =>
-        Number(b.appointmentDate === today) -
-          Number(a.appointmentDate === today) ||
-        b.appointmentDate.localeCompare(a.appointmentDate) ||
-        a.appointmentTime.localeCompare(b.appointmentTime),
-    );
+  const { appointments, business, workRecords, businessHours } =
+    await getBusinessAgendaBundle();
+  const today = getDateKeyInTimeZone(business.timeZone);
+  // Assign reference hours before filtering, so searching never changes a time.
+  const rows = filterCheckoutEntries(
+    [
+      ...appointments,
+      ...buildHistoricalAgendaEntries(workRecords, appointments, businessHours),
+    ],
+    { query: params.q, date: params.date, today },
+  );
+  const visibleRows = rows.slice(0, 100);
   return (
     <div className="space-y-7 p-4 md:p-7">
       <header className="flex flex-wrap justify-between gap-4">
@@ -48,7 +46,7 @@ export default async function CheckoutPage({
           <p className="section-kicker">Recepción y caja</p>
           <h1 className="page-title">Un turno. Todo a mano.</h1>
           <p className="mt-2 text-sm text-slate-500">
-            Abrí la ficha para revisar la atención, ajustar el importe y cobrar.
+            Consultá el historial o abrí un turno para revisar la atención y cobrar.
           </p>
         </div>
         <Link className="brand-button" href="/dashboard/appointments?new=1">
@@ -81,28 +79,43 @@ export default async function CheckoutPage({
           Hoy
         </Link>
       </form>
+      {visibleRows.some(isHistoricalEntry) && (
+        <p className="text-sm leading-relaxed text-slate-500">
+          Las atenciones del historial sin hora se ordenan con horarios de
+          referencia, separados por una hora.
+        </p>
+      )}
       <div className="grid gap-3 lg:grid-cols-2">
-        {rows.slice(0, 100).map((a) => (
+        {visibleRows.map((a) => (
           <Link
             key={a.id}
+            prefetch={false}
+            data-history-id={isHistoricalEntry(a) ? a.workRecord.id : undefined}
             className="checkout-appointment-card group"
-            href={`/dashboard/checkout?appointment=${a.id}`}
+            href={
+              isHistoricalEntry(a)
+                ? `/dashboard/appointments?work=${encodeURIComponent(a.workRecord.id)}&view=day`
+                : `/dashboard/checkout?appointment=${a.id}`
+            }
           >
             <div className="flex items-start gap-4">
-              <div className="brand-avatar">
+              <div className="brand-avatar hidden shrink-0 sm:flex">
                 {a.customerName.slice(0, 2).toUpperCase()}
               </div>
-              <div className="flex-1">
-                <p className="font-semibold">{a.customerName}</p>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-semibold">{a.customerName}</p>
+                <p className="mt-1 break-words text-sm text-slate-500">
                   {a.serviceName} · {a.staffName || "Sin profesional"}
                 </p>
                 <p className="mt-3 text-xs text-slate-500">
                   {a.appointmentDate.split("-").reverse().join("/")} ·{" "}
-                  {a.appointmentTime.slice(0, 5)} · {getStatusLabel(a.status)}
+                  {a.appointmentTime.slice(0, 5)} ·{" "}
+                  {isHistoricalEntry(a)
+                    ? "Realizado · Historial"
+                    : getStatusLabel(a.status)}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="shrink-0 text-right">
                 <p className="font-semibold">{formatCurrency(a.price)}</p>
                 <ArrowUpRight
                   className="ml-auto mt-3 text-slate-400 transition-transform group-hover:-translate-y-1"
@@ -115,13 +128,14 @@ export default async function CheckoutPage({
       </div>
       {!rows.length && (
         <p className="rounded-2xl border bg-white p-10 text-center text-slate-500">
-          No hay turnos con esos filtros. Podés cargar uno desde Nuevo turno.
+          No hay turnos ni atenciones con esos filtros. Podés cargar uno desde
+          Nuevo turno.
         </p>
       )}
       {rows.length > 100 && (
         <p className="text-sm text-slate-500">
-          Se muestran 100 turnos. Usá la búsqueda o elegí una fecha para
-          encontrar uno anterior.
+          Se muestran 100 de {rows.length} atenciones. Usá la búsqueda o elegí una
+          fecha para encontrar una anterior.
         </p>
       )}
     </div>

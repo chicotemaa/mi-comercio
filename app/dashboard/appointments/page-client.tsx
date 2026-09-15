@@ -101,7 +101,7 @@ export function AppointmentsPageClient({
   todayKey,
 }: AppointmentsPageClientProps) {
   const isMobile = useIsMobile();
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(Boolean(initialAppointmentId));
   const detailTriggerRef = useRef<HTMLElement | null>(null);
   const controller = useAppointmentsController({
     initialViewMode,
@@ -351,7 +351,7 @@ export function AppointmentsPageClient({
               {controller.visibleAppointments.some(
                 (entry) => entry.channel === "history",
               )
-                ? "El historial usa horas estimadas para ordenar las atenciones."
+                ? "El historial sin hora usa horarios de referencia separados por una hora."
                 : "Seleccioná un turno para ver sus detalles."}
             </CardDescription>
           </CardHeader>
