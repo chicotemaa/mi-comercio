@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mi Comercio · Nerea Aylen Barber",
+  title: "Mi Comercio · Nerea Aylén Hairstudio",
   description: "Administración del negocio, agenda, clientes y caja.",
   robots: { index: false, follow: false },
 };

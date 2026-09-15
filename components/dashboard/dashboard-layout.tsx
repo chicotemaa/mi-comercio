@@ -40,6 +40,7 @@ import {
   ChevronDown,
   LogOut,
   Building2,
+  Globe,
   CalendarDays,
 } from "lucide-react";
 import { MobileNavigation, SidebarRouteLink } from "./mobile-navigation";
@@ -64,10 +65,12 @@ const menuItems = [
   { title: "Equipo", url: "/dashboard/employees", icon: Users },
   { title: "Horarios", url: "/dashboard/hours", icon: Clock3 },
   { title: "Reportes", url: "/dashboard/reports", icon: BarChart3 },
+  { title: "Mi web", url: "/dashboard/website", icon: Globe },
   { title: "Configuración", url: "/dashboard/settings", icon: Settings },
 ];
 
 const routeMeta = [
+  { match: "/dashboard/website", title: "Mi web" },
   {
     match: "/dashboard/checkout",
     title: "Checkout",
@@ -146,8 +149,17 @@ export default function DashboardLayout({
   brand: Brand;
 }) {
   useEffect(() => {
-    document.documentElement.dataset.palette = brand.palette;
-  }, [brand.palette]);
+    const root = document.documentElement;
+    root.dataset.palette = "nerea";
+    for (const key of ["gray", "black", "burgundy", "white"] as const)
+      root.style.setProperty(`--studio-${key}`, brand.identity[key]);
+    root.style.setProperty(
+      "--studio-font",
+      brand.identity.font === "system"
+        ? "system-ui, sans-serif"
+        : "var(--font-geist-sans), sans-serif",
+    );
+  }, [brand.identity]);
   const pathname = usePathname();
   const currentRoute = getRouteMeta(pathname);
   const todayLabel = new Intl.DateTimeFormat("es-AR", {
@@ -158,7 +170,7 @@ export default function DashboardLayout({
   }).format(new Date());
 
   return (
-    <SidebarProvider data-palette={brand.palette} className="admin-shell">
+    <SidebarProvider data-palette="nerea" className="admin-shell">
       <a href="#admin-content" className="skip-link">
         Ir al contenido
       </a>
@@ -167,9 +179,16 @@ export default function DashboardLayout({
           <div className="sidebar-brand px-3 py-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 shadow-sm">
-                <span className="font-serif text-xl text-white">
-                  {brand.initials}
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    brand.identity.logo.startsWith("/")
+                      ? `https://www.nereaaylen.com.ar${brand.identity.logo}`
+                      : brand.identity.logo
+                  }
+                  alt=""
+                  className="h-10 w-10 object-contain"
+                />
               </div>
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-semibold text-slate-900">

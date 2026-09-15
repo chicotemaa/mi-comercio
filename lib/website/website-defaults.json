@@ -1,0 +1,184 @@
+{
+  "identity": {
+    "name": "Nerea Aylén Hairstudio",
+    "shortName": "Nerea Aylén",
+    "logo": "/images/brand/logo.webp",
+    "gray": "#d9d9d9",
+    "black": "#151515",
+    "burgundy": "#6b2036",
+    "white": "#ffffff",
+    "font": "manrope",
+    "rounded": false
+  },
+  "navigation": {
+    "topbar": "Peluquería & barbería · Tu estilo, en buenas manos.",
+    "services": "Servicios",
+    "work": "Nuestro trabajo",
+    "about": "El estudio",
+    "booking": "Reservar",
+    "journal": "Consejos"
+  },
+  "hero": {
+    "eyebrow": "Hairstudio · Resistencia, Chaco",
+    "title": "NEREA",
+    "note": "Tu pelo.\nTu forma.\nTu estilo.",
+    "image": "/images/brand/nerea-1280.webp",
+    "alt": "Nerea Aylén",
+    "buttonText": "Reservar turno",
+    "secondaryText": "Nuestro trabajo",
+    "signature": "Peluquería\n& barbería"
+  },
+  "services": {
+    "enabled": true,
+    "title": "Nuestros servicios",
+    "linkText": "Ver servicios y precios"
+  },
+  "work": {
+    "enabled": true,
+    "eyebrow": "Hecho en Nerea",
+    "title": "El detalle hace\nla diferencia.",
+    "linkText": "Ver todos los trabajos"
+  },
+  "about": {
+    "enabled": true,
+    "eyebrow": "La persona detrás del estilo",
+    "title": "Hola,\nsoy Nerea.",
+    "body": "Antes de empezar, nos tomamos un momento para conocerte. Cómo llevás el pelo, qué te gusta y qué querés cambiar.\n\nDe esa charla nace un look pensado para vos. Con atención al detalle, a tu textura y a tu forma de ser.",
+    "image": "/images/optimized/IMG_8589-1280.webp",
+    "alt": "Nerea trabajando en el corte de un cliente",
+    "caption": "Nerea Aylén · En el estudio",
+    "buttonText": "Busquemos tu próximo look"
+  },
+  "brand": {
+    "enabled": true,
+    "eyebrow": "El universo Nerea",
+    "title": "Un estilo.\nNuestra firma.",
+    "body": "Líneas simples, contraste y un sello propio.\nLa identidad del estudio, en cada detalle.",
+    "credit": "Colección visual · Aplicaciones de nuestra marca",
+    "photos": [
+      {
+        "image": "/images/optimized/marca-cristal-1280.webp",
+        "title": "Nuestra firma",
+        "alt": "Aplicación del logo blanco Nerea Aylén sobre una superficie de cristal gris"
+      },
+      {
+        "image": "/images/optimized/marca-indumentaria-1280.webp",
+        "title": "Un sello propio",
+        "alt": "Aplicación del logo Nerea Aylén en una remera negra"
+      },
+      {
+        "image": "/images/optimized/marca-delantal-1280.webp",
+        "title": "Identidad en los detalles",
+        "alt": "Aplicación dorada del logo Nerea Aylén sobre un delantal negro"
+      }
+    ]
+  },
+  "visit": {
+    "enabled": true,
+    "eyebrow": "Un momento para vos",
+    "title": "Nos vemos\nen el estudio.",
+    "body": "Cortes, color y cuidado del cabello. Elegí tu servicio y encontrá un momento para vos.",
+    "buttonText": "Elegí tu servicio"
+  },
+  "gallery": {
+    "eyebrow": "La mirada Nerea",
+    "title": "El estilo está\nen los detalles.",
+    "body": "Cortes, texturas y momentos en el estudio. Mirá de cerca nuestro trabajo y encontrá inspiración para tu próxima visita.",
+    "photos": [
+      {
+        "id": "textura",
+        "image": "/images/optimized/IMG_8813-1280.webp",
+        "title": "Textura & movimiento",
+        "category": "Cortes",
+        "alt": "Corte con textura en la parte superior y laterales degradados",
+        "description": "Textura arriba y una transición suave en los laterales. Un corte que deja que el pelo se mueva.",
+        "position": "center 43%"
+      },
+      {
+        "id": "rulos",
+        "image": "/images/optimized/IMG_8814-1280.webp",
+        "title": "Rulos con carácter",
+        "category": "Cortes",
+        "alt": "Corte de cabello rizado con volumen y laterales cortos",
+        "description": "El rulo es protagonista. Volumen natural y contornos definidos para acompañar su forma.",
+        "position": "center 45%"
+      },
+      {
+        "id": "lineas",
+        "image": "/images/optimized/IMG_8815-1280.webp",
+        "title": "Líneas & definición",
+        "category": "Cortes",
+        "alt": "Detalle de un corte corto con degradado y contorno definido",
+        "description": "Una mirada de cerca al degradado: transiciones parejas y una terminación limpia.",
+        "position": "center 43%"
+      },
+      {
+        "id": "natural",
+        "image": "/images/optimized/IMG_3024-1280.webp",
+        "title": "Natural, como vos",
+        "category": "Cortes",
+        "alt": "Retrato en blanco y negro con corte corto y flequillo ondulado",
+        "description": "Un flequillo con movimiento y una silueta suave. La textura natural marca el ritmo del corte.",
+        "position": "center 38%"
+      },
+      {
+        "id": "nerea-trabajando",
+        "image": "/images/optimized/IMG_8589-1280.webp",
+        "title": "Detrás de cada detalle",
+        "category": "En el estudio",
+        "alt": "Nerea trabajando en el corte de un cliente en el estudio",
+        "description": "Nerea en pleno trabajo. Atención a las líneas, a las proporciones y a esos pequeños detalles que hacen al resultado.",
+        "position": "center 35%"
+      }
+    ]
+  },
+  "journal": {
+    "enabled": true,
+    "eyebrow": "El cuaderno de Nerea",
+    "title": "Ideas para\ntu pelo.",
+    "body": "Cómo elegir tu próximo corte y cuidarlo después. Una lectura breve antes de tu próxima visita.",
+    "posts": [
+      {
+        "id": "1",
+        "title": "Cómo elegir un corte que te quede bien de verdad",
+        "excerpt": "La forma del rostro importa, pero no alcanza. También influyen el tipo de pelo, el tiempo de peinado y el ritmo de tu rutina.",
+        "image": "/images/optimized/IMG_8813-1280.webp",
+        "date": "18 de marzo de 2026",
+        "readingTime": "3 min",
+        "content": "Elegir un corte no pasa solo por traer una foto. Un buen resultado depende de entender como cae tu pelo, cuánto tiempo dedicas al peinado y que imagen quieres proyectar.\n\nLos rostros más marcados suelen tolerar muy bien laterales cortos y volumen arriba, mientras que los perfiles más redondeados suelen verse mejor cuando se trabaja altura sin exagerar el contraste.\n\nLa mejor referencia es una conversación corta antes de empezar. Si el profesional entiende tu rutina y tus límites de mantenimiento, el corte queda mejor y dura más."
+      },
+      {
+        "id": "2",
+        "title": "Perfilado de barba: pequeños ajustes que cambian todo",
+        "excerpt": "Una barba prolija no depende solo del largo. La línea de mejilla, el cuello y la unión con el corte hacen la diferencia.",
+        "image": "/images/optimized/IMG_8589-1280.webp",
+        "date": "11 de marzo de 2026",
+        "readingTime": "4 min",
+        "content": "Muchas barbas pierden fuerza por un mal límite en el cuello. Cuando esa línea esta demasiado alta se ve artificial; cuando queda muy baja, el rostro pierde definición.\n\nEl perfilado correcto acompaña la mandíbula y ordena la transición con las patillas. No se trata de recortar por recortar, sino de construir una silueta limpia.\n\nEl mantenimiento en casa también cuenta. Un aceite liviano y un cepillado rápido todos los días ayudan a que el trabajo de barbería se mantenga prolijo por más tiempo."
+      },
+      {
+        "id": "3",
+        "title": "Qué pedir en la barbería si querés un look fácil de mantener",
+        "excerpt": "No todos quieren peinarse todos los días. Pedir un corte compatible con tu rutina evita frustraciones después del turno.",
+        "image": "/images/optimized/IMG_3024-1280.webp",
+        "date": "4 de marzo de 2026",
+        "readingTime": "3 min",
+        "content": "Si querés levantarte, acomodarte un poco el pelo y salir, necesitas un corte pensado para eso. Los acabados demasiado estructurados suelen pedir más producto y más tiempo.\n\nConviene hablar con claridad: cuánto tardás en arreglarte, si usas secador o no y cada cuánto volvés a cortarte. Esa información cambia por completo la recomendación.\n\nUn buen corte no es el más llamativo, sino el que encaja con tu ritmo y te hace ver bien sin exigir demasiado mantenimiento."
+      }
+    ]
+  },
+  "videos": {
+    "enabled": false,
+    "eyebrow": "En movimiento",
+    "title": "Dentro del estudio.",
+    "items": []
+  },
+  "footer": {
+    "description": "Peluquería y barbería. Atención personalizada en Resistencia, Chaco.",
+    "bookingText": "Reservar turno"
+  },
+  "booking": {
+    "title": "Un momento para vos.",
+    "intro": "Elegí el servicio y el momento para vos. Te contactaremos para confirmar tu turno."
+  }
+}
