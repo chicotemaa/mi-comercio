@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { backendUrl, sessionCookie } from "@/lib/backend/config";
+import SettingsForm, { type BookingSettings } from "./settings-form";
 export const dynamic = "force-dynamic";
-type State = {
+type State = BookingSettings & {
   enabled: boolean;
   ready: boolean;
   requested: boolean;
@@ -62,25 +63,6 @@ export default async function OnlineBookingPage() {
       "No se pudo consultar la configuración de reservas online.",
     );
   const data = (await res.json()) as State;
-  const providers = [
-    {
-      name: "Mercado Pago",
-      ready: !data.missing.some((k) => k.startsWith("MP_")),
-      detail: "Seña del 50% y acreditación automática",
-    },
-    {
-      name: "Ingreso con Google",
-      ready: data.googleConfigured,
-      detail: "Acceso de clientes con su cuenta",
-    },
-    {
-      name: "Correo de reservas",
-      ready: !data.missing.some(
-        (k) => k.startsWith("CLOUDFLARE_") || k === "NOTIFICATION_EMAIL_FROM",
-      ),
-      detail: "Códigos de acceso y confirmaciones",
-    },
-  ];
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
       <Link className="text-sm underline" href="/dashboard/settings">
@@ -97,65 +79,7 @@ export default async function OnlineBookingPage() {
           Actualizar
         </a>
       </div>
-      <section className="rounded-2xl border bg-card p-5">
-        <p className="font-semibold">
-          {data.enabled
-            ? "Reservas con seña habilitadas"
-            : "Integración preparada · pendiente de activación"}
-        </p>
-        <p className="mt-2 text-sm leading-6">
-          {data.enabled
-            ? `Modo ${data.mode === "production" ? "producción" : "pruebas"}. Los turnos se confirman cuando se acredita la seña.`
-            : "La web conserva la solicitud de turnos actual. El nuevo circuito se habilita al completar la configuración y las pruebas de acceso, cobro y correo."}
-        </p>
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          {providers.map((p) => (
-            <div key={p.name} className="rounded-xl border p-4">
-              <h2 className="font-medium">{p.name}</h2>
-              <p className="mt-1 text-sm">
-                {p.ready
-                  ? "Configurado · verificar funcionamiento"
-                  : "Pendiente de configurar"}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">{p.detail}</p>
-            </div>
-          ))}
-        </div>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs text-muted-foreground">Seña</dt>
-            <dd className="mt-1 font-medium">
-              {data.depositPercent}% del servicio
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Tiempo para pagar</dt>
-            <dd className="mt-1 font-medium">{data.holdMinutes} minutos</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">
-              Cancelación del cliente
-            </dt>
-            <dd className="mt-1 font-medium">
-              {data.cancellationHours} h antes · sin devolución
-            </dd>
-          </div>
-        </dl>
-        {data.missing.length > 0 && (
-          <details className="mt-5">
-            <summary className="cursor-pointer text-sm">
-              Configuración técnica pendiente
-            </summary>
-            <p className="mt-3 break-words text-xs leading-6">
-              {data.missing.join(" · ")}
-            </p>
-            <p className="mt-2 text-xs">
-              Las claves se configuran en el servidor. Nunca se muestran en este
-              panel.
-            </p>
-          </details>
-        )}
-      </section>
+      <SettingsForm initial={data} />
       {data.paymentReviews.length > 0 && (
         <section className="rounded-2xl border bg-card p-5">
           <h2 className="text-xl font-semibold">
