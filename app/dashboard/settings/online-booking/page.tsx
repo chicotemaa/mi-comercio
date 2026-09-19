@@ -80,6 +80,12 @@ export default async function OnlineBookingPage() {
         </a>
       </div>
       <SettingsForm initial={data} />
+      <Link
+        className="block rounded-2xl border bg-card p-5 text-sm underline"
+        href="/dashboard/services/booking"
+      >
+        Configurar duración y reservas de todos los servicios
+      </Link>
       {data.paymentReviews.length > 0 && (
         <section className="rounded-2xl border bg-card p-5">
           <h2 className="text-xl font-semibold">

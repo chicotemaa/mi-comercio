@@ -69,6 +69,12 @@ export function ServicesPageClient({
       <div className="metric-grid grid gap-4">
         <Link
           className="inline-flex rounded-lg border bg-white px-4 py-2 text-sm font-medium"
+          href="/dashboard/services/booking"
+        >
+          Configurar tiempos y reservas online
+        </Link>
+        <Link
+          className="inline-flex rounded-lg border bg-white px-4 py-2 text-sm font-medium"
           href="/dashboard/services/prices"
         >
           Editar precios y variantes
